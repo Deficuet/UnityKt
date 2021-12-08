@@ -1,5 +1,6 @@
 package io.github.deficuet.unitykt
 
-object UnityKt {
+import io.github.deficuet.unitykt.util.EndianByteArrayReader
 
+object UnityKt {
 }
