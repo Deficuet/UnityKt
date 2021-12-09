@@ -9,26 +9,47 @@ enum class EndianType {
 }
 
 enum class OffsetMode {
-    MANUAL, AUTO
+    /**
+     * Stream will apply the extra offset directly starting from position 0.
+     */
+    MANUAL,
+
+    /**
+     * Stream will seek automatically to the first byte that is not 0. Then apply the extra offset.
+     */
+    AUTO
 }
 
-abstract class EndianBinaryReader(initOffset: Long): AutoCloseable {
-    open var position = 0L
-    val realOffset: Long get() = baseOffset + position
+sealed class EndianBinaryReader: AutoCloseable {
+//    val realOffset: Long get() = baseOffset + position
 //    abstract val bytes: ByteArray
+    /**
+     * `getter` - Absolute position
+     *
+     * `setter` - Relative position
+     */
+    abstract var position: Long
+
     protected abstract val endian: EndianType
     protected abstract val offsetMode: OffsetMode
+    protected abstract val manualOffset: Long
+    protected abstract val baseOffset: Long
     protected abstract val length: Long
 
-    protected open val baseOffset: Long = run {
-        if (offsetMode == OffsetMode.MANUAL) {
-            initOffset
+    protected open fun initOffset(): Long {
+        return if (offsetMode == OffsetMode.MANUAL) {
+            manualOffset
         } else {
-            0
+            var first: Byte
+            do {
+                first = read(1)[0]
+            } while (first == 0.toByte())
+            position -= 1
+            position + manualOffset
         }
     }
 
-    abstract fun read(length: Int): ByteArray
+    abstract fun read(size: Int): ByteArray
 
     fun readByte(): Byte = ByteBuffer.wrap(read(1)).get()
     fun readUByte(): UByte = readByte().toUByte()
@@ -98,20 +119,21 @@ abstract class EndianBinaryReader(initOffset: Long): AutoCloseable {
 class EndianByteArrayReader(
     private val array: ByteArray,
     override val endian: EndianType = EndianType.BigEndian,
-    initOffset: Long = 0,
+    override val manualOffset: Long = 0,
     override val offsetMode: OffsetMode = OffsetMode.AUTO
-): EndianBinaryReader(initOffset) {
+): EndianBinaryReader() {
+    override val baseOffset: Long = initOffset()
     override val length = array.size.toLong()
-    override var position: Long = baseOffset    //0 by default
+    override var position: Long = 0
         set(value) { field = value + baseOffset }
 
-    override fun read(length: Int): ByteArray {
-        if (length <= 0) {
+    override fun read(size: Int): ByteArray {
+        if (size <= 0) {
             return byteArrayOf()
         }
-        val position = position.toInt()
-        val ret = array.sliceArray(position until position + length)
-        this.position += length
+        val positionInt = position.toInt()
+        val ret = array.sliceArray(positionInt..positionInt + size)
+        position += size - baseOffset   //absolute position
         return ret
     }
 
