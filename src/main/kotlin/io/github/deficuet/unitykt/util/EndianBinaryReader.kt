@@ -39,7 +39,7 @@ sealed class EndianBinaryReader: AutoCloseable {
     protected abstract val length: Long
     protected abstract val baseOffset: Long     //Should be last initialized
 
-    protected open fun initOffset(): Long {
+    protected fun initOffset(): Long {
         return if (offsetMode == OffsetMode.MANUAL) {
             manualOffset
         } else {
@@ -132,7 +132,7 @@ class EndianByteArrayReader(
     override val length = array.size.toLong()
     override var position = 0L
         set(value) { field = value + baseOffset }
-    
+
     override val baseOffset = initOffset()
 
     override fun read(size: Int): ByteArray {

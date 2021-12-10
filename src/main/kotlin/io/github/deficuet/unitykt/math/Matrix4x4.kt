@@ -16,11 +16,11 @@ data class Matrix4x4(private val data: MutableList<Double>) {
 
     operator fun set(index: Int, value: Double) { data[index] = value }
 
-    fun column(index: Int) = with(data.subList(index * 4, index * 4 + 4)) {
+    fun row(index: Int) = with(data.subList(index * 4, index * 4 + 4)) {
         Vector4(get(0), get(1), get(2), get(3))
     }
 
-    fun row(index: Int) = Vector4(data[index], data[index + 4], data[index + 8], data[index + 12])
+    fun column(index: Int) = Vector4(data[index], data[index + 4], data[index + 8], data[index + 12])
 
     fun scale(v3: Vector3) = Matrix4x4 {
         MutableList(16) { 0.0 }.apply {
