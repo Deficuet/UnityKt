@@ -1,13 +1,17 @@
 package io.github.deficuet.unitykt
 
 import io.github.deficuet.unitykt.util.EndianByteArrayReader
+import io.github.deficuet.unitykt.util.EndianFileStreamReader
+import java.io.FileInputStream
 
 fun main() {
     val t = EndianByteArrayReader(
-        array = byteArrayOf(0x0, 0x0, 0x0, 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7)
+        byteArrayOf(0,0,0,0,0,0,0)
     )
-    println(t.position)
-    t.position = 0
-    println(t.read(1)[0])
-    println(t.position)
+
+
+//    val a = FileInputStream("D:\\Programs\\srcode\\test\\未命名3")
+//    println(a.channel.size())
+//    println(with(a.channel) { position() >= size() })
+//    a.close()
 }

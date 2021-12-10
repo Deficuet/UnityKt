@@ -40,7 +40,7 @@ data class Vector3(var x: Double, var y: Double, var z: Double): Vector() {
 
     operator fun <N> div(d: N) where N: Number, N: Comparable<N> = Vector3(x / d, y / d, z / d)
 
-    fun approxEquals(other: Vector3): Boolean = minus(other).length2() < kEpsilon2
+    infix fun approxEquals(other: Vector3): Boolean = minus(other).length2() < kEpsilon2
 
     override fun hashCode(): Int {
         return x.hashCode() xor (y.hashCode() shl 2) xor (z.hashCode() shr 2)
