@@ -5,6 +5,7 @@ import java.nio.charset.Charset
 import java.nio.file.Files
 import java.nio.file.Path
 import java.io.FileInputStream
+import java.io.Closeable
 import io.github.deficuet.unitykt.math.*
 
 enum class EndianType {
@@ -23,7 +24,7 @@ enum class OffsetMode {
     AUTO
 }
 
-sealed class EndianBinaryReader: AutoCloseable {
+sealed class EndianBinaryReader: Closeable {
 //    val realOffset: Long get() = baseOffset + position
 //    abstract val bytes: ByteArray
     /**
@@ -32,11 +33,11 @@ sealed class EndianBinaryReader: AutoCloseable {
      * `setter` - Relative position
      */
     abstract var position: Long
+    abstract val length: Long
 
     protected abstract val endian: EndianType
     protected abstract val offsetMode: OffsetMode
     protected abstract val manualOffset: Long
-    protected abstract val length: Long
     protected abstract val baseOffset: Long     //Should be last initialized
 
     protected fun initOffset(): Long {
@@ -56,6 +57,12 @@ sealed class EndianBinaryReader: AutoCloseable {
 
     abstract fun read(size: Int): ByteArray
 
+    inline fun <T> runThenReset(crossinline block: EndianBinaryReader.() -> T): T {
+        val result = this.block()
+        position = 0
+        return result
+    }
+
     fun readByte(): Byte = ByteBuffer.wrap(read(1)).get()
     fun readUByte(): UByte = readByte().toUByte()
     fun readShort(): Short = ByteBuffer.wrap(read(2).rearrange(endian)).short
@@ -68,9 +75,9 @@ sealed class EndianBinaryReader: AutoCloseable {
     fun readDouble(): Double = ByteBuffer.wrap(read(8).rearrange(endian)).double
     fun readBool(): Boolean = readByte() != 0.toByte()
     fun readString(size: Int = -1, encode: Charset = Charsets.UTF_8): String {
-        return if (size == -1) readStringToNull(charset = encode) else read(size).decodeToString(encode)
+        return if (size == -1) readStringUntilNull(charset = encode) else read(size).decodeToString(encode)
     }
-    fun readStringToNull(maxLength: Int = 32767, charset: Charset = Charsets.UTF_8): String {
+    fun readStringUntilNull(maxLength: Int = 32767, charset: Charset = Charsets.UTF_8): String {
         val ret = mutableListOf<Byte>()
         var c: Byte? = null
         while (c != 0.toByte() && ret.size < maxLength && position != length) {
@@ -90,8 +97,8 @@ sealed class EndianBinaryReader: AutoCloseable {
         }
         return ""
     }
-    private fun alignStream(alignment: Int = 4) {
-        position += (alignment - position % alignment) % alignment - baseOffset
+    fun alignStream(alignment: Int = 4) {
+        plusAbsPos((alignment - position % alignment) % alignment)
     }
     fun readNextByteArray(): ByteArray = read(readInt())
     private fun <R> readArray(frequency: Int, lambda: () -> R): List<R> {
@@ -121,6 +128,46 @@ sealed class EndianBinaryReader: AutoCloseable {
     fun readNextMatrixArray(): List<Matrix4x4> = readArray(readInt(), this::readMatrix4x4)
     fun readNextVector2Array(): List<Vector2> = readArray(readInt(), this::readVector2)
     fun readNextVector4Array(): List<Vector4> = readArray(readInt(), this::readVector4)
+
+    fun isSerializedFile(): Boolean {
+        readUInt()    //m_MetadataSize
+        var mFileSize = readUInt().toLong()
+        val mVersion = readUInt()
+        var mDataOffset = readUInt().toLong()
+        read(1)   //m_Endian
+        read(3)   //m_Reserved
+        if (mVersion > 22u) {
+            if (length < 48) {
+                position = 0
+                return false
+            }
+            runThenReset {
+                readUInt()    //m_MetadataSize
+                mFileSize = readLong()
+                mDataOffset = readLong()
+            }
+        }
+        return mFileSize == length && mDataOffset <= length
+    }
+
+    fun plusAbsPos(inc: Int) {
+        position += inc - baseOffset
+    }
+
+    fun plusAbsPos(inc: Long) {
+        position += inc - baseOffset
+    }
+
+    companion object {
+        fun assign(input: Any, offsetMode: OffsetMode): EndianBinaryReader {
+            return when {
+                input is ByteArray -> EndianByteArrayReader(input, offsetMode = offsetMode)
+                input is String && input.isFile() -> EndianFileStreamReader(input, offsetMode = offsetMode)
+                input is EndianBinaryReader -> input
+                else -> throw UnsupportedFormatException("Invalid input for EndianBinaryReader")
+            }
+        }
+    }
 }
 
 class EndianByteArrayReader(
@@ -141,7 +188,7 @@ class EndianByteArrayReader(
         }
         val positionInt = position.toInt()
         val ret = array.sliceArray(positionInt until positionInt + size)
-        position += size - baseOffset   //absolute position
+        plusAbsPos(size)   //absolute position
         return ret
     }
 

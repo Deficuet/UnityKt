@@ -1,6 +1,8 @@
 package io.github.deficuet.unitykt.util
 
 import java.nio.charset.Charset
+import java.nio.file.Files
+import java.nio.file.Path
 
 internal fun ByteArray.rearrange(endian: EndianType): ByteArray {
     return if (size > 1 && endian == EndianType.LittleEndian) reversedArray() else this
@@ -8,3 +10,9 @@ internal fun ByteArray.rearrange(endian: EndianType): ByteArray {
 
 internal fun ByteArray.decodeToString(charset: Charset = Charsets.UTF_8) =
     java.lang.String(this, charset) as String
+
+internal fun String.isFile(): Boolean = Files.isRegularFile(Path.of(this))
+
+internal fun byteArrayOf(vararg bytes: Int) = ByteArray(bytes.size) { bytes[it].toByte() }
+
+internal infix fun Boolean.imply(other: Boolean) = !this or other
