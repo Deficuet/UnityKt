@@ -1,6 +1,7 @@
 package io.github.deficuet.unitykt.util
 
 import SevenZip.Compression.LZMA.Decoder
+import net.jpountz.lz4.LZ4BlockInputStream
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 
@@ -21,6 +22,18 @@ object CompressUtils {
         }
         decoder.SetDecoderProperties(prop)
         decoder.Code(input, output, outSize)
+        return output.toByteArray()
+    }
+
+    fun lz4Decompress(data: ByteArray): ByteArray {
+        val buf = ByteArray(2048)
+        val output = ByteArrayOutputStream()
+        var len: Int
+        LZ4BlockInputStream(ByteArrayInputStream(data)).use { input ->
+            while (input.read(buf).also { len = it } > 0) {
+                output.write(buf, 0, len)
+            }
+        }
         return output.toByteArray()
     }
 }

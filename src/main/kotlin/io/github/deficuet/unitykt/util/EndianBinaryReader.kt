@@ -28,6 +28,11 @@ sealed class EndianBinaryReader: Closeable {
 //    val realOffset: Long get() = baseOffset + position
 //    abstract val bytes: ByteArray
     /**
+     * Mark of relative position
+     */
+    private var mark: Long = 0
+
+    /**
      * `getter` - Absolute position
      *
      * `setter` - Relative position
@@ -56,6 +61,10 @@ sealed class EndianBinaryReader: Closeable {
     }
 
     abstract fun read(size: Int): ByteArray
+
+    fun mark() { mark = position }
+
+    fun reset() { position = mark }
 
     inline fun <T> runThenReset(crossinline block: EndianBinaryReader.() -> T): T {
         val result = this.block()
@@ -174,7 +183,7 @@ class EndianByteArrayReader(
     private val array: ByteArray,
     override val endian: EndianType = EndianType.BigEndian,
     override val manualOffset: Long = 0,
-    override val offsetMode: OffsetMode = OffsetMode.AUTO
+    override val offsetMode: OffsetMode = OffsetMode.MANUAL
 ): EndianBinaryReader() {
     override val length = array.size.toLong()
     override var position = 0L
@@ -199,7 +208,7 @@ class EndianFileStreamReader(
     filePath: String,
     override val endian: EndianType = EndianType.BigEndian,
     override val manualOffset: Long = 0,
-    override val offsetMode: OffsetMode = OffsetMode.AUTO
+    override val offsetMode: OffsetMode = OffsetMode.MANUAL
 ): EndianBinaryReader() {
     init {
         if (!Files.isRegularFile(Path.of(filePath)))

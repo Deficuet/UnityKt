@@ -28,6 +28,6 @@ internal operator fun <N> Double.div(x: N): Double where N:Number, N: Comparable
     return operator(this)
 }
 
-inline fun <E> mutableList(block: MutableList<E>.() -> Unit): MutableList<E> {
-    return mutableListOf<E>().apply(block)
+inline fun <E> mutableList(builder: MutableList<E>.() -> Unit): MutableList<E> {
+    return mutableListOf<E>().apply(builder)
 }
