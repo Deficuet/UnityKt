@@ -15,6 +15,8 @@ internal fun String.isFile(): Boolean = Files.isRegularFile(Path.of(this))
 
 internal fun byteArrayOf(vararg bytes: Int) = ByteArray(bytes.size) { bytes[it].toByte() }
 
+internal fun byteArrayOf(str: String) = ByteArray(str.length) { str[it].code.toByte() }
+
 //internal infix fun Boolean.imply(other: Boolean) = !this or other
 
 internal fun List<ByteArray>.sum(): ByteArray {
