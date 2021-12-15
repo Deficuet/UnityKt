@@ -1,2 +1,2 @@
 # UnityKt
-Unity AssetBundle Extractor for Kotlin
+Readonly Unity AssetBundle Extractor for Kotlin
