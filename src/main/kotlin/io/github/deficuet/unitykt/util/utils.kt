@@ -15,4 +15,10 @@ internal fun String.isFile(): Boolean = Files.isRegularFile(Path.of(this))
 
 internal fun byteArrayOf(vararg bytes: Int) = ByteArray(bytes.size) { bytes[it].toByte() }
 
-internal infix fun Boolean.imply(other: Boolean) = !this or other
+//internal infix fun Boolean.imply(other: Boolean) = !this or other
+
+internal fun List<ByteArray>.sum(): ByteArray {
+    var bytes = kotlin.byteArrayOf()
+    forEach { bytes += it }
+    return bytes
+}

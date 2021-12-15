@@ -1,70 +1,70 @@
 package io.github.deficuet.unitykt.file
 
 import io.github.deficuet.unitykt.util.*
-import kotlin.properties.Delegates
 
-class BundleFile(private val reader: EndianBinaryReader): AssetBundle() {
+class BundleFile(private val reader: EndianBinaryReader): AssetNode() {
     data class Block(
         val compressedSize: UInt,
         val uncompressedSize: UInt,
         val flags: UShort
     )
 
-    abstract class Node { abstract val path: String }
-
-    data class NodeWeb(
-        override val path: String,
-        val offset: UInt,
-        val size: UInt
-    ): Node()
-
-    data class NodeFS(
+    data class Node(
+        val path: String,
         val offset: Long,
         val size: Long,
-        val flags: UInt,
-        override val path: String
-    ): Node()
-
-    private fun fsBranch() {
-
-    }
+        val flag: UInt = 0u
+    )
 
     //Header
     private val hSignature: String = reader.readStringUntilNull()
     private val hVersion: UInt = reader.readUInt()
-    private val hUnityVersion: String = reader.readStringUntilNull()
-    private val hUnityRevision: String = reader.readStringUntilNull()
-    private var hSize by Delegates.notNull<Long>()
-    private var hCompressedBlockSize by Delegates.notNull<UInt>()
-    private var hUncompressedBlockSize by Delegates.notNull<UInt>()
-    private var hFlags by Delegates.notNull<UInt>()
 
     private val blocksInfo = mutableListOf<Block>()
     private val directoryInfo = mutableListOf<Node>()
 
+    override val files: Map<String, Any>
+
     init {
-        when (hSignature) {
+        reader.readStringUntilNull()    //hUnityVersion
+        reader.readStringUntilNull()    //hUnityRevision
+        val filesReader = when (hSignature) {
             "UnityArchive" -> throw UnsupportedFormatException("Unsupported file type UnityArchive")
             "UnityWeb", "UnityRaw" -> {
-                if (hVersion == 6u) {
-                    fsBranch()
-                }
-                val blocksReader = readHeaderAndBlockInfo()
+                if (hVersion == 6u) readFS()
+                readWebRaw()
             }
-            "UnityFs" -> {
-
-            }
+            "UnityFS" -> readFS()
+            else -> throw UnsupportedFormatException("Unknown Bundle Signature")
         }
+        val fileMap = mutableMapOf<String, Any>()
+        for (node in directoryInfo) {
+            filesReader.position = node.offset
+            val nodeReader = EndianByteArrayReader(
+                filesReader.read(node.size.toInt()),
+                manualOffset = filesReader.baseOffset + node.offset
+            )
+            val (nodeType, _) = ImportUtils.checkFileType(nodeReader, OffsetMode.MANUAL)
+            var nodeFile: AssetNode? = null
+            when (nodeType) {
+                FileType.BUNDLE -> nodeFile = BundleFile(nodeReader)
+                FileType.WEB -> TODO()
+                FileType.ASSETS -> TODO()
+                else -> {  }
+            }
+            fileMap[node.path] = nodeFile ?: nodeReader
+        }
+        files = fileMap
     }
 
-    private fun readHeaderAndBlockInfo(): EndianBinaryReader {  //Web Raw
+    private fun readWebRaw(): EndianBinaryReader {  //Web Raw
         val isCompressed = hSignature == "UnityWeb"
         if (hVersion >= 4u) {
             reader.read(16)   //hash
             reader.readUInt()     //crc
         }
         reader.readUInt()   //minStreamedByte
-        hSize = reader.readUInt().toLong()
+        val hSize = reader.readUInt().toLong()
         reader.readUInt()   //levelsBeforeStreaming
         val levelCount = reader.readInt()
         reader.plusAbsPos(4 * 2 * (levelCount - 1))
@@ -94,9 +94,10 @@ class BundleFile(private val reader: EndianBinaryReader): AssetBundle() {
         for (i in 0 until nodesCount) {
             directoryInfo.add(
                 with(blocksReader) {
-                    NodeWeb(
+                    Node(
                         readStringUntilNull(),
-                        readUInt(), readUInt()
+                        readUInt().toLong(),
+                        readUInt().toLong()
                     )
                 }
             )
@@ -104,11 +105,11 @@ class BundleFile(private val reader: EndianBinaryReader): AssetBundle() {
         return blocksReader
     }
 
-    private fun readHeader() {  //FS
-        hSize = reader.readLong()
-        hCompressedBlockSize = reader.readUInt()
-        hUncompressedBlockSize = reader.readUInt()
-        hFlags = reader.readUInt()
+    private fun readFS(): EndianBinaryReader {  //FS
+        reader.readLong()   //header.size
+        val hCompressedBlockSize = reader.readUInt()
+        reader.readUInt()   //UncompressedBlockSize
+        val hFlags = reader.readUInt()
         if (hSignature != "UnityFS") reader.read(1)
         if (hVersion >= 7u) reader.alignStream(16)
         val blockOffset = reader.position
@@ -133,13 +134,39 @@ class BundleFile(private val reader: EndianBinaryReader): AssetBundle() {
         for (i in 0 until blocksInfoCount) {
             blocksInfo.add(
                 Block(
-                    blocksInfoReader.readUInt(),
-                    blocksInfoReader.readUInt(),
-                    blocksInfoReader.readUShort()
+                    uncompressedSize = blocksInfoReader.readUInt(),
+                    compressedSize = blocksInfoReader.readUInt(),
+                    flags = blocksInfoReader.readUShort()
                 )
             )
         }
         val nodesCount = blocksInfoReader.readInt()
-
+        with(blocksInfoReader) {
+            for (j in 0 until nodesCount) {
+                directoryInfo.add(
+                    Node(
+                        offset = readLong(),
+                        size = readLong(),
+                        flag = readUInt(),
+                        path = readStringUntilNull()
+                    )
+                )
+            }
+        }
+        return EndianByteArrayReader(
+            manualOffset = blocksInfoReader.position
+        ) {
+            blocksInfo.map { block ->
+                when (block.flags and 0x3Fu) {
+                    1.toUShort() -> CompressUtils.lzmaDecompress(
+                        reader.read(block.compressedSize.toInt())
+                    )
+                    2.toUShort(), 3.toUShort() -> CompressUtils.lz4Decompress(
+                        reader.read(block.compressedSize.toInt())
+                    )
+                    else -> reader.read(block.uncompressedSize.toInt())
+                }
+            }.sum()
+        }
     }
 }

@@ -1,6 +1,8 @@
 package io.github.deficuet.unitykt
 
+import io.github.deficuet.unitykt.file.BundleFile
+import io.github.deficuet.unitykt.util.EndianFileStreamReader
+
 fun main() {
-    val a: Byte = 127
-    println(a.toLong())
+    val b = BundleFile(EndianFileStreamReader("D:\\leidian\\Painting\\baoduoliuhua"))
 }
