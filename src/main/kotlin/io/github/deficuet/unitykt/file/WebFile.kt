@@ -22,7 +22,7 @@ class WebFile(preReader: EndianBinaryReader): AssetNode() {
             preReader.position = 0x20
             magic = preReader.runThenReset { read(6) }
             if (magic.contentEquals(CompressUtils.BROTLI_MAGIC)) {
-                EndianByteArrayReader()
+                EndianByteArrayReader(preReader.bytes)
             } else {
                 preReader.resetEndian(EndianType.LittleEndian)
             }

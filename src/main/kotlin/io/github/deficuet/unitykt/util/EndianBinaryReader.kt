@@ -28,7 +28,8 @@ sealed class EndianBinaryReader: Closeable, AssetNodeOrReader {
     /**
      * Mark of relative position
      */
-    private var mark: Long = 0
+    var mark: Long = 0
+        private set
 
     abstract val bytes: ByteArray
     /**
@@ -63,12 +64,10 @@ sealed class EndianBinaryReader: Closeable, AssetNodeOrReader {
 
     fun mark() { mark = position }
 
-    fun reset() { position = mark }
-
     inline fun <T> withMark(block: EndianBinaryReader.() -> T): T {
         mark()
         val result = this.block()
-        reset()
+        position = mark
         return result
     }
 
@@ -144,33 +143,32 @@ sealed class EndianBinaryReader: Closeable, AssetNodeOrReader {
     fun readNextVector2Array(): List<Vector2> = readArray(readInt(), this::readVector2)
     fun readNextVector4Array(): List<Vector4> = readArray(readInt(), this::readVector4)
 
-    fun isSerializedFile(): Boolean {
-        readUInt()    //m_MetadataSize
-        var mFileSize = readUInt().toLong()
-        val mVersion = readUInt()
-        var mDataOffset = readUInt().toLong()
-        read(1)   //m_Endian
-        read(3)   //m_Reserved
-        if (mVersion > 22u) {
-            if (length < 48) {
-                position = 0
-                return false
-            }
-            runThenReset {
-                readUInt()    //m_MetadataSize
-                mFileSize = readLong()
-                mDataOffset = readLong()
-            }
-        }
-        return mFileSize == length && mDataOffset <= length
-    }
-
     fun plusAbsPos(inc: Int) {
         position += inc - baseOffset
     }
 
     fun plusAbsPos(inc: Long) {
         position += inc - baseOffset
+    }
+
+    fun isSerializedFile(): Boolean {
+        plusAbsPos(4)    //m_MetadataSize
+        var mFileSize = readUInt().toLong()
+        val mVersion = readUInt()
+        var mDataOffset = readUInt().toLong()
+        plusAbsPos(4)   //m_Endian, m_Reserved
+        if (mVersion > 22u) {
+            if (length < 48) {
+                position = 0
+                return false
+            }
+            runThenReset {
+                plusAbsPos(4)    //m_MetadataSize
+                mFileSize = readLong()
+                mDataOffset = readLong()
+            }
+        }
+        return mFileSize == length && mDataOffset <= length
     }
 
     fun resetEndian(e: EndianType): EndianBinaryReader { endian = e; return this }

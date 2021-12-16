@@ -8,7 +8,7 @@ import java.util.zip.GZIPInputStream
 
 class CompressUtils {
     companion object {
-        val GZIP_MAGIC = byteArrayOf(0x1f, 0x8b)
+        val GZIP_MAGIC = byteArrayOf(0x1F, 0x8B)
         val BROTLI_MAGIC = byteArrayOf("brotli")
 
         private val lz4Decompressor = LZ4Factory.fastestInstance().fastDecompressor()

@@ -59,15 +59,14 @@ class BundleFile(private val reader: EndianBinaryReader): AssetNode() {
         reader.close()
     }
 
-    private fun readWebRaw(): EndianBinaryReader {  //Web Raw
+    private fun readWebRaw(): EndianBinaryReader {
         val isCompressed = hSignature == "UnityWeb"
         if (hVersion >= 4u) {
-            reader.read(16)   //hash
-            reader.readUInt()     //crc
+            reader.plusAbsPos(20)   //hash(16), crc(4)
         }
-        reader.readUInt()   //minStreamedByte
+        reader.plusAbsPos(4)  //minStreamedByte
         val hSize = reader.readUInt().toLong()
-        reader.readUInt()   //levelsBeforeStreaming
+        reader.plusAbsPos(4)   //levelsBeforeStreaming
         val levelCount = reader.readInt()
         reader.plusAbsPos(4 * 2 * (levelCount - 1))
         blocksInfo.add(
@@ -77,10 +76,10 @@ class BundleFile(private val reader: EndianBinaryReader): AssetNode() {
             )
         )
         if (hVersion >= 2u) {
-            reader.readUInt()   //completeFileSize
+            reader.plusAbsPos(4)   //completeFileSize
         }
         if (hVersion >= 3u) {
-            reader.readUInt()   //fileInfoHeaderSize
+            reader.plusAbsPos(4)   //fileInfoHeaderSize
         }
         reader.position = hSize
         val uncompressedBytes = with(reader.read(blocksInfo[0].compressedSize.toInt())) {
@@ -107,8 +106,8 @@ class BundleFile(private val reader: EndianBinaryReader): AssetNode() {
         return blocksReader
     }
 
-    private fun readFS(): EndianBinaryReader {  //FS
-        reader.readLong()   //header.size
+    private fun readFS(): EndianBinaryReader {
+        reader.plusAbsPos(8)   //header.size
         val hCompressedBlockSize = reader.readUInt()
         val uncompressedBlockSize = reader.readUInt()
         val hFlags = reader.readUInt()
@@ -129,7 +128,7 @@ class BundleFile(private val reader: EndianBinaryReader): AssetNode() {
             2u, 3u -> blocksInfoBytes = CompressUtils.lz4Decompress(blocksInfoBytes, uncompressedBlockSize.toInt())
         }
         val blocksInfoReader = EndianByteArrayReader(blocksInfoBytes, manualOffset = blockOffset)
-        blocksInfoReader.read(16)   //uncompressedDataHash
+        blocksInfoReader.plusAbsPos(16)   //uncompressedDataHash
         val blocksInfoCount = blocksInfoReader.readInt()
         for (i in 0 until blocksInfoCount) {
             blocksInfo.add(
