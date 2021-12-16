@@ -1,12 +1,9 @@
 package io.github.deficuet.unitykt.file
 
-import io.github.deficuet.unitykt.util.CompressUtils
-import io.github.deficuet.unitykt.util.EndianBinaryReader
-import io.github.deficuet.unitykt.util.EndianByteArrayReader
-import io.github.deficuet.unitykt.util.EndianType
+import io.github.deficuet.unitykt.util.*
 
 class WebFile(preReader: EndianBinaryReader): AssetNode() {
-    override val files: Map<String, Any>
+    override val files: Map<String, AssetNodeOrReader>
         get() = TODO("Not yet implemented")
 
     private val reader: EndianBinaryReader

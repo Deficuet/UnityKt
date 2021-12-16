@@ -152,18 +152,18 @@ sealed class EndianBinaryReader: Closeable, AssetNodeOrReader {
     }
 
     fun isSerializedFile(): Boolean {
-        plusAbsPos(4)    //m_MetadataSize
+        plusAbsPos(4)    //m_MetadataSize: UInt
         var mFileSize = readUInt().toLong()
         val mVersion = readUInt()
         var mDataOffset = readUInt().toLong()
-        plusAbsPos(4)   //m_Endian, m_Reserved
+        plusAbsPos(4)   //m_Endian(1), m_Reserved(3)
         if (mVersion > 22u) {
             if (length < 48) {
                 position = 0
                 return false
             }
             runThenReset {
-                plusAbsPos(4)    //m_MetadataSize
+                plusAbsPos(4)    //m_MetadataSize: UInt
                 mFileSize = readLong()
                 mDataOffset = readLong()
             }

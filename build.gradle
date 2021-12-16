@@ -12,7 +12,8 @@ repositories {
 
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib"
-    implementation 'org.b1.pack:lzma-sdk-4j:9.22.0'
+    implementation 'org.tukaani:xz:1.9'
+    implementation 'org.apache.commons:commons-compress:1.21'
     implementation 'org.lz4:lz4-java:1.8.0'
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.2'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.2'

@@ -62,11 +62,11 @@ class BundleFile(private val reader: EndianBinaryReader): AssetNode() {
     private fun readWebRaw(): EndianBinaryReader {
         val isCompressed = hSignature == "UnityWeb"
         if (hVersion >= 4u) {
-            reader.plusAbsPos(20)   //hash(16), crc(4)
+            reader.plusAbsPos(20)   //hash(16), crc: UInt
         }
-        reader.plusAbsPos(4)  //minStreamedByte
+        reader.plusAbsPos(4)   //minStreamedByte: UInt
         val hSize = reader.readUInt().toLong()
-        reader.plusAbsPos(4)   //levelsBeforeStreaming
+        reader.plusAbsPos(4)   //levelsBeforeStreaming: UInt
         val levelCount = reader.readInt()
         reader.plusAbsPos(4 * 2 * (levelCount - 1))
         blocksInfo.add(
@@ -76,10 +76,10 @@ class BundleFile(private val reader: EndianBinaryReader): AssetNode() {
             )
         )
         if (hVersion >= 2u) {
-            reader.plusAbsPos(4)   //completeFileSize
+            reader.plusAbsPos(4)   //completeFileSize: UInt
         }
         if (hVersion >= 3u) {
-            reader.plusAbsPos(4)   //fileInfoHeaderSize
+            reader.plusAbsPos(4)   //fileInfoHeaderSize: UInt
         }
         reader.position = hSize
         val uncompressedBytes = with(reader.read(blocksInfo[0].compressedSize.toInt())) {
@@ -107,7 +107,7 @@ class BundleFile(private val reader: EndianBinaryReader): AssetNode() {
     }
 
     private fun readFS(): EndianBinaryReader {
-        reader.plusAbsPos(8)   //header.size
+        reader.plusAbsPos(8)   //header.size: Long
         val hCompressedBlockSize = reader.readUInt()
         val uncompressedBlockSize = reader.readUInt()
         val hFlags = reader.readUInt()
