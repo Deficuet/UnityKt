@@ -25,12 +25,6 @@ enum class OffsetMode {
 }
 
 sealed class EndianBinaryReader: Closeable, AssetNodeOrReader {
-    /**
-     * Mark of relative position
-     */
-    var mark: Long = 0
-        private set
-
     abstract val bytes: ByteArray
     /**
      * `getter` - Absolute position
@@ -39,15 +33,22 @@ sealed class EndianBinaryReader: Closeable, AssetNodeOrReader {
      */
     abstract var position: Long
     abstract val length: Long
-    abstract val baseOffset: Long     //Should be last initialized
+    abstract val baseOffset: Long
 
     protected abstract var endian: EndianType
     protected abstract val offsetMode: OffsetMode
-    protected abstract val manualOffset: Long
+    protected abstract val solidOffset: Long     //Should be last initialized
+
+    /**
+     * Mark of relative position
+     */
+    var mark: Long = 0
+        private set
+    val realOffset get() = position + baseOffset
 
     protected fun initOffset(): Long {
         return if (offsetMode == OffsetMode.MANUAL) {
-            manualOffset
+            0
         } else {
             var first: Byte
             do {
@@ -56,9 +57,13 @@ sealed class EndianBinaryReader: Closeable, AssetNodeOrReader {
                 else first = array[0]
             } while (first == 0.toByte())
             position -= 1
-            position + manualOffset
+            position
         }
     }
+
+    operator fun plusAssign(inc: Int) { position += inc - solidOffset }
+
+    operator fun plusAssign(inc: Long) { position += inc - solidOffset }
 
     abstract fun read(size: Int): ByteArray
 
@@ -112,7 +117,7 @@ sealed class EndianBinaryReader: Closeable, AssetNodeOrReader {
         return ""
     }
     fun alignStream(alignment: Int = 4) {
-        plusAbsPos((alignment - position % alignment) % alignment)
+        plusAssign((alignment - position % alignment) % alignment)
     }
     fun readNextByteArray(): ByteArray = read(readInt())
     private fun <R> readArray(frequency: Int, lambda: () -> R): List<R> {
@@ -143,27 +148,19 @@ sealed class EndianBinaryReader: Closeable, AssetNodeOrReader {
     fun readNextVector2Array(): List<Vector2> = readArray(readInt(), this::readVector2)
     fun readNextVector4Array(): List<Vector4> = readArray(readInt(), this::readVector4)
 
-    fun plusAbsPos(inc: Int) {
-        position += inc - baseOffset
-    }
-
-    fun plusAbsPos(inc: Long) {
-        position += inc - baseOffset
-    }
-
     fun isSerializedFile(): Boolean {
-        plusAbsPos(4)    //m_MetadataSize: UInt
+        plusAssign(4)    //m_MetadataSize: UInt
         var mFileSize = readUInt().toLong()
         val mVersion = readUInt()
         var mDataOffset = readUInt().toLong()
-        plusAbsPos(4)   //m_Endian(1), m_Reserved(3)
+        plusAssign(4)   //m_Endian(1), m_Reserved(3)
         if (mVersion > 22u) {
             if (length < 48) {
                 position = 0
                 return false
             }
             runThenReset {
-                plusAbsPos(4)    //m_MetadataSize: UInt
+                plusAssign(4)    //m_MetadataSize: UInt
                 mFileSize = readLong()
                 mDataOffset = readLong()
             }
@@ -188,7 +185,7 @@ sealed class EndianBinaryReader: Closeable, AssetNodeOrReader {
 class EndianByteArrayReader(
     private val array: ByteArray,
     override var endian: EndianType = EndianType.BigEndian,
-    override val manualOffset: Long = 0,
+    override val baseOffset: Long = 0,
     override val offsetMode: OffsetMode = OffsetMode.MANUAL
 ): EndianBinaryReader() {
     constructor(
@@ -201,9 +198,9 @@ class EndianByteArrayReader(
     override val bytes = array
     override val length = array.size.toLong()
     override var position = 0L
-        set(value) { field = value + baseOffset }
+        set(value) { field = value + solidOffset }
 
-    override val baseOffset = initOffset()
+    override val solidOffset = initOffset()
 
     override fun read(size: Int): ByteArray {
         if (size <= 0 || position >= length) {
@@ -211,7 +208,7 @@ class EndianByteArrayReader(
         }
         val positionInt = position.toInt()
         val ret = array.sliceArray(positionInt until positionInt + size)
-        plusAbsPos(size)   //absolute position
+        plusAssign(size)   //absolute position
         return ret
     }
 
@@ -221,7 +218,7 @@ class EndianByteArrayReader(
 class EndianFileStreamReader(
     filePath: String,
     override var endian: EndianType = EndianType.BigEndian,
-    override val manualOffset: Long = 0,
+    override val baseOffset: Long = 0,
     override val offsetMode: OffsetMode = OffsetMode.MANUAL
 ): EndianBinaryReader() {
     init {
@@ -240,9 +237,9 @@ class EndianFileStreamReader(
     override val length = channel.size()
     override var position: Long
         get() = channel.position()
-        set(value) { channel.position(value + baseOffset) }
+        set(value) { channel.position(value + solidOffset) }
 
-    override val baseOffset = initOffset()
+    override val solidOffset = initOffset()
 
     override fun read(size: Int): ByteArray {
         if (size <= 0 || position >= length) {
