@@ -14,7 +14,6 @@ class CompressUtils private constructor() {
         private val lz4Decompressor = LZ4Factory.fastestInstance().fastDecompressor()
 
         fun lzmaDecompress(data: ByteArray): ByteArray {
-            val decoder = Decoder()
             val preInput = ByteArrayInputStream(data)
             val props = ByteArray(5)
             if (preInput.read(props) != 5) {
@@ -26,11 +25,15 @@ class CompressUtils private constructor() {
                 if (v < 0) throw IllegalStateException("Invalid input data")
                 outSize = outSize or (v.toLong().shl(8 * i))
             }
-            val input = with(data) { ByteArrayInputStream(sliceArray(5 until size)) }
             val output = ByteArrayOutputStream()
-            decoder.SetDecoderProperties(props)
-            decoder.Code(input, output, outSize)
-            return output.toByteArray()
+            return with(Decoder()) {
+                SetDecoderProperties(props)
+                Code(
+                    with(data) { ByteArrayInputStream(sliceArray(5 until size)) },
+                    output, outSize
+                )
+                output.toByteArray()
+            }
         }
 
         fun lz4Decompress(data: ByteArray, uncompressedSize: Int): ByteArray {

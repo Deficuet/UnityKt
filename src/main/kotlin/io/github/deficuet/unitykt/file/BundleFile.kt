@@ -111,7 +111,7 @@ class BundleFile(private val reader: EndianBinaryReader): AssetNode() {
         val hCompressedBlockSize = reader.readUInt()
         val uncompressedBlockSize = reader.readUInt()
         val hFlags = reader.readUInt()
-        if (hSignature != "UnityFS") reader.read(1)
+        if (hSignature != "UnityFS") reader += 1
         if (hVersion >= 7u) reader.alignStream(16)
         val blockOffset = reader.position
         var blocksInfoBytes: ByteArray
