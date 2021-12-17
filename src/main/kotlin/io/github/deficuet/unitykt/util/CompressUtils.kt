@@ -5,11 +5,6 @@ import net.jpountz.lz4.LZ4Factory
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.util.zip.GZIPInputStream
-import org.tukaani.xz.ArrayCache
-import org.tukaani.xz.lz.LZDecoder
-import org.tukaani.xz.lzma.LZMADecoder
-import org.tukaani.xz.rangecoder.RangeDecoderFromStream
-import kotlin.experimental.and
 
 class CompressUtils private constructor() {
     companion object {
@@ -36,22 +31,6 @@ class CompressUtils private constructor() {
             decoder.SetDecoderProperties(props)
             decoder.Code(input, output, outSize)
             return output.toByteArray()
-//            var props = input.read()
-//            val dictSize = input.read() +
-//                input.read().shl(8) +
-//                input.read().shl(16) +
-//                input.read().shl(24)
-//            val outputStream = LZDecoder(dictSize, null, ArrayCache.getDefaultCache())
-//            val lc = props % 9
-//            props /= 9
-//            val decoder = LZMADecoder(
-//                outputStream, RangeDecoderFromStream(input),
-//                lc, props % 5, props / 5
-//            )
-//            decoder.decode()
-//            val output = ByteArray(uncompressedSize)
-//            outputStream.flush(output, 0)
-//            return output
         }
 
         fun lz4Decompress(data: ByteArray, uncompressedSize: Int): ByteArray {
