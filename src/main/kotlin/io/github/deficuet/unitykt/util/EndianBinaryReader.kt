@@ -13,13 +13,9 @@ enum class EndianType {
 }
 
 enum class OffsetMode {
-    /**
-     * Stream will apply the extra offset directly starting from position 0.
-     */
     MANUAL,
-
     /**
-     * Stream will seek automatically to the first byte that is not 0. Then apply the extra offset.
+     * Stream will seek automatically to the first byte that is not 0.
      */
     AUTO
 }
@@ -37,7 +33,7 @@ sealed class EndianBinaryReader: Closeable, AssetNodeOrReader {
 
     protected abstract var endian: EndianType
     protected abstract val offsetMode: OffsetMode
-    protected abstract val solidOffset: Long     //Should be last initialized
+    protected abstract val solidOffset: Long     //Should be initialized last
 
     /**
      * Mark of relative position
@@ -153,7 +149,7 @@ sealed class EndianBinaryReader: Closeable, AssetNodeOrReader {
         var mFileSize = readUInt().toLong()
         val mVersion = readUInt()
         var mDataOffset = readUInt().toLong()
-        plusAssign(4)   //m_Endian(1), m_Reserved(3)
+        plusAssign(4)    //m_Endian(1), m_Reserved(3)
         if (mVersion > 22u) {
             if (length < 48) {
                 position = 0
@@ -165,6 +161,7 @@ sealed class EndianBinaryReader: Closeable, AssetNodeOrReader {
                 mDataOffset = readLong()
             }
         }
+        position = 0
         return mFileSize == length && mDataOffset <= length
     }
 

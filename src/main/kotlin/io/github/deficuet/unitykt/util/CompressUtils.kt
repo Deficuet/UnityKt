@@ -1,6 +1,7 @@
 package io.github.deficuet.unitykt.util
 
 import SevenZip.Compression.LZMA.Decoder
+import com.nixxcode.jvmbrotli.dec.BrotliInputStream
 import net.jpountz.lz4.LZ4Factory
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
@@ -46,6 +47,18 @@ class CompressUtils private constructor() {
                 val buf = ByteArray(1024)
                 var bytesRead: Int
                 while (gzip.read(buf).also { bytesRead = it } > 0) {
+                    output.write(buf, 0, bytesRead)
+                }
+                output.toByteArray()
+            }
+        }
+
+        fun brotliDecompress(data: ByteArray): ByteArray {
+            val output = ByteArrayOutputStream()
+            return BrotliInputStream(ByteArrayInputStream(data)).use { brotli ->
+                val buf = ByteArray(2048)
+                var bytesRead: Int
+                while (brotli.read(buf).also { bytesRead = it } > 0) {
                     output.write(buf, 0, bytesRead)
                 }
                 output.toByteArray()

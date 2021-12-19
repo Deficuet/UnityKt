@@ -9,19 +9,12 @@ class BundleFile(private val reader: EndianBinaryReader): AssetNode() {
         val flags: UShort
     )
 
-    data class Node(
-        val path: String,
-        val offset: Long,
-        val size: Long,
-        val flag: UInt = 0u
-    )
-
     //Header
     private val hSignature: String = reader.readStringUntilNull()
     private val hVersion: UInt = reader.readUInt()
 
     private val blocksInfo = mutableListOf<Block>()
-    private val directoryInfo = mutableListOf<Node>()
+    private val directoryInfo = mutableListOf<DirectoryInfoNode>()
 
     override val files: Map<String, AssetNodeOrReader>
 
@@ -37,24 +30,7 @@ class BundleFile(private val reader: EndianBinaryReader): AssetNode() {
             "UnityFS" -> readFS()
             else -> throw UnsupportedFormatException("Unknown Bundle Signature")
         }
-        val fileMap = mutableMapOf<String, AssetNodeOrReader>()
-        for (node in directoryInfo) {
-            filesReader.position = node.offset
-            val nodeReader = EndianByteArrayReader(
-                filesReader.read(node.size.toInt()),
-                baseOffset = filesReader.baseOffset + node.offset
-            )
-            val (nodeType, _) = ImportUtils.checkFileType(nodeReader, OffsetMode.MANUAL)
-            var nodeFile: AssetNode? = null
-            when (nodeType) {
-                FileType.BUNDLE -> nodeFile = BundleFile(nodeReader)
-                FileType.WEB -> nodeFile = WebFile(nodeReader)
-                FileType.ASSETS -> TODO()
-                else -> {  }
-            }
-            fileMap[node.path] = nodeFile ?: nodeReader
-        }
-        files = fileMap
+        files = readFiles(filesReader, directoryInfo)
         filesReader.close()
         reader.close()
     }
@@ -95,7 +71,7 @@ class BundleFile(private val reader: EndianBinaryReader): AssetNode() {
         for (i in 0 until nodesCount) {
             directoryInfo.add(
                 with(blocksReader) {
-                    Node(
+                    DirectoryInfoNode(
                         readStringUntilNull(),
                         readUInt().toLong(),
                         readUInt().toLong()
@@ -143,7 +119,7 @@ class BundleFile(private val reader: EndianBinaryReader): AssetNode() {
         with(blocksInfoReader) {
             for (j in 0 until nodesCount) {
                 directoryInfo.add(
-                    Node(
+                    DirectoryInfoNode(
                         offset = readLong(),
                         size = readLong(),
                         flag = readUInt(),
