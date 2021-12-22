@@ -6,6 +6,9 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.io.FileInputStream
 import java.io.Closeable
+import io.github.deficuet.unitykt.file.ClassIDType
+import io.github.deficuet.unitykt.file.ObjectInfo
+import io.github.deficuet.unitykt.file.SerializedFile
 import io.github.deficuet.unitykt.math.*
 
 enum class EndianType {
@@ -20,7 +23,7 @@ enum class OffsetMode {
     AUTO
 }
 
-sealed class EndianBinaryReader: Closeable, AssetNodeOrReader {
+sealed class EndianBinaryReader: Closeable {
     abstract val bytes: ByteArray
     /**
      * `getter` - Absolute position
@@ -30,10 +33,10 @@ sealed class EndianBinaryReader: Closeable, AssetNodeOrReader {
     abstract var position: Long
     abstract val length: Long
     abstract val baseOffset: Long
-
-    protected abstract var endian: EndianType
+    abstract var endian: EndianType
+        protected set
+    abstract val solidOffset: Long
     protected abstract val offsetMode: OffsetMode
-    protected abstract val solidOffset: Long     //Should be initialized last
 
     /**
      * Mark of relative position
@@ -225,18 +228,17 @@ class EndianFileStreamReader(
     private val stream = FileInputStream(filePath)
     private val channel get() = stream.channel
 
+    override val length = channel.size()
+    override var position: Long
+        get() = channel.position()
+        set(value) { channel.position(value + solidOffset) }
+    override val solidOffset = initOffset()
     override val bytes: ByteArray by lazy {
         withMark {
             position = 0
             read((length - position).toInt())
         }
     }
-    override val length = channel.size()
-    override var position: Long
-        get() = channel.position()
-        set(value) { channel.position(value + solidOffset) }
-
-    override val solidOffset = initOffset()
 
     override fun read(size: Int): ByteArray {
         if (size <= 0 || position >= length) {
@@ -250,4 +252,40 @@ class EndianFileStreamReader(
     override fun close() {
         stream.close()
     }
+}
+
+class ObjectReader(
+    private val reader: EndianBinaryReader,
+    val assetFile: SerializedFile,
+    private val info: ObjectInfo
+) : EndianBinaryReader() {
+    val mPathID = info.mPathID
+    val byteSize = info.byteSize
+    val formatVersion = assetFile.header.version
+    val unityVersion = assetFile.version
+    val platform = assetFile.targetPlatform
+    val type = if (ClassIDType.isDefined(info.classID)) {
+        ClassIDType.values().first { it.id == info.classID }
+    } else ClassIDType.UnknownType
+    val serializedType = info.serializedType
+
+    override val solidOffset = info.byteStart
+    override val length = info.byteSize.toLong()
+    override var position: Long
+        get() = reader.position - reader.solidOffset
+        set(value) { reader.position = value + solidOffset }
+
+    override val bytes: ByteArray by lazy {
+        withMark {
+            position = 0
+            read(info.byteSize.toInt())
+        }
+    }
+    override val baseOffset = reader.baseOffset
+    override var endian = reader.endian
+    override val offsetMode = OffsetMode.MANUAL
+
+    override fun read(size: Int) = reader.read(size)
+
+    override fun close() { reader.close() }
 }

@@ -2,8 +2,11 @@ package io.github.deficuet.unitykt.file
 
 import io.github.deficuet.unitykt.util.*
 
-class WebFile(preReader: EndianBinaryReader): AssetNode() {
-    override val files: Map<String, AssetNodeOrReader>
+class WebFile(
+    preReader: EndianBinaryReader,
+    override val bundleParent: AssetBundleFile? = null
+): AssetBundleFile() {
+    override val files: Map<String, Any>
 
     private val reader: EndianBinaryReader
     private val directoryInfo = mutableListOf<DirectoryInfoNode>()

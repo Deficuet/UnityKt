@@ -8,7 +8,7 @@ internal data class FileTypeWithReader(
     val type: FileType, val reader: EndianBinaryReader
 )
 
-internal class ImportUtils {
+internal class ImportUtils private constructor() {
     companion object {
         fun checkFileType(input: Any, offsetMode: OffsetMode): FileTypeWithReader {
             val reader = EndianBinaryReader.assign(input, offsetMode)

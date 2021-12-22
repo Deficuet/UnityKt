@@ -2,10 +2,7 @@ package io.github.deficuet.unitykt
 
 import io.github.deficuet.unitykt.file.BundleFile
 import io.github.deficuet.unitykt.file.SerializedFile
-import io.github.deficuet.unitykt.util.CompressUtils
-import io.github.deficuet.unitykt.util.EndianBinaryReader
-import io.github.deficuet.unitykt.util.EndianFileStreamReader
-import io.github.deficuet.unitykt.util.sum
+import io.github.deficuet.unitykt.util.*
 import java.io.File
 
 fun main() {
@@ -15,7 +12,6 @@ fun main() {
 //    val dump = File("D:\\Programs\\srcode\\test\\tttt")
 //    dump.writeBytes((b.files["CAB-8aa23d255bf6b144eeeacdf7c9936504"] as EndianBinaryReader).bytes)
     val s = b.files["CAB-8aa23d255bf6b144eeeacdf7c9936504"] as SerializedFile
-    s.version.forEach { print("$it ") }
 //    println(s.objectInfoList)
 
 }

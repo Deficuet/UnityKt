@@ -2,7 +2,10 @@ package io.github.deficuet.unitykt.file
 
 import io.github.deficuet.unitykt.util.*
 
-class BundleFile(private val reader: EndianBinaryReader): AssetNode() {
+class BundleFile(
+    private val reader: EndianBinaryReader,
+    override val bundleParent: AssetBundleFile? = null
+): AssetBundleFile() {
     data class Block(
         val compressedSize: UInt,
         val uncompressedSize: UInt,
@@ -16,7 +19,7 @@ class BundleFile(private val reader: EndianBinaryReader): AssetNode() {
     private val blocksInfo = mutableListOf<Block>()
     private val directoryInfo = mutableListOf<DirectoryInfoNode>()
 
-    override val files: Map<String, AssetNodeOrReader>
+    override val files: Map<String, Any>
 
     init {
         reader.readStringUntilNull()    //hUnityVersion
