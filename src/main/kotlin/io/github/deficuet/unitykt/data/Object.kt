@@ -4,11 +4,11 @@ import io.github.deficuet.unitykt.file.BuildTarget
 import io.github.deficuet.unitykt.file.SerializedType
 import io.github.deficuet.unitykt.util.ObjectReader
 
-open class Object(private val reader: ObjectReader) {
+open class Object internal constructor(private val reader: ObjectReader) {
     val asserFile = reader.assetFile
     val type = reader.type
     val mPathID = reader.mPathID
-    val unityType = reader.unityVersion
+    val unityVersion = reader.unityVersion
     val byteSize = reader.byteSize
     val platform = reader.platform
     val serializedType = reader.serializedType

@@ -1,8 +1,6 @@
 package io.github.deficuet.unitykt.util
 
-internal enum class FileType {
-    ASSETS, BUNDLE, WEB, RESOURCE   //, GZIP, BROTLI
-}
+
 
 internal data class FileTypeWithReader(
     val type: FileType, val reader: EndianBinaryReader

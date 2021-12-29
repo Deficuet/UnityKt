@@ -4,6 +4,8 @@ data class Quaternion(var a: Double, var b: Double, var c: Double, var d: Double
     constructor(x: Float, y: Float, z: Float, w: Float):
         this(x.toDouble(), y.toDouble(), z.toDouble(), w.toDouble())
 
+    constructor(vararg data: Float): this(data[0], data[1], data[2], data[3])
+
 //    val data: List<Double> get() = listOf(x, y, z, w)
 
     infix fun dot(other: Quaternion) = a * other.a + b * other.b + c * other.c + d * other.d

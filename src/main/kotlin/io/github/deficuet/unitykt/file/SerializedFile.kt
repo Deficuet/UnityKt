@@ -2,6 +2,7 @@ package io.github.deficuet.unitykt.file
 
 import io.github.deficuet.unitykt.data.Object
 import io.github.deficuet.unitykt.util.*
+import java.io.File
 
 @Suppress("unused")
 class FormatVersion private constructor() {
@@ -66,8 +67,9 @@ data class ObjectInfo(
 
 class SerializedFile(
     private val reader: EndianBinaryReader,
-    override val bundleParent: AssetBundleFile? = null
-): AssetNode() {
+    override val bundleParent: AssetBundleFile,
+    override val name: String
+): RawAssetFile() {
     data class Header(
         val metadataSize: UInt = 0u,
         val fileSize: Long = 0,
@@ -81,6 +83,8 @@ class SerializedFile(
         val type: Int,
         val path: String
     ) {
+        val name: String by lazy { File(path).name }
+
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
             if (javaClass != other?.javaClass) return false

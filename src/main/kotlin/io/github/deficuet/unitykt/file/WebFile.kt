@@ -4,9 +4,10 @@ import io.github.deficuet.unitykt.util.*
 
 class WebFile(
     preReader: EndianBinaryReader,
-    override val bundleParent: AssetBundleFile? = null
+    override val bundleParent: AssetBundleFile,
+    override val name: String
 ): AssetBundleFile() {
-    override val files: Map<String, Any>
+    override val files: Map<String, RawAssetFile>
 
     private val reader: EndianBinaryReader
     private val directoryInfo = mutableListOf<DirectoryInfoNode>()
@@ -43,7 +44,7 @@ class WebFile(
             }
         }
         files = readFiles(reader, directoryInfo)
-        preReader.resetEndian(EndianType.LittleEndian)
         preReader.close()
+        reader.close()
     }
 }

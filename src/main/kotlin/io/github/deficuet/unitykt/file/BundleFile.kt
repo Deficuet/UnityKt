@@ -4,7 +4,8 @@ import io.github.deficuet.unitykt.util.*
 
 class BundleFile(
     private val reader: EndianBinaryReader,
-    override val bundleParent: AssetBundleFile? = null
+    override val bundleParent: AssetBundleFile,
+    override val name: String
 ): AssetBundleFile() {
     data class Block(
         val compressedSize: UInt,
@@ -19,7 +20,7 @@ class BundleFile(
     private val blocksInfo = mutableListOf<Block>()
     private val directoryInfo = mutableListOf<DirectoryInfoNode>()
 
-    override val files: Map<String, Any>
+    override val files: Map<String, RawAssetFile>
 
     init {
         reader.readStringUntilNull()    //hUnityVersion

@@ -12,6 +12,7 @@ repositories {
 
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib"
+    implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk7'
     implementation 'org.lz4:lz4-java:1.8.0'
     implementation 'com.nixxcode.jvmbrotli:jvmbrotli:0.2.0'
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.2'
