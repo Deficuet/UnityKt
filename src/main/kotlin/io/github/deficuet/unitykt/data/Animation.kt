@@ -12,6 +12,6 @@ class Animation(reader: ObjectReader): Behaviour(reader) {
 //        for (i in 0 until numAnimations) {
 //            animations.add(PPtr(reader))
 //        }
-        mAnimations = reader.readObjectArrayOf { PPtr(this) }
+        mAnimations = reader.readArrayOf { PPtr(reader) }
     }
 }

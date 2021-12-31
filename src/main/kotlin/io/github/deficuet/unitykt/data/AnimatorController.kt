@@ -11,8 +11,8 @@ class AnimatorController internal constructor(reader: ObjectReader): RuntimeAnim
     init {
         reader += 4     //m_ControllerSize: UInt
         ControllerConstant(reader)  //m_Controller
-        reader.readObjectArrayOf { readUInt() to readAlignedString() }  //m_TOS: Map<>
-        mAnimationClips = reader.readObjectArrayOf { PPtr(reader) }
+        reader.readArrayOf { with(reader) { readUInt() to readAlignedString() } }  //m_TOS: Map<>
+        mAnimationClips = reader.readArrayOf { PPtr(reader) }
     }
 }
 
@@ -28,7 +28,7 @@ class SkeletonMaskElement internal constructor(reader: ObjectReader) {
 }
 
 class SkeletonMask internal constructor(reader: ObjectReader) {
-    val mData = reader.readObjectArrayOf { SkeletonMaskElement(this) }
+    val mData = reader.readArrayOf { SkeletonMaskElement(reader) }
 }
 
 class LayerConstant internal constructor(reader: ObjectReader) {
@@ -53,7 +53,7 @@ class ConditionConstant internal constructor(reader: ObjectReader) {
 }
 
 class TransitionConstant internal constructor(reader: ObjectReader) {
-    val mConditionConstantArray = reader.readObjectArrayOf { ConditionConstant(this) }
+    val mConditionConstantArray = reader.readArrayOf { ConditionConstant(reader) }
     val mDestinationState = reader.readUInt()
     val mFullPathID = if (reader.unityVersion[0] >= 5) reader.readUInt() else 0u
     val mID = reader.readUInt()
@@ -105,7 +105,7 @@ class Blend2dDataConstant internal constructor(reader: ObjectReader) {
     val mChildMagnitudeArray = reader.readNextFloatArray()
     val mChildPairVectorArray = reader.readNextVector2Array()
     val mChildPairAvgMagInvArray = reader.readNextFloatArray()
-    val mChildNeighborListArray = reader.readObjectArrayOf { MotionNeighborList(this) }
+    val mChildNeighborListArray = reader.readArrayOf { MotionNeighborList(reader) }
 }
 
 class Blend1dDataConstant internal constructor(reader: ObjectReader) {
@@ -163,19 +163,19 @@ class BlendTreeNodeConstant internal constructor(reader: ObjectReader) {
 }
 
 class BlendTreeConstant internal constructor(reader: ObjectReader) {
-    val mNodeArray = reader.readObjectArrayOf { BlendTreeNodeConstant(this) }
+    val mNodeArray = reader.readArrayOf { BlendTreeNodeConstant(reader) }
     val mBlendEventArrayConstant = if (reader.unityVersion < intArrayOf(4, 5)) {
         ValueArrayConstant(reader)
     } else null
 }
 
 class StateConstant internal constructor(reader: ObjectReader) {
-    val mTransitionConstantArray = reader.readObjectArrayOf { TransitionConstant(this) }
+    val mTransitionConstantArray = reader.readArrayOf { TransitionConstant(reader) }
     val mBlendTreeConstantIndexArray = reader.readNextIntArray()
     val mLeafInfoArray = if (reader.unityVersion < intArrayOf(5, 2)) {
-        reader.readObjectArrayOf { LeafInfoConstant(this) }
+        reader.readArrayOf { LeafInfoConstant(reader) }
     } else emptyList()
-    val mBlendTreeConstantArray = reader.readObjectArrayOf { BlendTreeConstant(this) }
+    val mBlendTreeConstantArray = reader.readArrayOf { BlendTreeConstant(reader) }
     val mNameID = reader.readUInt()
     val mPathID = if (reader.unityVersion >= intArrayOf(4, 3)) reader.readUInt() else 0u
     val mFullPathID = if (reader.unityVersion[0] >= 5) reader.readUInt() else 0u
@@ -214,11 +214,11 @@ class StateConstant internal constructor(reader: ObjectReader) {
 
 class SelectorTransitionConstant internal constructor(reader: ObjectReader) {
     val mDestination = reader.readUInt()
-    val mConditionConstantArray = reader.readObjectArrayOf { ConditionConstant(this) }
+    val mConditionConstantArray = reader.readArrayOf { ConditionConstant(reader) }
 }
 
 class SelectorStateConstant internal constructor(reader: ObjectReader) {
-    val mTransitionConstantArray = reader.readObjectArrayOf { SelectorTransitionConstant(this) }
+    val mTransitionConstantArray = reader.readArrayOf { SelectorTransitionConstant(reader) }
     val mFullPathID = reader.readUInt()
     val mIsEntry = reader.readBool()
 
@@ -226,10 +226,10 @@ class SelectorStateConstant internal constructor(reader: ObjectReader) {
 }
 
 class StateMachineConstant internal constructor(reader: ObjectReader) {
-    val mStateConstantArray = reader.readObjectArrayOf { StateConstant(this) }
-    val mAnyStateTransitionConstantArray = reader.readObjectArrayOf { TransitionConstant(this) }
+    val mStateConstantArray = reader.readArrayOf { StateConstant(reader) }
+    val mAnyStateTransitionConstantArray = reader.readArrayOf { TransitionConstant(reader) }
     val mSelectorStateConstantArray = if (reader.unityVersion[0] >= 5) {
-        reader.readObjectArrayOf { SelectorStateConstant(this) }
+        reader.readArrayOf { SelectorStateConstant(reader) }
     } else emptyList()
     val mDefaultState = reader.readUInt()
     val mMotionSetCount = reader.readUInt()
@@ -263,12 +263,12 @@ class ValueArray internal constructor(reader: ObjectReader) {
             mScaleValues = emptyList()
         } else {
             mVectorValues = emptyList()
-            mPositionValues = reader.readObjectArrayOf {
+            mPositionValues = reader.readArrayOf {
                 if (version >= v54) reader.readVector3()
                 else reader.readVector4().vector3
             }
             mQuaternionValues = reader.readNextVector4Array()
-            mScaleValues = reader.readObjectArrayOf {
+            mScaleValues = reader.readArrayOf {
                 if (version >= v54) reader.readVector3()
                 else reader.readVector4().vector3
             }
@@ -286,8 +286,8 @@ class ValueArray internal constructor(reader: ObjectReader) {
 }
 
 class ControllerConstant internal constructor(reader: ObjectReader) {
-    val mLayerArray = reader.readObjectArrayOf { LayerConstant(this) }
-    val mStateMachineArray = reader.readObjectArrayOf { StateMachineConstant(this) }
+    val mLayerArray = reader.readArrayOf { LayerConstant(reader) }
+    val mStateMachineArray = reader.readArrayOf { StateMachineConstant(reader) }
     val mValues = ValueArrayConstant(reader)
     val mDefaultValues = ValueArray(reader)
 }

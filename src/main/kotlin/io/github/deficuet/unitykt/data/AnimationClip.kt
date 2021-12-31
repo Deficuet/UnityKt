@@ -45,13 +45,13 @@ class AnimationClip internal constructor(reader: ObjectReader): NamedObject(read
 //        for (i in 0 until numRCurves) {
 //            rotationCurves.add(QuaternionCurve(reader))
 //        }
-        mRotationCurves = reader.readObjectArrayOf { QuaternionCurve(this) }
+        mRotationCurves = reader.readArrayOf { QuaternionCurve(reader) }
 //        val numCRCurves = reader.readInt()
 //        val crCurves = mutableListOf<CompressedAnimationCurve>()
 //        for (j in 0 until numCRCurves) {
 //            crCurves.add(CompressedAnimationCurve(reader))
 //        }
-        mCompressedRotationCurves = reader.readObjectArrayOf { CompressedAnimationCurve(this) }
+        mCompressedRotationCurves = reader.readArrayOf { CompressedAnimationCurve(reader) }
         mEulerCurves = if (unityVersion >= intArrayOf(5, 3)) {
 //            val numEulerCurves = reader.readInt()
 //            val eCurves = mutableListOf<Vector3Curve>()
@@ -59,26 +59,26 @@ class AnimationClip internal constructor(reader: ObjectReader): NamedObject(read
 //                eCurves.add(Vector3Curve(reader))
 //            }
 //            eCurves
-            reader.readObjectArrayOf { Vector3Curve(this) }
+            reader.readArrayOf { Vector3Curve(reader) }
         } else emptyList()
 //        val numPCurves = reader.readInt()
 //        val pCurves = mutableListOf<Vector3Curve>()
 //        for (l in 0 until numPCurves) {
 //            pCurves.add(Vector3Curve(reader))
 //        }
-        mPositionCurves = reader.readObjectArrayOf { Vector3Curve(this) }
+        mPositionCurves = reader.readArrayOf { Vector3Curve(reader) }
 //        val numSCurves = reader.readInt()
 //        val sCurves = mutableListOf<Vector3Curve>()
 //        for (m in 0 until numSCurves) {
 //            sCurves.add(Vector3Curve(reader))
 //        }
-        mScaleCurves = reader.readObjectArrayOf { Vector3Curve(this) }
+        mScaleCurves = reader.readArrayOf { Vector3Curve(reader) }
 //        val numFCurves = reader.readInt()
 //        val fCurves = mutableListOf<FloatCurve>()
 //        for (n in 0 until numFCurves) {
 //            fCurves.add(FloatCurve(reader))
 //        }
-        mFloatCurves = reader.readObjectArrayOf { FloatCurve(this) }
+        mFloatCurves = reader.readArrayOf { FloatCurve(reader) }
         mPPtrCurves = if (unityVersion >= v43) {
 //            val numPtrCurves = reader.readInt()
 //            val ptrCurves = mutableListOf<PPtrCurve>()
@@ -86,7 +86,7 @@ class AnimationClip internal constructor(reader: ObjectReader): NamedObject(read
 //                ptrCurves.add(PPtrCurve(reader))
 //            }
 //            ptrCurves
-            reader.readObjectArrayOf { PPtrCurve(this) }
+            reader.readArrayOf { PPtrCurve(reader) }
         } else emptyList()
         mSampleRate = reader.readFloat()
         mWrapMode = reader.readFloat()
@@ -107,7 +107,7 @@ class AnimationClip internal constructor(reader: ObjectReader): NamedObject(read
 //        for (p in 0 until numEvents) {
 //            events.add(AnimationEvent(reader))
 //        }
-        mEvents = reader.readObjectArrayOf { AnimationEvent(this) }
+        mEvents = reader.readArrayOf { AnimationEvent(reader) }
         if (unityVersion[0] >= 2017) reader.alignStream()
     }
 }
@@ -133,7 +133,7 @@ class KeyFrame<T> internal constructor(reader: ObjectReader, readerFunc: () -> T
 }
 
 class AnimationCurve<T> internal constructor(reader: ObjectReader, readerFunc: () -> T) {
-    val mCurve = reader.readObjectArrayOf { KeyFrame(reader, readerFunc) }
+    val mCurve = reader.readArrayOf { KeyFrame(reader, readerFunc) }
     val mPreInfinity = reader.readInt()
     val mPostInfinity = reader.readInt()
     val mRotationOrder = if (reader.unityVersion >= intArrayOf(5, 3)) reader.readInt() else -1
@@ -321,7 +321,7 @@ class PPtrKeyFrame internal constructor(reader: ObjectReader) {
 }
 
 class PPtrCurve internal constructor(reader: ObjectReader) {
-    val curve = reader.readObjectArrayOf { PPtrKeyFrame(this) }
+    val curve = reader.readArrayOf { PPtrKeyFrame(reader) }
     val attribute = reader.readAlignedString()
     val path = reader.readAlignedString()
     val classID = reader.readInt()
@@ -392,12 +392,12 @@ class HumanPose internal constructor(reader: ObjectReader) {
     val mRootX = XForm(reader)
     val mLookAt = if (reader.unityVersion >= intArrayOf(5, 4)) reader.readVector3() else reader.readVector4().vector3
     val mLookAtWeight = reader.readVector4()
-    val mGoalArray = reader.readObjectArrayOf { HumanGoal(this) }
+    val mGoalArray = reader.readArrayOf { HumanGoal(reader) }
     val mLeftHandPose = HandPose(reader)
     val mRightHandPose = HandPose(reader)
     val mDoFArray = reader.readNextFloatArray()
     val mTDoFArray = if (reader.unityVersion > intArrayOf(5, 2)) {
-        reader.readObjectArrayOf {
+        reader.readArrayOf {
             if (reader.unityVersion >= intArrayOf(5, 4)) reader.readVector3() else reader.readVector4().vector3
         }
     } else emptyList()
@@ -411,7 +411,7 @@ class HumanPose internal constructor(reader: ObjectReader) {
 ////        for (i in 0 until goalCount) {
 ////            goals.add(HumanGoal(reader))
 ////        }
-//        mGoalArray = reader.readArrayOf { HumanGoal(this) }
+//        mGoalArray = reader.readArrayOf { HumanGoal(reader) }
 //        mLeftHandPose = HandPose(reader)
 //        mRightHandPose = HandPose(reader)
 //        mDoFArray = reader.readNextFloatArray()
@@ -452,7 +452,7 @@ class StreamedCurveKey internal constructor(reader: EndianBinaryReader) {
 
 class StreamedFrame internal constructor(reader: EndianBinaryReader) {
     val time = reader.readFloat()
-    val keyList = reader.readArrayOf { StreamedCurveKey(this) }
+    val keyList = reader.readArrayOf { StreamedCurveKey(reader) }
 
 //    init {
 //        val keyCount = reader.readInt()
@@ -524,7 +524,7 @@ class ValueConstant internal constructor(reader: ObjectReader) {
 }
 
 class ValueArrayConstant internal constructor(reader: ObjectReader) {
-    val mValueArray = reader.readObjectArrayOf { ValueConstant(this) }
+    val mValueArray = reader.readArrayOf { ValueConstant(reader) }
 
 //    init {
 //        val valCount = reader.readInt()
@@ -556,8 +556,8 @@ class GenericBinding internal constructor(reader: ObjectReader) {
 }
 
 class AnimationClipBindingConstant internal constructor(reader: ObjectReader) {
-    val genericBindings = reader.readObjectArrayOf { GenericBinding(this) }
-    val pptrCurveMapping = reader.readObjectArrayOf { PPtr<Object>(this) }
+    val genericBindings = reader.readArrayOf { GenericBinding(reader) }
+    val pptrCurveMapping = reader.readArrayOf { PPtr<Object>(reader) }
 
 //    internal constructor(reader: ObjectReader) {
 //        val bindingCount = reader.readInt()
@@ -677,7 +677,7 @@ class ClipMuscleConstant internal constructor(reader: ObjectReader) {
 //        for (i in 0 until deltaCount) {
 //            valueDeltas.add(ValueDelta(reader))
 //        }
-        mValueArrayDelta = reader.readObjectArrayOf { ValueDelta(this) }
+        mValueArrayDelta = reader.readArrayOf { ValueDelta(reader) }
         mValueArrayReferencePose = if (version >= intArrayOf(5, 3)) reader.readNextFloatArray() else emptyList()
         mMirror = reader.readBool()
         mLoopTime = if (version >= intArrayOf(4, 3)) reader.readBool() else false

@@ -15,7 +15,7 @@ class Avatar internal constructor(reader: ObjectReader): NamedObject(reader) {
 //        for (i in 0 until numTOS) {
 //            tos[reader.readUInt()] = reader.readAlignedString()
 //        }
-        mTOS = reader.readObjectArrayOf { readUInt() to readAlignedString() }.toMap()
+        mTOS = reader.readArrayOf { with(reader) { readUInt() to readAlignedString() } }.toMap()
     }
 }
 
@@ -68,14 +68,14 @@ class Skeleton internal constructor(reader: ObjectReader) {
 //        for (i in 0 until numNodes) {
 //            nodes.add(Node(reader))
 //        }
-        mNode = reader.readObjectArrayOf { Node(this) }
+        mNode = reader.readArrayOf { Node(reader) }
         mID = reader.readNextUIntArray()
 //        val numAxes = reader.readInt()
 //        val axes = mutableListOf<Axes>()
 //        for (j in 0 until numAxes) {
 //            axes.add(Axes(reader))
 //        }
-        mAxesArray = reader.readObjectArrayOf { Axes(this) }
+        mAxesArray = reader.readArrayOf { Axes(reader) }
     }
 }
 
@@ -88,7 +88,7 @@ class SkeletonPose internal constructor(reader: ObjectReader) {
 //        for (i in 0 until numX) {
 //            x.add(XForm(reader))
 //        }
-        mX = reader.readObjectArrayOf { XForm(this) }
+        mX = reader.readArrayOf { XForm(reader) }
     }
 }
 
@@ -146,13 +146,13 @@ class Human internal constructor(reader: ObjectReader) {
 //            for (i in 0 until numHandles) {
 //                handles.add(Handle(reader))
 //            }
-            mHandles = reader.readObjectArrayOf { Handle(this) }
+            mHandles = reader.readArrayOf { Handle(reader) }
 //            val numColliders = reader.readInt()
 //            val colliders = mutableListOf<Collider>()
 //            for (j in 0 until numColliders) {
 //                colliders.add(Collider(reader))
 //            }
-            mColliderArray = reader.readObjectArrayOf { Collider(this) }
+            mColliderArray = reader.readArrayOf { Collider(reader) }
         } else {
             mHandles = emptyList(); mColliderArray = emptyList()
         }

@@ -173,13 +173,9 @@ sealed class EndianBinaryReader(private val manualIgnoredOffset: Long): Closeabl
     fun readNextMatrixArray(): List<Matrix4x4> = readArray(readInt(), this::readMatrix4x4)
     fun readNextVector2Array(): List<Vector2> = readArray(readInt(), this::readVector2)
     fun readNextVector4Array(): List<Vector4> = readArray(readInt(), this::readVector4)
-    fun <T> readArrayOf(constructor: EndianBinaryReader.() -> T): List<T> {
-        val num = readInt()
-        val list = mutableListOf<T>()
-        for (i in 0 until num) {
-            list.add(this.constructor())
-        }
-        return list
+    fun <T> readArrayOf(frequency: Int = 0, constructor: () -> T): List<T> {
+        val num = if (frequency == 0) readInt() else frequency
+        return readArray(num, constructor)
     }
 
     fun isSerializedFile(): Boolean {
@@ -336,15 +332,6 @@ class ObjectReader(
     override val baseOffset = reader.baseOffset
     override var endian = reader.endian
     override val offsetMode = OffsetMode.MANUAL
-
-    fun <T> readObjectArrayOf(constructor: ObjectReader.() -> T): List<T> {
-        val num = readInt()
-        val list = mutableListOf<T>()
-        for (i in 0 until num) {
-            list.add(constructor())
-        }
-        return list
-    }
 
     override fun read(size: Int) = reader.read(size)
 
