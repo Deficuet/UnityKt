@@ -38,7 +38,7 @@ class AudioClip internal constructor(reader: ObjectReader): NamedObject(reader) 
                 reader += 4     //m_Stream: Int
                 mSize = reader.readInt().toLong()
                 val tSize = if (mSize % 4 != 0L) mSize + 4 - mSize % 4 else mSize
-                if (reader.byteSize.toLong() + reader.byteStart - reader.position != tSize) {
+                if (reader.byteSize.toLong() + reader.byteStart - reader.absolutePosition != tSize) {
                     mOffset = reader.readUInt().toLong()
                     mSource = "${asserFile.name}.resS"
                 } else {
@@ -86,7 +86,7 @@ class AudioClip internal constructor(reader: ObjectReader): NamedObject(reader) 
         mAudioData = if (mSource.isNotEmpty()) {
             ResourceReader(mSource, asserFile, mOffset, mSize)
         } else {
-            ResourceReader(reader, reader.position, mSize)
+            ResourceReader(reader, reader.absolutePosition, mSize)
         }
     }
 }

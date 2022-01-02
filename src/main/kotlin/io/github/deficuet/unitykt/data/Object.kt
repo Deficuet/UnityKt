@@ -9,6 +9,7 @@ open class Object internal constructor(private val reader: ObjectReader) {
     val type = reader.type
     val mPathID = reader.mPathID
     val unityVersion = reader.unityVersion
+    protected val buildType = reader.buildType
     val byteSize = reader.byteSize
     val platform = reader.platform
     val serializedType = reader.serializedType
@@ -16,11 +17,11 @@ open class Object internal constructor(private val reader: ObjectReader) {
 
     init {
         reader.position = 0
-        if (platform == BuildTarget.NoTarget) reader += 4
+        if (platform == BuildTarget.NoTarget) reader += 4   //m_ObjectHideFlags: UInt
     }
 
-    fun dump() = serializedType?.typeTree?.readString(reader)
-    fun dump(tree: SerializedType.Tree) = tree.readString(reader)
+    fun dump() = serializedType?.typeTree?.readTypeString(reader)
+    fun dump(tree: SerializedType.Tree) = tree.readTypeString(reader)
     fun toType() = serializedType?.typeTree?.readType(reader)
     fun toType(tree: SerializedType.Tree) = tree.readType(reader)
 }

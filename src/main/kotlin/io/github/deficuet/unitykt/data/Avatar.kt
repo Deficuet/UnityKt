@@ -7,7 +7,7 @@ import io.github.deficuet.unitykt.util.compareTo
 class Avatar internal constructor(reader: ObjectReader): NamedObject(reader) {
     val mAvatarSize = reader.readUInt()
     val mAvatar = AvatarConstant(reader)
-    val mTOS: Map<UInt, String>
+    val mTOS: List<Pair<UInt, String>>
 
     init {
 //        val numTOS = reader.readInt()
@@ -15,7 +15,7 @@ class Avatar internal constructor(reader: ObjectReader): NamedObject(reader) {
 //        for (i in 0 until numTOS) {
 //            tos[reader.readUInt()] = reader.readAlignedString()
 //        }
-        mTOS = reader.readArrayOf { with(reader) { readUInt() to readAlignedString() } }.toMap()
+        mTOS = reader.readArrayOf { with(reader) { readUInt() to readAlignedString() } }
     }
 }
 

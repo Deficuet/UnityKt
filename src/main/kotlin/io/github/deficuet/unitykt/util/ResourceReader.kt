@@ -5,14 +5,15 @@ import io.github.deficuet.unitykt.ImportContext
 import io.github.deficuet.unitykt.file.ResourceFile
 import io.github.deficuet.unitykt.file.SerializedFile
 import java.io.File
+import java.io.FileNotFoundException
 
-class ResourceReader {
-    private val needSearch: Boolean
-    private val path: String
-    private val assetFile: SerializedFile?
-    private val offset: Long
+class ResourceReader internal constructor(
+    private val path: String,
+    private val assetFile: SerializedFile?,
+    private val offset: Long,
     private val size: Long
-    private var reader: EndianBinaryReader?
+) {
+    private var reader: EndianBinaryReader? = null
         get() {
             if (field != null) return field
             else {
@@ -22,44 +23,27 @@ class ResourceReader {
                 }
                 val dir = "${assetFile!!.root.directory}/${file.name}"
                 return if (!File(dir).exists()) {
-                    println("Can't find the resource file $dir")
-                    null
+                    throw FileNotFoundException("Can't find the resource file $dir")
                 } else {
-                    field = (ImportContext(dir, OffsetMode.MANUAL).files.getValue(file.name) as ResourceFile).reader
+                    field = (ImportContext(
+                        dir, OffsetMode.MANUAL, 0
+                    ).files.getValue(file.name) as ResourceFile).reader
                     field
                 }
             }
         }
 
-    internal constructor(path: String, assetFile: SerializedFile, offset: Long, size: Long) {
-        needSearch = true
-        this.path = path
-        this.assetFile = assetFile
-        this.offset = offset
-        this.size = size
-        this.reader = null
-    }
-
-    internal constructor(reader: EndianBinaryReader, offset: Long, size: Long) {
-        needSearch = false
+    internal constructor(reader: EndianBinaryReader, offset: Long, size: Long):
+            this("", null, offset, size) {
         this.reader = reader
-        this.offset = offset
-        this.size = size
-        this.assetFile = null
-        this.path = ""
     }
 
-    var bytes: ByteArray? = null
-        private set
-        get() {
-            return if (field != null) field
-            else {
-                reader?.position = offset
-                reader?.read(size.toInt()).also { if (it != null) field = it }
-            }
-        }
+    val bytes: ByteArray by lazy {
+        reader!!.position = offset
+        reader!!.read(size.toInt())
+    }
 
     fun read(buffer: ByteArray) {
-        bytes?.let { System.arraycopy(it, 0, buffer, 0, buffer.size) }
+        bytes.let { System.arraycopy(it, 0, buffer, 0, buffer.size) }
     }
 }

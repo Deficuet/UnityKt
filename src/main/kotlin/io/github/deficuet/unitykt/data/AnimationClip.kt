@@ -127,7 +127,7 @@ class KeyFrame<T> internal constructor(reader: ObjectReader, readerFunc: () -> T
             inWeight = readerFunc()
             outWeight = readerFunc()
         } else {
-            weightedMode = -1; inWeight = null; outWeight = null
+            weightedMode = 0; inWeight = null; outWeight = null
         }
     }
 }
@@ -136,18 +136,7 @@ class AnimationCurve<T> internal constructor(reader: ObjectReader, readerFunc: (
     val mCurve = reader.readArrayOf { KeyFrame(reader, readerFunc) }
     val mPreInfinity = reader.readInt()
     val mPostInfinity = reader.readInt()
-    val mRotationOrder = if (reader.unityVersion >= intArrayOf(5, 3)) reader.readInt() else -1
-//    init {
-//        val curveCount = reader.readInt()
-//        val curves = mutableListOf<KeyFrame<T>>()
-//        for (i in 0 until curveCount) {
-//            curves.add(KeyFrame(reader, readerFunc))
-//        }
-//        mCurve = curves
-//        mPreInfinity = reader.readInt()
-//        mPostInfinity = reader.readInt()
-//        mRotationOrder = if (reader.unityVersion >= intArrayOf(5, 3)) reader.readInt() else -1
-//    }
+    val mRotationOrder = if (reader.unityVersion >= intArrayOf(5, 3)) reader.readInt() else 0
 }
 
 class QuaternionCurve internal constructor(reader: ObjectReader) {
@@ -160,7 +149,7 @@ class PackedFloatVector internal constructor(reader: ObjectReader) {
     val mRange = reader.readFloat()
     val mStart = reader.readFloat()
     val mData: ByteArray
-    val mBitSize: Byte
+    val mBitSize: UByte
 
     init {
         mData = reader.read(reader.readInt())
@@ -175,7 +164,7 @@ class PackedFloatVector internal constructor(reader: ObjectReader) {
         start: Int = 0,
         chunkCount: Int = -1
     ): FloatArray {
-        var bitPos = start * mBitSize
+        var bitPos = start * mBitSize.toInt()
         var indexPos = bitPos / 8
         bitPos %= 8
         val scale = 1.0f / mRange
@@ -188,9 +177,9 @@ class PackedFloatVector internal constructor(reader: ObjectReader) {
             for (i in 0 until itemCountInChunk) {
                 var x = 0u
                 var bits = 0
-                while (bits < mBitSize) {
+                while (bits < mBitSize.toInt()) {
                     x = x or ((mData[indexPos].toInt() shr bitPos) shl bits).toUInt()
-                    val num = minOf(mBitSize - bits, 8 - bitPos)
+                    val num = minOf(mBitSize.toInt() - bits, 8 - bitPos)
                     bitPos += num; bits += num
                     if (bitPos == 8) {
                         indexPos++; bitPos = 0
@@ -205,9 +194,11 @@ class PackedFloatVector internal constructor(reader: ObjectReader) {
 }
 
 class PackedIntVector internal constructor(reader: ObjectReader) {
-    val mNumItems = reader.readUInt()
+    var mNumItems = reader.readUInt()
+        internal set
     val mData: ByteArray
-    val mBitSize: Byte
+    var mBitSize: UByte
+        internal set
 
     init {
         mData = reader.read(reader.readInt())
@@ -221,9 +212,9 @@ class PackedIntVector internal constructor(reader: ObjectReader) {
         var indexPos = 0; var bitPos = 0
         for (i in 0 until mNumItems.toInt()) {
             var bits = 0; var value = 0
-            while (bits < mBitSize) {
+            while (bits < mBitSize.toInt()) {
                 value = value or ((mData[indexPos].toInt() shr bitPos) shl bits)
-                val num = minOf(mBitSize - bits, 8 - bitPos)
+                val num = minOf(mBitSize.toInt() - bits, 8 - bitPos)
                 bitPos += num; bits += num
                 if (bitPos == 8) {
                     indexPos++; bitPos = 0
@@ -541,8 +532,8 @@ class GenericBinding internal constructor(reader: ObjectReader) {
     val attribute = reader.readUInt()
     val script = PPtr<Object>(reader)
     val typeID: ClassIDType
-    val customType: Byte
-    val isPPtrCurve: Byte
+    val customType: UByte
+    val isPPtrCurve: UByte
 
     init {
         val version = reader.unityVersion
@@ -672,11 +663,6 @@ class ClipMuscleConstant internal constructor(reader: ObjectReader) {
         mAverageAngularSpeed = reader.readFloat()
         mIndexArray = reader.readNextIntArray()
         if (version < intArrayOf(4, 3)) reader.readNextIntArray()   //m_AdditionalCurveIndexArray: List<Int>
-//        val deltaCount = reader.readInt()
-//        val valueDeltas = mutableListOf<ValueDelta>()
-//        for (i in 0 until deltaCount) {
-//            valueDeltas.add(ValueDelta(reader))
-//        }
         mValueArrayDelta = reader.readArrayOf { ValueDelta(reader) }
         mValueArrayReferencePose = if (version >= intArrayOf(5, 3)) reader.readNextFloatArray() else emptyList()
         mMirror = reader.readBool()

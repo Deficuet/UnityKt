@@ -8,13 +8,13 @@ import io.github.deficuet.unitykt.util.*
 import java.io.File
 
 class PPtr<T: Object> internal constructor(reader: ObjectReader) {
-    val mFileID = reader.readInt()
-    val mPathID = with(reader) {
-        if (formatVersion < FormatVersion.kUnknown_14) readInt().toLong() else readLong()
-    }
+    var mFileID = reader.readInt()
+        private set
+    var mPathID = with(reader) { if (formatVersion < FormatVersion.kUnknown_14) readInt().toLong() else readLong() }
+        private set
     val isNull = mPathID == 0L || mFileID < 0
     private val assetFile = reader.assetFile
-    val obj: T? = null
+    var obj: T? = null
         get() {
             if (field != null) return field
             val manager: SerializedFile?
@@ -58,4 +58,24 @@ class PPtr<T: Object> internal constructor(reader: ObjectReader) {
             }
             return null
         }
+    internal set(value) {
+        if (value == null) throw IllegalArgumentException("The value set to PPtr can not be null.")
+        val name = value.asserFile.name
+        if (name.contentEquals(assetFile.name)) {
+            mFileID = 0
+        } else {
+            mFileID = assetFile.externals.indexOfFirst { it.name.contentEquals(name) }
+            if (mFileID == -1) {
+                (assetFile.externals as MutableList).add(
+                    SerializedFile.FileIdentifier(
+                        kotlin.byteArrayOf(), 0, value.asserFile.name
+                    )
+                )
+                mFileID = assetFile.externals.size
+            } else {
+                mFileID += 1
+            }
+        }
+        mPathID = value.mPathID
+    }
 }

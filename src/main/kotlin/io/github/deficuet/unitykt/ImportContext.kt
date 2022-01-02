@@ -11,17 +11,21 @@ class ImportContext: AssetBundleFile {
     val directory: String
     override val name: String
 
-    internal constructor(filePath: String, offsetMode: OffsetMode) {
+    internal constructor(filePath: String, offsetMode: OffsetMode, manualIgnoredOffset: Long) {
         val file = File(filePath)
         directory = file.parentFile.canonicalPath
         name = file.name
-        files = mapOf(name to init(EndianFileStreamReader(filePath, offsetMode = offsetMode)))
+        files = mapOf(name to init(EndianFileStreamReader(
+            filePath, offsetMode = offsetMode, manualIgnoredOffset = manualIgnoredOffset
+        )))
     }
 
-    internal constructor(data: ByteArray, name: String, offsetMode: OffsetMode) {
+    internal constructor(data: ByteArray, name: String, offsetMode: OffsetMode, manualIgnoredOffset: Long) {
         directory = ""
         this.name = name
-        files = mapOf(this.name to init(EndianByteArrayReader(data, offsetMode = offsetMode)))
+        files = mapOf(this.name to init(EndianByteArrayReader(
+            data, offsetMode = offsetMode, manualIgnoredOffset = manualIgnoredOffset
+        )))
     }
 
     private fun init(reader: EndianBinaryReader): RawAssetFile {
@@ -41,5 +45,3 @@ class ImportContext: AssetBundleFile {
         }
     }
 }
-
-operator fun List<ImportContext>.get(key: String) = find { it.name.contentEquals(key) }

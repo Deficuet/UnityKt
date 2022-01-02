@@ -6,6 +6,12 @@ import io.github.deficuet.unitykt.util.compareTo
 class GameObject internal constructor(reader: ObjectReader): EditorExtension(reader) {
     val mComponents: List<PPtr<Component>>
     val mName: String
+    val mTransform = mutableListOf<Transform>()
+    val mMeshRenderer = mutableListOf<MeshRenderer>()
+    val mMeshFilter = mutableListOf<MeshFilter>()
+    val mSkinnedMeshRenderer = mutableListOf<SkinnedMeshRenderer>()
+    val mAnimator = mutableListOf<Animator>()
+    val mAnimation = mutableListOf<Animation>()
 
     init {
         val componentSize = reader.readInt()

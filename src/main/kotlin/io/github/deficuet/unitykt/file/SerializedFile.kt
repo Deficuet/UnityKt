@@ -1,13 +1,12 @@
 package io.github.deficuet.unitykt.file
 
-import io.github.deficuet.unitykt.data.Object
+import io.github.deficuet.unitykt.data.*
 import io.github.deficuet.unitykt.util.*
 import java.io.File
 
-@Suppress("unused")
 class FormatVersion private constructor() {
     companion object {
-        const val kUnsupported = 1u
+//        const val kUnsupported = 1u
         const val kUnknown_2 = 2u
         const val kUnknown_3 = 3u
         const val kUnknown_5 = 5u
@@ -23,7 +22,7 @@ class FormatVersion private constructor() {
         const val kSupportsStrippedObject = 15u
         const val kRefactoredClassId = 16u
         const val kRefactorTypeData = 17u
-        const val kRefactorShareableTypeTreeData = 18u
+//        const val kRefactorShareableTypeTreeData = 18u
         const val kTypeTreeNodeWithTypeFlags = 19u
         const val kSupportsRefObject = 20u
         const val kStoresTypeDependencies = 21u
@@ -31,10 +30,10 @@ class FormatVersion private constructor() {
     }
 }
 
-//private class BuildType(private val type: String) {
+class BuildType(private val type: String) {
 //    val isAlpha get() = type == "a"
-//    val isPatch get() = type == "p"
-//}
+    val isPatch get() = type == "p"
+}
 
 @Suppress("EnumEntryName")
 enum class BuildTarget(val id: Int) {
@@ -60,7 +59,7 @@ data class ObjectInfo(
     val typeID: Int,
     val classID: Int,
     val isDestroyed: UShort,
-    val stripped: Byte,
+    val stripped: UByte,
     val mPathID: Long,
     val serializedType: SerializedType?
 )
@@ -75,7 +74,7 @@ class SerializedFile(
         val fileSize: Long = 0,
         val version: UInt = 0u,
         val dataOffset: Long = 0,
-        val endian: Byte = 0
+        val endian: UByte = 0u
     )
 
     data class FileIdentifier(
@@ -116,11 +115,10 @@ class SerializedFile(
     private var hFileSize = reader.readUInt().toLong()
     private val hVersion = reader.readUInt()
     private var hDataOffset = reader.readUInt().toLong()
-    private val hEndian: Byte
+    private val hEndian: UByte
 //    private val hReserved: ByteArray
 
     private var unityVersion = "2.5.0.f5"
-//    private var buildType = BuildType("")
 
     private var enableTypeTree = true
     private var bigIDEnabled = 0
@@ -135,9 +133,12 @@ class SerializedFile(
         private set
     var targetPlatform = BuildTarget.UnknownPlatform
         private set
-    val externals = mutableListOf<FileIdentifier>()
-    val objects = mutableListOf<Object>()
-    val objectDict = mutableMapOf<Long, Object>()
+    var buildType = BuildType("")
+        private set
+    val externals: List<FileIdentifier>
+    val objects: List<Object>// = mutableListOf()
+    val objectDict: Map<Long, Object>
+        get() = objects.associateBy { it.mPathID }
 
     init {
         if (hVersion >= FormatVersion.kUnknown_9) {
@@ -153,9 +154,15 @@ class SerializedFile(
             hDataOffset = reader.readLong()
             reader += 8     //unknown
         }
-        if (hEndian == 0.toByte()) reader.resetEndian(EndianType.LittleEndian)
+        if (hEndian == 0u.toUByte()) reader.resetEndian(EndianType.LittleEndian)
         if (hVersion >= FormatVersion.kUnknown_7) {
             unityVersion = reader.readStringUntilNull()
+            buildType = buildTypeRegex.findAll(unityVersion).iterator().let {
+                BuildType(
+                    if (it.hasNext()) it.next().value
+                    else ""
+                )
+            }
             version = versionSplitRegex.split(unityVersion).map { it.toInt() }.toIntArray()
         }
         if (hVersion >= FormatVersion.kUnknown_8) {
@@ -208,7 +215,7 @@ class SerializedFile(
             if (hVersion in with(FormatVersion) { kHasScriptTypeIndex until kRefactorTypeData } ) {
                 serialisedType?.scriptTypeIndex = reader.readShort()
             }
-            var stripped: Byte = 0
+            var stripped: UByte = 0u
             if (hVersion == FormatVersion.kSupportsStrippedObject ||
                 hVersion == FormatVersion.kRefactoredClassId) {
                 stripped = reader.readByte()
@@ -238,6 +245,7 @@ class SerializedFile(
             }
         }
         val externalsCount = reader.readInt()
+        val externals = mutableListOf<FileIdentifier>()
         for (l in 0 until externalsCount) {
             if (hVersion >= FormatVersion.kUnknown_6) reader.readStringUntilNull()
             var guid = ByteArray(16); var type = 0
@@ -252,6 +260,7 @@ class SerializedFile(
                 )
             )
         }
+        this.externals = externals
         if (hVersion >= FormatVersion.kSupportsRefObject) {
             val refTypesCount = reader.readInt()
             for (m in 0 until refTypesCount) {
@@ -261,6 +270,80 @@ class SerializedFile(
         if (hVersion >= FormatVersion.kUnknown_5) {
             userInformation = reader.readStringUntilNull()
         }
+        //region readObjects
+        val initSp = mutableListOf<Object>()
+        val objectList = mutableListOf<Object>()
+        for (info in objectInfoList) {
+            val objReader = ObjectReader(reader, this, info)
+            val obj = when (objReader.type) {
+                ClassIDType.Animation -> Animation(objReader)
+                ClassIDType.AnimationClip -> AnimationClip(objReader)
+                ClassIDType.Animator -> Animator(objReader)
+                ClassIDType.AnimatorController -> AnimatorController(objReader)
+                ClassIDType.AnimatorOverrideController -> AnimatorOverrideController(objReader)
+                ClassIDType.AssetBundle -> AssetBundle(objReader)
+                ClassIDType.AudioClip -> AudioClip(objReader)
+                ClassIDType.Avatar -> Avatar(objReader)
+                ClassIDType.Font -> Font(objReader)
+                ClassIDType.GameObject -> GameObject(objReader).also { initSp.add(it) }
+                ClassIDType.Material -> Material(objReader)
+                ClassIDType.Mesh -> Mesh(objReader)
+                ClassIDType.MeshFilter -> MeshFilter(objReader)
+                ClassIDType.MeshRenderer -> MeshRenderer(objReader)
+                ClassIDType.MonoBehaviour -> MonoBehavior(objReader)
+                ClassIDType.MonoScript -> MonoScript(objReader)
+                ClassIDType.MovieTexture -> MovieTexture(objReader)
+                ClassIDType.PlayerSettings -> PlayerSetting(objReader)
+                ClassIDType.RectTransform -> RectTransform(objReader)
+                ClassIDType.Shader -> Shader(objReader)
+                ClassIDType.SkinnedMeshRenderer -> SkinnedMeshRenderer(objReader)
+                ClassIDType.Sprite -> Sprite(objReader)
+                ClassIDType.SpriteAtlas -> SpriteAtlas(objReader).also { initSp.add(it) }
+                ClassIDType.TextAsset -> TextAsset(objReader)
+                ClassIDType.Texture2D -> Texture2D(objReader)
+                ClassIDType.Transform -> Transform(objReader)
+                ClassIDType.VideoClip -> VideoClip(objReader)
+                ClassIDType.ResourceManager -> ResourceManager(objReader)
+                else -> Object(objReader)
+            }
+            objectList.add(obj)
+        }
+        objects = objectList
+        for (sp in initSp) {
+            when (sp) {
+                is GameObject -> sp.apply {
+                    for (pptr in mComponents) {
+                        val obj = pptr.obj
+                        if (obj != null) {
+                            when (obj) {
+                                is Transform -> mTransform.add(obj)
+                                is MeshRenderer -> mMeshRenderer.add(obj)
+                                is MeshFilter -> mMeshFilter.add(obj)
+                                is SkinnedMeshRenderer -> mSkinnedMeshRenderer.add(obj)
+                                is Animator -> mAnimator.add(obj)
+                                is Animation -> mAnimation.add(obj)
+                            }
+                        }
+                    }
+                }
+                is SpriteAtlas -> sp.apply {
+                    if (!mIsVariant) {
+                        for (pack in mPackedSprites) {
+                            val sprite = pack.obj
+                            if (sprite != null) {
+                                if (sprite.mSpriteAtlas != null && sprite.mSpriteAtlas.isNull) {
+                                    sprite.mSpriteAtlas.obj = this
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        objectInfoList.clear()
+        initSp.clear()
+        reader.close()
+        //endregion
     }
 
     private fun readSerializedType(isRefType: Boolean): SerializedType {
@@ -383,12 +466,8 @@ class SerializedFile(
         return newTree
     }
 
-    fun addObject(o: Object) {
-        objects.add(o)
-    }
-
     companion object {
-//        private val buildTypeRegex = Regex("""([^\d.])""")
+        private val buildTypeRegex = Regex("""([^\d.])""")
         private val versionSplitRegex = Regex("""\D""")
         private val commonString = mapOf(
             0u to "AABB", 5u to "AnimationClip", 19u to "AnimationCurve", 34u to "AnimationState",

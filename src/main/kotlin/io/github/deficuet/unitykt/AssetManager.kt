@@ -15,15 +15,17 @@ object AssetManager {
      * @see [OffsetMode]
      */
     var offsetMode = OffsetMode.AUTO
+    var manualIgnoredOffset: Long = 0
+
     private val zipExt = listOf("apk", "zip")
 
     fun loadFromByteArray(data: ByteArray, name: String): ImportContext {
-        return ImportContext(data, name, offsetMode).also { contexts.add(it) }
+        return ImportContext(data, name, offsetMode, manualIgnoredOffset).also { contexts.add(it) }
     }
 
     fun loadFile(path: String): ImportContext {
         if (!path.isFile()) throw IllegalStateException("\"path\" must be a file")
-        return ImportContext(path, offsetMode).also { contexts.add(it) }
+        return ImportContext(path, offsetMode, manualIgnoredOffset).also { contexts.add(it) }
     }
 
     fun loadFiles(vararg path: String): List<ImportContext> {

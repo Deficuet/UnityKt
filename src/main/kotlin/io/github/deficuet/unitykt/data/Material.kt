@@ -42,10 +42,10 @@ class UnityTexEnv internal constructor(reader: ObjectReader) {
 }
 
 class UnityPropertySheet internal constructor(reader: ObjectReader) {
-    val mTexEnvs = reader.readArrayOf { reader.readAlignedString() to UnityTexEnv(reader) }.toMap()
+    val mTexEnvs = reader.readArrayOf { reader.readAlignedString() to UnityTexEnv(reader) }
     val mInts = if (reader.unityVersion[0] >= 2021) {
-        reader.readArrayOf { with(reader) { readAlignedString() to readInt() } }.toMap()
-    } else emptyMap()
-    val mFloats = reader.readArrayOf { with(reader) { readAlignedString() to readFloat() } }.toMap()
-    val mColors = reader.readArrayOf { with(reader) { readAlignedString() to readColor4() } }.toMap()
+        reader.readArrayOf { with(reader) { readAlignedString() to readInt() } }
+    } else emptyList()
+    val mFloats = reader.readArrayOf { with(reader) { readAlignedString() to readFloat() } }
+    val mColors = reader.readArrayOf { with(reader) { readAlignedString() to readColor4() } }
 }

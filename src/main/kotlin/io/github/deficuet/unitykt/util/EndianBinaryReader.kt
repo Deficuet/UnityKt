@@ -30,18 +30,31 @@ enum class OffsetMode {
 sealed class EndianBinaryReader(private val manualIgnoredOffset: Long): Closeable {
     abstract val bytes: ByteArray
     /**
-     * `getter` - Absolute position
-     *
-     * `setter` - Relative position
+     * Relative Position
      */
     abstract var position: Long
+
+    /**
+     * Relative Length
+     */
     abstract val length: Long
+
+    /**
+     * Relative offset to its "parent" endian binary reader.
+     */
     abstract val baseOffset: Long
     abstract var endian: EndianType
         protected set
+
+    /**
+     * Length of bytes that are ignored from the beginning.
+     */
     abstract val ignoredOffset: Long
     protected abstract val offsetMode: OffsetMode
 
+    /**
+     * @see [FileType]
+     */
     val fileType: FileType by lazy {
         if (length < 20) return@lazy FileType.RESOURCE
         when (runThenReset { readStringUntilNull(20) }) {
@@ -59,8 +72,27 @@ sealed class EndianBinaryReader(private val manualIgnoredOffset: Long): Closeabl
                 if (CompressUtils.BROTLI_MAGIC.contentEquals(magic)) {
                     return@lazy FileType.WEB
                 }
-                return@lazy if (isSerializedFile()) FileType.ASSETS else FileType.RESOURCE
+                return@lazy if (isSerializedFile) FileType.ASSETS else FileType.RESOURCE
             }
+        }
+    }
+
+    private val isSerializedFile by lazy {
+        runThenReset {
+            plusAssign(4)    //m_MetadataSize: UInt
+            var mFileSize = readUInt().toLong()
+            val mVersion = readUInt()
+            var mDataOffset = readUInt().toLong()
+            plusAssign(4)    //m_Endian(1), m_Reserved(3)
+            if (mVersion > 22u) {
+                if (length < 48) {
+                    return@runThenReset false
+                }
+                plusAssign(4)    //m_MetadataSize: UInt
+                mFileSize = readLong()
+                mDataOffset = readLong()
+            }
+            return@runThenReset mFileSize == length && mDataOffset <= length
         }
     }
 
@@ -69,8 +101,11 @@ sealed class EndianBinaryReader(private val manualIgnoredOffset: Long): Closeabl
      */
     var mark: Long = 0
         private set
+
+    /**
+     * Actual position relative to its "parent" endian binary reader.
+     */
     val realOffset get() = position + baseOffset
-    open val relativePosition get() = position - ignoredOffset
 
     protected fun initOffset(): Long {
         return if (offsetMode == OffsetMode.MANUAL) {
@@ -87,13 +122,13 @@ sealed class EndianBinaryReader(private val manualIgnoredOffset: Long): Closeabl
         }
     }
 
-    operator fun plusAssign(inc: Int) { position += inc - ignoredOffset }
+    operator fun plusAssign(inc: Int) { position += inc }
 
-    operator fun plusAssign(inc: Long) { position += inc - ignoredOffset }
+    operator fun plusAssign(inc: Long) { position += inc }
 
     abstract fun read(size: Int): ByteArray
 
-    fun mark() { mark = relativePosition }
+    fun mark() { mark = position }
 
     inline fun <T> withMark(block: EndianBinaryReader.() -> T): T {
         mark()
@@ -108,8 +143,8 @@ sealed class EndianBinaryReader(private val manualIgnoredOffset: Long): Closeabl
         return result
     }
 
-    fun readByte(): Byte = ByteBuffer.wrap(read(1)).get()
-    fun readUByte(): UByte = readByte().toUByte()
+    fun readSByte(): Byte = ByteBuffer.wrap(read(1)).get()      //-128~127
+    fun readByte(): UByte = readSByte().toUByte()       //0~255
     fun readShort(): Short = ByteBuffer.wrap(read(2).rearrange(endian)).short
     fun readUShort(): UShort = readShort().toUShort()
     fun readInt(): Int = ByteBuffer.wrap(read(4).rearrange(endian)).int
@@ -118,7 +153,7 @@ sealed class EndianBinaryReader(private val manualIgnoredOffset: Long): Closeabl
     fun readULong(): ULong = readLong().toULong()
     fun readFloat(): Float = ByteBuffer.wrap(read(4).rearrange(endian)).float
     fun readDouble(): Double = ByteBuffer.wrap(read(8).rearrange(endian)).double
-    fun readBool(): Boolean = readByte() != 0.toByte()
+    fun readBool(): Boolean = readSByte() != 0.toByte()
     fun readString(size: Int = -1, encode: Charset = Charsets.UTF_8): String {
         return if (size == -1) readStringUntilNull(charset = encode) else read(size).decodeToString(encode)
     }
@@ -142,8 +177,8 @@ sealed class EndianBinaryReader(private val manualIgnoredOffset: Long): Closeabl
         }
         return ""
     }
-    fun alignStream(alignment: Int = 4) {
-        plusAssign((alignment - relativePosition % alignment) % alignment)
+    open fun alignStream(alignment: Int = 4) {
+        plusAssign((alignment - position % alignment) % alignment)
     }
     fun readNextByteArray(): ByteArray = read(readInt())
     private fun <R> readArray(frequency: Int, lambda: () -> R): List<R> {
@@ -164,8 +199,9 @@ sealed class EndianBinaryReader(private val manualIgnoredOffset: Long): Closeabl
     fun readNextFloatArray(frequency: Int = 0): List<Float> =
         readArray(if (frequency == 0) readInt() else frequency, this::readFloat)
     fun readNextStringArray(): List<String> = readArray(readInt(), this::readAlignedString)
+    fun readRectangle(): Rectangle = Rectangle(readFloat(), readFloat(), readFloat(), readFloat())
     fun readQuaternion(): Quaternion = Quaternion(readFloat(), readFloat(), readFloat(), readFloat())
-    fun readMatrix4x4(): Matrix4x4 = Matrix4x4(readNextFloatArray(16))
+    private fun readMatrix4x4(): Matrix4x4 = Matrix4x4(readNextFloatArray(16))
     fun readVector2(): Vector2 = Vector2(readFloat(), readFloat())
     fun readVector3(): Vector3 = Vector3(readFloat(), readFloat(), readFloat())
     fun readVector4(): Vector4 = Vector4(readFloat(), readFloat(), readFloat(), readFloat())
@@ -177,40 +213,16 @@ sealed class EndianBinaryReader(private val manualIgnoredOffset: Long): Closeabl
         val num = if (frequency == 0) readInt() else frequency
         return readArray(num, constructor)
     }
-
-    fun isSerializedFile(): Boolean {
-        plusAssign(4)    //m_MetadataSize: UInt
-        var mFileSize = readUInt().toLong()
-        val mVersion = readUInt()
-        var mDataOffset = readUInt().toLong()
-        plusAssign(4)    //m_Endian(1), m_Reserved(3)
-        if (mVersion > 22u) {
-            if (length < 48) {
-                position = 0
-                return false
-            }
-            runThenReset {
-                plusAssign(4)    //m_MetadataSize: UInt
-                mFileSize = readLong()
-                mDataOffset = readLong()
+    fun <T> readArrayIndexed(frequency: Int = 0, constructor: (Int) -> T): List<T> {
+        val num = if (frequency == 0) readInt() else frequency
+        return mutableListOf<T>().apply {
+            for (i in 0 until num) {
+                add(constructor(i))
             }
         }
-        position = 0
-        return mFileSize == length && mDataOffset <= length
     }
 
     fun resetEndian(e: EndianType): EndianBinaryReader { endian = e; return this }
-
-    companion object {
-        fun assign(input: Any, offsetMode: OffsetMode): EndianBinaryReader {
-            return when {
-                input is ByteArray -> EndianByteArrayReader(input, offsetMode = offsetMode)
-                input is String && input.isFile() -> EndianFileStreamReader(input, offsetMode = offsetMode)
-                input is EndianBinaryReader -> input
-                else -> throw UnsupportedFormatException("Invalid input for EndianBinaryReader")
-            }
-        }
-    }
 }
 
 class EndianByteArrayReader(
@@ -218,20 +230,24 @@ class EndianByteArrayReader(
     override var endian: EndianType = EndianType.BigEndian,
     override val baseOffset: Long = 0,
     override val offsetMode: OffsetMode = OffsetMode.MANUAL,
-    ignoredOffset: Long = 0
-): EndianBinaryReader(ignoredOffset) {
+    manualIgnoredOffset: Long = 0
+): EndianBinaryReader(manualIgnoredOffset) {
     constructor(
         endian: EndianType = EndianType.BigEndian,
         manualOffset: Long = 0,
         offsetMode: OffsetMode = OffsetMode.MANUAL,
+        manualIgnoredOffset: Long = 0,
         arrayBuilder: () -> ByteArray
-    ): this(arrayBuilder(), endian, manualOffset, offsetMode)
+    ): this(arrayBuilder(), endian, manualOffset, offsetMode, manualIgnoredOffset)
 
-    override val length = array.size.toLong()
     override var position = 0L
+        get() = field - ignoredOffset
         set(value) { field = value + ignoredOffset }
 
     override val ignoredOffset = initOffset()
+    override val length
+        get() = array.size.toLong() - ignoredOffset
+
     override val bytes by lazy { with(array) { sliceArray(ignoredOffset.toInt() until size) } }
 
     override fun read(size: Int): ByteArray {
@@ -252,8 +268,8 @@ class EndianFileStreamReader(
     override var endian: EndianType = EndianType.BigEndian,
     override val baseOffset: Long = 0,
     override val offsetMode: OffsetMode = OffsetMode.MANUAL,
-    ignoredOffset: Long = 0
-): EndianBinaryReader(ignoredOffset) {
+    manualIgnoredOffset: Long = 0
+): EndianBinaryReader(manualIgnoredOffset) {
     init {
         if (!Files.isRegularFile(Path.of(filePath)))
             throw IllegalStateException("Path $filePath must be a file.")
@@ -261,11 +277,12 @@ class EndianFileStreamReader(
     private val stream = FileInputStream(filePath)
     private val channel get() = stream.channel
 
-    override val length = channel.size()
     override var position: Long
-        get() = channel.position()
+        get() = channel.position() - ignoredOffset
         set(value) { channel.position(value + ignoredOffset) }
+
     override val ignoredOffset = initOffset()
+    override val length get() = channel.size() - ignoredOffset
     override val bytes: ByteArray by lazy {
         withMark {
             position = 0
@@ -300,6 +317,7 @@ class ObjectReader(
     val byteStart = info.byteStart
     val formatVersion = assetFile.header.version
     val unityVersion = assetFile.version
+    val buildType = assetFile.buildType
     val platform = assetFile.targetPlatform
     val type = if (ClassIDType.isDefined(info.classID)) {
         ClassIDType.values().first { it.id == info.classID }
@@ -309,20 +327,20 @@ class ObjectReader(
     override val ignoredOffset = byteStart
     override val length = info.byteSize.toLong()
 
-    /**
-     * `getter` - relative position of parent reader
-     *
-     * `setter` - relative position of **this** reader
-     *
-     * `relativePosition` - getter for the relative position of **this** reader
-     *
-     * @see [relativePosition]
-     */
     override var position: Long
-        get() = reader.position - reader.ignoredOffset
+        get() = reader.position - reader.ignoredOffset - ignoredOffset
         set(value) { reader.position = value + ignoredOffset }
-//    override val relativePosition get() = position
 
+    /**
+     * Relative position at parent reader where this object reader wraps.
+     *
+     * May use absolute position when reading objects.
+     */
+    val absolutePosition get() = position + ignoredOffset
+
+    override fun alignStream(alignment: Int) {
+        plusAssign((alignment - absolutePosition % alignment) % alignment)
+    }
     override val bytes: ByteArray by lazy {
         withMark {
             position = 0

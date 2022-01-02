@@ -79,5 +79,6 @@ data class Matrix4x4(private val data: MutableList<Double>) {
     companion object {
         //Secondary constructor in order to avoid signature conflict due to type erasure
         operator fun invoke(data: List<Float>) = Matrix4x4(data.map { it.toDouble() }.toMutableList())
+        operator fun invoke(vararg data: Float) = invoke(data.toList())
     }
 }

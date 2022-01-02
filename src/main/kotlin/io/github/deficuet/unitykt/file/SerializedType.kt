@@ -16,11 +16,10 @@ data class SerializedType(
 ) {
     data class Tree(
         val nodes: MutableList<TreeNode> = mutableListOf()
-//        val stringBuffer: ByteArray
     ) {
         private operator fun <E> List<E>.get(i: IntRef) = this[i.value]
 
-        fun readString(reader: ObjectReader): String {
+        fun readTypeString(reader: ObjectReader): String {
             reader.position = 0
             val builder = StringBuilder()
             val iRef = IntRef(0)
@@ -52,8 +51,8 @@ data class SerializedType(
             var align = (node.metaFlag and 0x4000) != 0
             var value: Any? = null
             when (node.type) {
-                "SInt8" -> value = reader.readByte()
-                "UInt8", "char" -> value = reader.readUByte()
+                "SInt8" -> value = reader.readSByte()
+                "UInt8", "char" -> value = reader.readByte()
                 "SInt16", "short" -> value = reader.readShort()
                 "UInt16", "unsigned short" -> value = reader.readUShort()
                 "SInt32", "int" -> value = reader.readInt()
@@ -66,7 +65,7 @@ data class SerializedType(
                 "string" -> {
                     append = false
                     val str = reader.readAlignedString()
-                    builder.append("${"\t".repeat(node.level)}${node.type} ${node.name} = \"${str}\"\r\n")
+                    builder.append("${"\t".repeat(node.level)}${node.type} ${node.name} = \"$str\"\r\n")
                     intRef += 3
                 }
                 "map" -> {
@@ -138,8 +137,8 @@ data class SerializedType(
             val node = this[intRef]
             var align = (node.metaFlag and 0x4000) != 0
             val value: Any = when (node.type) {
-                "SInt8" -> reader.readByte()
-                "UInt8", "char" -> reader.readUByte()
+                "SInt8" -> reader.readSByte()
+                "UInt8", "char" -> reader.readByte()
                 "SInt16", "short" -> reader.readShort()
                 "UInt16", "unsigned short" -> reader.readUShort()
                 "SInt32", "int" -> reader.readInt()
@@ -167,7 +166,7 @@ data class SerializedType(
                             second.readNode(reader, IntRef(0))
                         ))
                     }
-                    dict.toMap()
+                    dict
                 }
                 "TypelessData" -> {
                     intRef += 2
@@ -205,7 +204,7 @@ data class SerializedType(
         private fun List<TreeNode>.getNode(index: Int): List<TreeNode> {
             val nodes = mutableListOf(this[index])
             val level = this[index].level
-            for (i in level + 1 until size) {
+            for (i in index + 1 until size) {
                 val node = this[i]
                 if (node.level <= level) return nodes
                 nodes.add(node)

@@ -4,7 +4,7 @@ import io.github.deficuet.unitykt.util.ObjectReader
 
 class AssetBundle internal constructor(reader: ObjectReader): NamedObject(reader) {
     val mPreloadTable = reader.readArrayOf { PPtr<Object>(reader) }
-    val mContainer = reader.readArrayOf { reader.readAlignedString() to AssetInfo(reader) }.toMap()
+    val mContainer = reader.readArrayOf { reader.readAlignedString() to AssetInfo(reader) }
 }
 
 class AssetInfo internal constructor(reader: ObjectReader) {
