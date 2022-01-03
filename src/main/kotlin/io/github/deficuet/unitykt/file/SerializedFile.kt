@@ -1,5 +1,6 @@
 package io.github.deficuet.unitykt.file
 
+import io.github.deficuet.unitykt.AssetManager
 import io.github.deficuet.unitykt.data.*
 import io.github.deficuet.unitykt.util.*
 import java.io.File
@@ -108,6 +109,17 @@ class SerializedFile(
     data class ObjectIdentifier(
         val serializedFileIndex: Int,
         val identifierInFile: Long
+    )
+
+    data class SerializedTypeTreeNodeInternal(
+        val byteSize: Int,
+        val index: Int,
+        val typeFlags: Int,
+        val version: Int,
+        val metaFlag: Int,
+        val level: Int,
+        val typeStrOffset: UInt,
+        val nameStrOffset: UInt
     )
 
     //Header
@@ -340,6 +352,8 @@ class SerializedFile(
                 }
             }
         }
+        root.objects.addAll(objects)
+        AssetManager.objectDict.addAll(objects.filter { it.mPathID != 1L }.map { it.mPathID to it })
         objectInfoList.clear()
         initSp.clear()
         reader.close()
@@ -401,22 +415,23 @@ class SerializedFile(
         val nodeCount = reader.readInt()
         val stringBufferSize = reader.readInt()
         val nodeList = mutableListOf<SerializedType.TreeNode>()
+        val nodeListInternal = mutableListOf<SerializedTypeTreeNodeInternal>()
         for (i in 0 until nodeCount) {
-            nodeList.add(
-                SerializedType.TreeNode().apply {
-                    this[::version] = reader.readUShort().toInt()
-                    this[::level] = reader.readByte().toInt()
-                    this[::typeFlags] = reader.readByte().toInt()
-                    this[::typeStrOffset] = reader.readUInt()
-                    this[::nameStrOffset] = reader.readUInt()
-                    this[::byteSize] = reader.readInt()
-                    this[::index] = reader.readInt()
-                    this[::metaFlag] = reader.readInt()
-                    if (hVersion >= FormatVersion.kTypeTreeNodeWithTypeFlags) {
-                        this[::refTypeHash] = reader.readULong()    //TODO
-                    }
-                }
+            nodeListInternal.add(
+                SerializedTypeTreeNodeInternal(
+                    version = reader.readUShort().toInt(),
+                    level = reader.readByte().toInt(),
+                    typeFlags = reader.readByte().toInt(),
+                    typeStrOffset = reader.readUInt(),
+                    nameStrOffset = reader.readUInt(),
+                    byteSize = reader.readInt(),
+                    index = reader.readInt(),
+                    metaFlag = reader.readInt()
+                )
             )
+            if (hVersion >= FormatVersion.kTypeTreeNodeWithTypeFlags) {
+                reader += 8     //refTypeHash: ULong
+            }
         }
         val stringBuffer = reader.read(stringBufferSize)
         fun EndianBinaryReader.readNodeString(value: UInt): String {
@@ -428,11 +443,14 @@ class SerializedFile(
             return commonString[offset] ?: offset.toString()
         }
         EndianByteArrayReader(stringBuffer).use {
-            for (node in nodeList) {
-                node.apply {
-                    this[::type] = it.readNodeString(typeStrOffset)
-                    this[::name] = it.readNodeString(nameStrOffset)
-                }
+            for (node in nodeListInternal) {
+                nodeList.add(
+                    SerializedType.TreeNode(
+                        node,
+                        type = it.readNodeString(node.typeStrOffset),
+                        name = it.readNodeString(node.nameStrOffset)
+                    )
+                )
             }
         }
         return SerializedType.Tree(nodeList)
@@ -445,23 +463,19 @@ class SerializedFile(
             val (level, count) = levelStack.last()
             if (count == 1) levelStack.removeLast()
             else levelStack.last()[1] -= 1
-            newTree.nodes.add(SerializedType.TreeNode().apply {
-                this[::level] = level
-                this[::type] = reader.readStringUntilNull()
-                this[::name] = reader.readStringUntilNull()
-                this[::byteSize] = reader.readInt()
-                if (hVersion == FormatVersion.kUnknown_2) reader += 4   //variableCount
-                if (hVersion != FormatVersion.kUnknown_3) {
-                    this[::index] = reader.readInt()
-                }
-                this[::typeFlags] = reader.readInt()
-                this[::version] = reader.readInt()
-                if (hVersion != FormatVersion.kUnknown_3) {
-                    this[::metaFlag] = reader.readInt()
-                }
-            })
+            val type = reader.readStringUntilNull()
+            val name = reader.readStringUntilNull()
+            val byteSize = reader.readInt()
+            if (hVersion == FormatVersion.kUnknown_2) reader += 4   //variableCount
+            val index = if (hVersion != FormatVersion.kUnknown_3) reader.readInt() else 0
+            val typeFlags = reader.readInt()
+            val version = reader.readInt()
+            val metaFlag = if (hVersion != FormatVersion.kUnknown_3) reader.readInt() else 0
+            newTree.nodes.add(SerializedType.TreeNode(
+                type, name, byteSize, index, typeFlags, version, metaFlag, level
+            ))
             val childrenCount = reader.readInt()
-            levelStack.add(mutableListOf(level + 1, childrenCount))
+            if (childrenCount > 0) levelStack.add(mutableListOf(level + 1, childrenCount))
         }
         return newTree
     }

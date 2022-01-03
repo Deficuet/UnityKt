@@ -15,7 +15,7 @@ internal operator fun <N> Double.times(x: N): Double where N: Number, N: Compara
     return operator(this)
 }
 
-internal operator fun <N> Double.div(x: N): Double where N:Number, N: Comparable<N> {
+internal operator fun <N> Double.div(x: N): Double where N: Number, N: Comparable<N> {
     val operator: (Double) -> Double = when (x) {
         is Byte    -> { { it / x } }
         is Short   -> { { it / x } }

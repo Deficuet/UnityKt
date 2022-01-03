@@ -5,6 +5,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.name
+import io.github.deficuet.unitykt.data.Object
 
 internal fun Byte.toIntBits() = toUByte().toInt()
 
@@ -67,7 +68,7 @@ internal fun List<String>.containsIgnoreCase(element: String, sRef: StringRef): 
     return find { it.contentEquals(element) }?.also { sRef.value = it } != null
 }
 
-internal infix fun Boolean.imply(other: Boolean) = !this or other
+//internal infix fun Boolean.imply(other: Boolean) = !this or other
 
 internal fun List<ByteArray>.sum(): ByteArray {
     var bytes = kotlin.byteArrayOf()

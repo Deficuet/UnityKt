@@ -6,7 +6,7 @@ import io.github.deficuet.unitykt.util.compareTo
 
 class Texture2D internal constructor(reader: ObjectReader): Texture(reader) {
     val mWidth = reader.readInt()
-    val mheight = reader.readInt()
+    val mHeight = reader.readInt()
     val mTextureFormat: TextureFormat
     val mMipMap: Boolean
     val mMipCount: Int
@@ -50,6 +50,28 @@ class Texture2D internal constructor(reader: ObjectReader): Texture(reader) {
         } else {
             ResourceReader(reader, reader.absolutePosition, imageDataSize.toLong())
         }
+    }
+
+    val decompressedImageData by lazy { imageData.bytes.decompressTexture() }
+
+    private fun ByteArray.decompressTexture(): ByteArray {
+        val out = ByteArray(mWidth * mHeight * 4)
+        when (mTextureFormat) {
+            TextureFormat.RGBA32 -> {
+                var pos = 0; var outPos = 0
+                for (x in 0 until mHeight) {
+                    for (y in 0 until mWidth) {
+                        out[outPos] = this[pos]
+                        out[outPos + 1] = this[pos + 1]
+                        out[outPos + 2] = this[pos + 2]
+                        out[outPos + 3] = this[pos + 3]
+                        pos += 4; outPos += 4
+                    }
+                }
+            }
+            else -> {  }
+        }
+        return out
     }
 }
 

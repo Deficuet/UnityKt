@@ -157,8 +157,9 @@ class Mesh internal constructor(reader: ObjectReader): NamedObject(reader) {
             StreamingInfo(reader)
         } else null
         //region processData
-        if (mStreamData?.path?.isEmpty() == true) {
+        if (mStreamData?.path?.isNotEmpty() == true) {
             if (mVertexData.mVertexCount > 0u) {
+                println(mStreamData.path)
                 val resourceReader = ResourceReader(
                     mStreamData.path, asserFile, mStreamData.offset, mStreamData.size.toLong()
                 )
@@ -434,7 +435,7 @@ class Mesh internal constructor(reader: ObjectReader): NamedObject(reader) {
             }
             val indexCount = subMesh.indexCount.toInt()
             if (subMesh.topology == GfxPrimitiveType.kPrimitiveTriangles) {
-                for (i in 0 until indexCount) {
+                for (i in 0 until indexCount step 3) {
                     with(indices) {
                         add(mIndexBuffer[firstIdx + i])
                         add(mIndexBuffer[firstIdx + i + 1])
@@ -782,7 +783,7 @@ class VertexData internal constructor(reader: ObjectReader) {
         } else {
             //region getStream
             val streams = mutableListOf<StreamInfo>()
-            val streamCount = channels.maxOf { it.stream }.toInt()
+            val streamCount = channels.maxOf { it.stream }.toInt() + 1
             var offset = 0u
             for (k in 0 until streamCount) {
                 var chnMask = 0u

@@ -1,5 +1,6 @@
 package io.github.deficuet.unitykt
 
+import io.github.deficuet.unitykt.data.Object
 import io.github.deficuet.unitykt.file.*
 import io.github.deficuet.unitykt.util.*
 import java.nio.file.Files
@@ -11,6 +12,7 @@ object AssetManager {
     val assetFiles = mutableMapOf<String, SerializedFile>()
     val resourceFiles = mutableMapOf<String, ResourceFile>()
     val contexts = mutableListOf<ImportContext>()
+    val objectDict = mutableListOf<Pair<Long, Object>>()
     /**
      * @see [OffsetMode]
      */

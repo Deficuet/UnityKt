@@ -14,12 +14,22 @@ operator fun <K, V> List<Pair<K, V>>.get(key: K): List<V> {
     }.map { it.second }
 }
 
-inline fun <reified O: Object> List<Object>.allInstanceOf(): List<O> {
+fun <K, V> List<Pair<K, V>>.first(key: K) = get(key)[0]
+
+fun <K, V> List<Pair<K, V>>.firstOrNull(key: K) = with(get(key)) { if (isEmpty()) null else this[0] }
+
+inline fun <reified O: Object> List<Object>.allObjectsOf(): List<O> {
     return mutableListOf<O>().apply {
-        for (obj in this@allInstanceOf) {
+        for (obj in this@allObjectsOf) {
             if (obj is O) add(obj)
         }
     }
+}
+
+inline fun <reified O: Object> List<Object>.firstObjectOf() = allObjectsOf<O>()[0]
+
+inline fun <reified O: Object> List<Object>.firstOfOrNull(): O? {
+    return with(allObjectsOf<O>()) { if (isEmpty()) null else this[0] }
 }
 
 fun List<Object>.allInstanceOf(vararg type: String): List<Object> {

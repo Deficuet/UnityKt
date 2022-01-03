@@ -213,18 +213,21 @@ data class SerializedType(
         }
     }
 
-    data class TreeNode(override val map: MutableMap<String, Any> = mutableMapOf()): LateInitDataClass() {
-        val type: String            by map
-        val name: String            by map
-        val byteSize: Int           by map
-        val index: Int              by map
-        val typeFlags: Int          by map
-        val version: Int            by map
-        val metaFlag: Int           by map
-        val level: Int              by map
-        val typeStrOffset: UInt     by map
-        val nameStrOffset: UInt     by map
-        val refTypeHash: ULong      by map
+    data class TreeNode(
+        val type: String,
+        val name: String,
+        val byteSize: Int,
+        val index: Int,
+        val typeFlags: Int,
+        val version: Int,
+        val metaFlag: Int,
+        val level: Int
+    ) {
+        constructor(data: SerializedFile.SerializedTypeTreeNodeInternal, type: String, name: String):
+            this(
+                type, name, data.byteSize, data.index, data.typeFlags,
+                data.version, data.metaFlag, data.level
+            )
     }
 
     override fun equals(other: Any?): Boolean {

@@ -6,8 +6,9 @@ import io.github.deficuet.unitykt.file.FormatVersion
 import io.github.deficuet.unitykt.file.SerializedFile
 import io.github.deficuet.unitykt.util.*
 import java.io.File
+import kotlin.reflect.KClass
 
-class PPtr<T: Object> internal constructor(reader: ObjectReader) {
+class PPtr<T: Object> private constructor(reader: ObjectReader, private val clazz: KClass<T>) {
     var mFileID = reader.readInt()
         private set
     var mPathID = with(reader) { if (formatVersion < FormatVersion.kUnknown_14) readInt().toLong() else readLong() }
@@ -53,8 +54,16 @@ class PPtr<T: Object> internal constructor(reader: ObjectReader) {
                 }
             } else { manager = null }
             if (manager != null && mPathID in manager.objectDict) {
-                @Suppress("UNCHECKED_CAST")
-                return try { manager.objectDict.getValue(mPathID) as T } catch (e: Exception) { null }
+                val objFound = manager.objectDict.getValue(mPathID)
+                return if (clazz.isInstance(objFound)) {
+                    @Suppress("UNCHECKED_CAST")
+                    field = objFound as T
+                    field
+                } else {
+                    null
+                }
+//                @Suppress("UNCHECKED_CAST")
+//                return try { manager.objectDict.getValue(mPathID) as T } catch (e: Exception) { null }
             }
             return null
         }
@@ -77,5 +86,11 @@ class PPtr<T: Object> internal constructor(reader: ObjectReader) {
             }
         }
         mPathID = value.mPathID
+    }
+
+    companion object {
+        internal inline operator fun <reified O: Object> invoke(reader: ObjectReader): PPtr<O> {
+            return PPtr(reader, O::class)
+        }
     }
 }

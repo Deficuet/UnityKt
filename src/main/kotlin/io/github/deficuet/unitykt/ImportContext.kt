@@ -1,5 +1,6 @@
 package io.github.deficuet.unitykt
 
+import io.github.deficuet.unitykt.data.Object
 import io.github.deficuet.unitykt.file.*
 import io.github.deficuet.unitykt.util.*
 import java.io.File
@@ -10,6 +11,8 @@ class ImportContext: AssetBundleFile {
     override val root = this
     val directory: String
     override val name: String
+
+    val objects = mutableListOf<Object>()
 
     internal constructor(filePath: String, offsetMode: OffsetMode, manualIgnoredOffset: Long) {
         val file = File(filePath)

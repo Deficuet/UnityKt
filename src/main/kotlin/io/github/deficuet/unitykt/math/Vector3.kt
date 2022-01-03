@@ -2,10 +2,19 @@ package io.github.deficuet.unitykt.math
 
 import kotlin.math.sqrt
 
-data class Vector3(var x: Double, var y: Double, var z: Double): Vector() {
+class Vector3(x: Double, y: Double, z: Double): Vector() {
     constructor(x: Float, y: Float, z: Float): this(x.toDouble(), y.toDouble(), z.toDouble())
 
     constructor(v2: Vector2, z: Double): this(v2.x, v2.y, z)
+
+    var x: Double = x
+        private set
+
+    var y: Double = y
+        private set
+
+    var z: Double = z
+        private set
 
     val vector2: Vector2 get() = Vector2(x, y)
 
