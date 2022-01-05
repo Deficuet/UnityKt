@@ -62,8 +62,6 @@ class PPtr<T: Object> private constructor(reader: ObjectReader, private val claz
                 } else {
                     null
                 }
-//                @Suppress("UNCHECKED_CAST")
-//                return try { manager.objectDict.getValue(mPathID) as T } catch (e: Exception) { null }
             }
             return null
         }

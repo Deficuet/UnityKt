@@ -5,9 +5,14 @@ import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.name
-import io.github.deficuet.unitykt.data.Object
+
+internal operator fun ByteArray.get(i: UInt) = get(i.toInt()).toIntBits()
+
+internal operator fun ByteArray.get(i: Int, l: Int) = sliceArray(i until i + l)
 
 internal fun Byte.toIntBits() = toUByte().toInt()
+
+internal fun Short.toIntBits() = toUShort().toInt()
 
 internal fun ByteArray.rearrange(endian: EndianType): ByteArray {
     return if (size > 1 && endian == EndianType.LittleEndian) reversedArray() else this
@@ -53,6 +58,15 @@ internal operator fun IntArray.compareTo(other: IntArray): Int {
     }
     return size.compareTo(other.size)
 }
+
+internal fun Int.clampByte(): Byte {
+    val i = this
+    return with(Byte.Companion) {
+        if (i > MAX_VALUE) MAX_VALUE else if (i < MIN_VALUE) MIN_VALUE else i.toByte()
+    }
+}
+
+internal fun Int.clamp() = if (this < 0) 0 else if (this > 255) 255 else this
 
 internal fun String.isFile(): Boolean = Files.isRegularFile(Path.of(this))
 

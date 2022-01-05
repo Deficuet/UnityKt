@@ -7,6 +7,7 @@ class IntRef(value: Int) {
     operator fun plusAssign(o: Int) { value += o }
     operator fun compareTo(o: Int) = value.compareTo(o)
     operator fun plus(o: Int) = value + o
+    operator fun plus(u: UInt) = value.toUInt() + u
 }
 
 class StringRef(var value: String = "")

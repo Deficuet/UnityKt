@@ -1,8 +1,12 @@
 package io.github.deficuet.unitykt.data
 
-import io.github.deficuet.unitykt.util.ObjectReader
-import io.github.deficuet.unitykt.util.ResourceReader
-import io.github.deficuet.unitykt.util.compareTo
+import io.github.deficuet.unitykt.extension.ETCDecoder
+import io.github.deficuet.unitykt.file.BuildTarget
+import io.github.deficuet.unitykt.util.*
+import java.awt.image.*
+import java.nio.ByteBuffer
+import kotlin.math.pow
+import kotlin.math.roundToInt
 
 class Texture2D internal constructor(reader: ObjectReader): Texture(reader) {
     val mWidth = reader.readInt()
@@ -54,20 +58,214 @@ class Texture2D internal constructor(reader: ObjectReader): Texture(reader) {
 
     val decompressedImageData by lazy { imageData.bytes.decompressTexture() }
 
+    /**
+     * Usually up-side-down
+     */
+    val image by lazy {
+        BufferedImage(mWidth, mHeight, BufferedImage.TYPE_4BYTE_ABGR).apply {
+            data = Raster.createRaster(
+                ComponentSampleModel(
+                    DataBuffer.TYPE_BYTE, mWidth, mHeight, 4,
+                    mWidth * 4, intArrayOf(2, 1, 0, 3)
+                ),
+                DataBufferByte(decompressedImageData, decompressedImageData.size),
+                null
+            )
+        }
+    }
+
+    private val areaIndices by lazy { 0 until mWidth * mHeight }
+    private val dataSizeIndices by lazy { 0 until mWidth * mHeight * 4 step 4 }
+
+    private fun ByteArray.swapForXbox() {
+        if (platform == BuildTarget.XBOX360) reverse()
+    }
+
     private fun ByteArray.decompressTexture(): ByteArray {
         val out = ByteArray(mWidth * mHeight * 4)
+
         when (mTextureFormat) {
+            TextureFormat.Alpha8 -> {
+                out.fill(-1)
+                for (i in areaIndices) {
+                    out[i * 4 + 3] = this[i]
+                }
+            }
+            TextureFormat.ARGB4444 -> {
+                swapForXbox()
+                for (i in areaIndices) {
+                    val p = ByteBuffer.wrap(this[i * 2, 2]).short.toIntBits()
+                    val a = p.and(0x000f).let { it.shl(4).or(it) }
+                    val b = p.and(0x00f0).shr(4).let { it.shl(4).or(it) }
+                    val c = p.and(0x0f00).shr(8).let { it.shl(4).or(it) }
+                    val d = p.and(0xf000).shr(12).let { it.shl(4).or(it) }
+                    out[i * 4] = a.toByte()
+                    out[i * 4 + 1] = b.toByte()
+                    out[i * 4 + 2] = c.toByte()
+                    out[i * 4 + 3] = d.toByte()
+                }
+            }
+            TextureFormat.RGBA4444 -> {
+                for (i in areaIndices) {
+                    val p = ByteBuffer.wrap(this[i * 2, 2]).short.toIntBits()
+                    val a = p.and(0x00f0).shr(4).let { it.shl(4).or(it) }
+                    val b = p.and(0x0f00).shr(8).let { it.shl(4).or(it) }
+                    val c = p.and(0xf000).shr(12).let { it.shl(4).or(it) }
+                    val d = p.and(0x000f).let { it.shl(4).or(it) }
+                    out[i * 4] = a.toByte()
+                    out[i * 4 + 1] = b.toByte()
+                    out[i * 4 + 2] = c.toByte()
+                    out[i * 4 + 3] = d.toByte()
+                }
+            }
             TextureFormat.RGBA32 -> {
-                var pos = 0; var outPos = 0
-                for (x in 0 until mHeight) {
-                    for (y in 0 until mWidth) {
-                        out[outPos] = this[pos]
-                        out[outPos + 1] = this[pos + 1]
-                        out[outPos + 2] = this[pos + 2]
-                        out[outPos + 3] = this[pos + 3]
-                        pos += 4; outPos += 4
+                for (i in dataSizeIndices) {
+                    out[i] = this[i + 2]
+                    out[i + 1] = this[i + 1]
+                    out[i + 2] = this[i]
+                    out[i + 3] = this[i + 3]
+                }
+            }
+            TextureFormat.ARGB32 -> {
+                for (i in dataSizeIndices) {
+                    out[i] = this[i + 3]
+                    out[i + 1] = this[i + 2]
+                    out[i + 2] = this[i + 1]
+                    out[i + 3] = this[i + 0]
+                }
+            }
+            TextureFormat.RGB24 -> {
+                for (i in areaIndices) {
+                    out[i * 4] = this[i * 3 + 2]
+                    out[i * 4 + 1] = this[i * 3 + 1]
+                    out[i * 4 + 2] = this[i * 3]
+                    out[i * 4 + 3] = -1
+                }
+            }
+            TextureFormat.RGB565 -> {
+                swapForXbox()
+                for (i in areaIndices) {
+                    val p = ByteBuffer.wrap(this[i * 2, 2]).short.toIntBits()
+                    out[i * 4] = p.shl(3).or(p.shr(2).and(7)).toByte()
+                    out[i * 4 + 1] = p.shr(3).and(0xFC).or(p.shr(9).and(3)).toByte()
+                    out[i * 4 + 2] = p.shr(8).and(0xF8).or(p.shr(13)).toByte()
+                    out[i * 4 + 3] = -1
+                }
+            }
+            TextureFormat.R8 -> {
+                for (i in areaIndices) {
+                    out[i * 4] = 0
+                    out[i * 4 + 1] = 0
+                    out[i * 4 + 2] = this[i]
+                    out[i * 4 + 3] = -1
+                }
+            }
+            TextureFormat.R16 -> {
+                for (i in areaIndices) {
+                    out[i * 4] = 0
+                    out[i * 4 + 1] = 0
+                    out[i * 4 + 2] = this[i * 2 + 1]
+                    out[i * 4 + 3] = -1
+                }
+            }
+            TextureFormat.RG16 -> {
+                for (i in 0 until mWidth * mHeight step 2) {
+                    out[i * 2] = 0
+                    out[i * 2 + 1] = this[i + 1]
+                    out[i * 2 + 2] = this[i]
+                    out[i * 2 + 3] = -1
+                }
+            }
+            TextureFormat.BGRA32 -> {
+                return this
+            }
+            TextureFormat.RHalf -> {
+                for (i in dataSizeIndices) {
+                    out[i] = 0
+                    out[i + 1] = 0
+                    out[i + 2] = (this[i / 2, 2].toHalf() * 255f).roundToInt().toByte()
+                    out[i + 3] = -1
+                }
+            }
+            TextureFormat.RGHalf -> {
+                for (i in dataSizeIndices) {
+                    out[i] = 0
+                    out[i + 1] = (this[i + 2, 2].toHalf() * 255f).roundToInt().toByte()
+                    out[i + 2] = (this[i, 2].toHalf() * 255f).roundToInt().toByte()
+                    out[i + 3] = -1
+                }
+            }
+            TextureFormat.RGBAHalf -> {
+                for (i in dataSizeIndices) {
+                    out[i] = (this[i * 2 + 4, 2].toHalf() * 255f).roundToInt().toByte()
+                    out[i + 1] = (this[i * 2 + 2, 2].toHalf() * 255f).roundToInt().toByte()
+                    out[i + 2] = (this[i * 2, 2].toHalf() * 255f).roundToInt().toByte()
+                    out[i + 3] = (this[i * 2 + 6, 2].toHalf() * 255f).roundToInt().toByte()
+                }
+            }
+            TextureFormat.RFloat -> {
+                for (i in dataSizeIndices) {
+                    out[i] = 0
+                    out[i + 1] = 0
+                    out[i + 2] = (ByteBuffer.wrap(this[i, 4]).float * 255f).roundToInt().toByte()
+                    out[i + 3] = -1
+                }
+            }
+            TextureFormat.RGFloat -> {
+                for (i in dataSizeIndices) {
+                    out[i] = 0
+                    out[i + 2] = (ByteBuffer.wrap(this[i * 2 + 4, 4]).float * 255f).roundToInt().toByte()
+                    out[i + 1] = (ByteBuffer.wrap(this[i * 2, 4]).float * 255f).roundToInt().toByte()
+                    out[i + 3] = -1
+                }
+            }
+            TextureFormat.RGBAFloat -> {
+                for (i in dataSizeIndices) {
+                    out[i] = (ByteBuffer.wrap(this[i * 4 + 8, 4]).float * 255f).roundToInt().toByte()
+                    out[i + 1] = (ByteBuffer.wrap(this[i * 4 + 4, 4]).float * 255f).roundToInt().toByte()
+                    out[i + 2] = (ByteBuffer.wrap(this[i * 4, 4]).float * 255f).roundToInt().toByte()
+                    out[i + 3] = (ByteBuffer.wrap(this[i * 4 + 12, 4]).float * 255f).roundToInt().toByte()
+                }
+            }
+            TextureFormat.YUY2 -> {
+                var p = 0; var o = 0
+                for (y in 0 until mHeight) {
+                    for (x in 0 until mWidth / 2) {
+                        val y0 = this[p++]
+                        val u0 = this[p++]
+                        val y1 = this[p++]
+                        val v0 = this[p++]
+                        var c = y0 - 16
+                        val d = u0 - 128
+                        val e = v0 - 128
+                        out[o++] = (298 * c + 516 * d + 128).shr(8).clampByte()
+                        out[o++] = (298 * c - 100 * d - 208 * e + 128).shr(8).clampByte()
+                        out[o++] = (298 * c + 409 * e + 128).shr(8).clampByte()
+                        out[o++] = -1
+                        c = y1 - 16
+                        out[o++] = (298 * c + 516 * d + 128).shr(8).clampByte()
+                        out[o++] = (298 * c - 100 * d - 208 * e + 128).shr(8).clampByte()
+                        out[o++] = (298 * c + 409 * e + 128).shr(8).clampByte()
+                        out[o++] = -1
                     }
                 }
+            }
+            TextureFormat.RGB9e5Float -> {
+                for (i in dataSizeIndices) {
+                    val n = ByteBuffer.wrap(this[i, 4]).int
+                    val scale = n.shr(27).and(0x1F)
+                    val scalef = 2.0.pow(scale - 24)
+                    val b = n.shr(18).and(0x1FF)
+                    val g = n.shr(9).and(0x1FF)
+                    val r = n.and(0x1FF)
+                    out[i] = (b * scalef * 255).roundToInt().toByte()
+                    out[i + 1] = (g * scalef * 255).roundToInt().toByte()
+                    out[i + 2] = (r * scalef * 255).roundToInt().toByte()
+                    out[i + 3] = -1
+                }
+            }
+            TextureFormat.ETC2_RGBA8, TextureFormat.ETC_RGBA8_3DS -> {
+                ETCDecoder.decodeETC2A8(this, mWidth, mHeight, out)
             }
             else -> {  }
         }
