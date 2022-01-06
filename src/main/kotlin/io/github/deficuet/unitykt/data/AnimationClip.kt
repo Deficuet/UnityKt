@@ -18,7 +18,7 @@ class AnimationClip internal constructor(reader: ObjectReader): NamedObject(read
     val mFloatCurves: List<FloatCurve>
     val mPPtrCurves: List<PPtrCurve>
     val mSampleRate: Float
-    val mWrapMode: Float
+    val mWrapMode: Int
     val mBounds: AABB?
     val mMuscleClipSize: UInt
     val mMuscleClip: ClipMuscleConstant?
@@ -40,56 +40,19 @@ class AnimationClip internal constructor(reader: ObjectReader): NamedObject(read
         mCompressed = reader.readBool()
         mUseHighQualityCurve = if (unityVersion >= v43) reader.readBool() else false
         reader.alignStream()
-//        val numRCurves = reader.readInt()
-//        val rotationCurves = mutableListOf<QuaternionCurve>()
-//        for (i in 0 until numRCurves) {
-//            rotationCurves.add(QuaternionCurve(reader))
-//        }
         mRotationCurves = reader.readArrayOf { QuaternionCurve(reader) }
-//        val numCRCurves = reader.readInt()
-//        val crCurves = mutableListOf<CompressedAnimationCurve>()
-//        for (j in 0 until numCRCurves) {
-//            crCurves.add(CompressedAnimationCurve(reader))
-//        }
         mCompressedRotationCurves = reader.readArrayOf { CompressedAnimationCurve(reader) }
         mEulerCurves = if (unityVersion >= intArrayOf(5, 3)) {
-//            val numEulerCurves = reader.readInt()
-//            val eCurves = mutableListOf<Vector3Curve>()
-//            for (k in 0 until numEulerCurves) {
-//                eCurves.add(Vector3Curve(reader))
-//            }
-//            eCurves
             reader.readArrayOf { Vector3Curve(reader) }
         } else emptyList()
-//        val numPCurves = reader.readInt()
-//        val pCurves = mutableListOf<Vector3Curve>()
-//        for (l in 0 until numPCurves) {
-//            pCurves.add(Vector3Curve(reader))
-//        }
         mPositionCurves = reader.readArrayOf { Vector3Curve(reader) }
-//        val numSCurves = reader.readInt()
-//        val sCurves = mutableListOf<Vector3Curve>()
-//        for (m in 0 until numSCurves) {
-//            sCurves.add(Vector3Curve(reader))
-//        }
         mScaleCurves = reader.readArrayOf { Vector3Curve(reader) }
-//        val numFCurves = reader.readInt()
-//        val fCurves = mutableListOf<FloatCurve>()
-//        for (n in 0 until numFCurves) {
-//            fCurves.add(FloatCurve(reader))
-//        }
         mFloatCurves = reader.readArrayOf { FloatCurve(reader) }
         mPPtrCurves = if (unityVersion >= v43) {
-//            val numPtrCurves = reader.readInt()
-//            val ptrCurves = mutableListOf<PPtrCurve>()
-//            for (o in 0 until numPtrCurves) {
-//                ptrCurves.add(PPtrCurve(reader))
-//            }
-//            ptrCurves
             reader.readArrayOf { PPtrCurve(reader) }
         } else emptyList()
         mSampleRate = reader.readFloat()
-        mWrapMode = reader.readFloat()
+        mWrapMode = reader.readInt()
         mBounds = if (unityVersion >= intArrayOf(3, 4)) AABB(reader) else null
         if (unityVersion[0] >= 4) {
             mMuscleClipSize = reader.readUInt()
@@ -97,16 +60,11 @@ class AnimationClip internal constructor(reader: ObjectReader): NamedObject(read
         } else {
             mMuscleClipSize = 0u; mMuscleClip = null
         }
-        mClipBindingConstant = if (unityVersion >= intArrayOf(4, 3)) AnimationClipBindingConstant(reader) else null
+        mClipBindingConstant = if (unityVersion >= v43) AnimationClipBindingConstant(reader) else null
         if (unityVersion >= intArrayOf(2018, 3)) {
             reader += 2     //m_HasGenericRootTransform, m_HasMotionFloatCurves: Boolean
             reader.alignStream()
         }
-//        val numEvents = reader.readInt()
-//        val events = mutableListOf<AnimationEvent>()
-//        for (p in 0 until numEvents) {
-//            events.add(AnimationEvent(reader))
-//        }
         mEvents = reader.readArrayOf { AnimationEvent(reader) }
         if (unityVersion[0] >= 2017) reader.alignStream()
     }
@@ -317,19 +275,6 @@ class PPtrCurve internal constructor(reader: ObjectReader) {
     val path = reader.readAlignedString()
     val classID = reader.readInt()
     val script = PPtr<MonoScript>(reader)
-
-//    init {
-//        val curveCount = reader.readInt()
-//        val curves = mutableListOf<PPtrKeyFrame>()
-//        for (i in 0 until curveCount) {
-//            curves.add(PPtrKeyFrame(reader))
-//        }
-//        curve = curves
-//        attribute = reader.readAlignedString()
-//        path = reader.readAlignedString()
-//        classID = reader.readInt()
-//        script = PPtr(reader)
-//    }
 }
 
 class AABB internal constructor(reader: ObjectReader) {
@@ -550,25 +495,6 @@ class AnimationClipBindingConstant internal constructor(reader: ObjectReader) {
     val genericBindings = reader.readArrayOf { GenericBinding(reader) }
     val pptrCurveMapping = reader.readArrayOf { PPtr<Object>(reader) }
 
-//    internal constructor(reader: ObjectReader) {
-//        val bindingCount = reader.readInt()
-//        val bindings = mutableListOf<GenericBinding>()
-//        for (i in 0 until bindingCount) {
-//            bindings.add(GenericBinding(reader))
-//        }
-//        genericBindings = bindings
-//        val mappingCount = reader.readInt()
-//        val mappings = mutableListOf<PPtr<Object>>()
-//        for (j in 0 until mappingCount) {
-//            mappings.add(PPtr(reader))
-//        }
-//        pptrCurveMapping = mappings
-//    }
-//
-//    internal constructor(bindings: List<GenericBinding>) {
-//        genericBindings = bindings; pptrCurveMapping = emptyList()
-//    }
-
     fun findBinding(index: Int): GenericBinding? {
         var curves = 0
         for (b in genericBindings) {
@@ -596,7 +522,7 @@ class Clip internal constructor(reader: ObjectReader) {
         mConstantClip = if (version >= intArrayOf(4, 3)) {
             ConstantClip(reader)
         } else null
-        mBinding = if (version >= intArrayOf(2018, 3)) {
+        mBinding = if (version < intArrayOf(2018, 3)) {
             ValueArrayConstant(reader)
         } else null
     }
@@ -686,13 +612,8 @@ class AnimationEvent internal constructor(reader: ObjectReader) {
     val data = reader.readAlignedString()
     val objectReferenceParameter = PPtr<Object>(reader)
     val floatParameter = reader.readFloat()
-    val intParameter: Int
-    val messageOptions: Int
-
-    init {
-        intParameter = if (reader.unityVersion[0] >= 3) reader.readInt() else 0
-        messageOptions = reader.readInt()
-    }
+    val intParameter = if (reader.unityVersion[0] >= 3) reader.readInt() else 0
+    val messageOptions = reader.readInt()
 }
 
 @Suppress("EnumEntryName")

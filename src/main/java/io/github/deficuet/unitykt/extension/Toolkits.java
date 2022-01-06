@@ -24,7 +24,7 @@ public class Toolkits {
         );
     }
 
-    public static int compareArray(byte[] a1, byte[] a2) {
+    public static int compareArrayUnsigned(byte[] a1, byte[] a2) {
         for (int i = 0; i < Math.min(a1.length, a2.length); i++) {
             int result = Integer.compare(a1[i] & 0xff, a2[i] & 0xff);
             if (result != 0) return result;

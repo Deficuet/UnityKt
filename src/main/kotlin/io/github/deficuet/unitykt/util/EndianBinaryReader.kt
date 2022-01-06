@@ -52,6 +52,8 @@ sealed class EndianBinaryReader(private val manualIgnoredOffset: Long): Closeabl
     abstract val ignoredOffset: Long
     protected abstract val offsetMode: OffsetMode
 
+    val absolutePosition get() = position + ignoredOffset
+
     /**
      * @see [FileType]
      */
@@ -188,6 +190,13 @@ sealed class EndianBinaryReader(private val manualIgnoredOffset: Long): Closeabl
             }
         }
     }
+    private fun <R> readArrayIndexed(frequency: Int, lambda: (Int) -> R): List<R> {
+        return mutableListOf<R>().apply {
+            for (i in 0 until frequency) {
+                add(lambda(i))
+            }
+        }
+    }
     fun readNextBoolArray(): List<Boolean> = readArray(readInt(), this::readBool)
     fun readNextUShortArray(): List<UShort> = readArray(readInt(), this::readUShort)
     fun readNextIntArray(frequency: Int = 0): List<Int> =
@@ -213,13 +222,9 @@ sealed class EndianBinaryReader(private val manualIgnoredOffset: Long): Closeabl
         val num = if (frequency == 0) readInt() else frequency
         return readArray(num, constructor)
     }
-    fun <T> readArrayIndexed(frequency: Int = 0, constructor: (Int) -> T): List<T> {
+    fun <T> readArrayIndexedOf(frequency: Int = 0, constructor: (Int) -> T): List<T> {
         val num = if (frequency == 0) readInt() else frequency
-        return mutableListOf<T>().apply {
-            for (i in 0 until num) {
-                add(constructor(i))
-            }
-        }
+        return readArrayIndexed(num, constructor)
     }
 
     fun resetEndian(e: EndianType): EndianBinaryReader { endian = e; return this }
@@ -254,9 +259,10 @@ class EndianByteArrayReader(
         if (size <= 0 || position >= length) {
             return byteArrayOf()
         }
-        val positionInt = position.toInt()
-        val ret = array.sliceArray(positionInt until positionInt + size)
-        plusAssign(size)   //absolute position
+        val ret = with(absolutePosition.toInt()) {
+            array.sliceArray(this until this + size)
+        }
+        plusAssign(size)
         return ret
     }
 
@@ -330,13 +336,6 @@ class ObjectReader(
     override var position: Long
         get() = reader.position - reader.ignoredOffset - ignoredOffset
         set(value) { reader.position = value + ignoredOffset }
-
-    /**
-     * Relative position at parent reader where this object reader wraps.
-     *
-     * May use absolute position when reading objects.
-     */
-    val absolutePosition get() = position + ignoredOffset
 
     override fun alignStream(alignment: Int) {
         plusAssign((alignment - absolutePosition % alignment) % alignment)

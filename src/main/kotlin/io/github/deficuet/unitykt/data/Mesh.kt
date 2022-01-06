@@ -310,7 +310,7 @@ class Mesh internal constructor(reader: ObjectReader): NamedObject(reader) {
             if (unityVersion[0] < 5) {
                 val unpackedBindPose = mCompressedMesh.mBindPoses!!.unpackFloats(16, 64)
                 val buffer = FloatArray(16)
-                mBindPose = reader.readArrayIndexed(
+                mBindPose = reader.readArrayIndexedOf(
                     (mCompressedMesh.mBindPoses.mNumItems / 16u).toInt()
                 ) {
                     System.arraycopy(

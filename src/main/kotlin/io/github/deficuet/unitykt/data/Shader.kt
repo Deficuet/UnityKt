@@ -145,7 +145,7 @@ enum class SerializedPropertyType(val id: Int) {
 class SerializedProperty internal constructor(reader: EndianBinaryReader) {
     val mName = reader.readAlignedString()
     val mDescription = reader.readAlignedString()
-    val mAttributes = reader.readNextFloatArray()
+    val mAttributes = reader.readNextStringArray()
     val mType = SerializedPropertyType.of(reader.readInt())
     val mFlags = reader.readUInt()
     val mDefValue = reader.readNextFloatArray(4)
@@ -394,7 +394,7 @@ class SerializedSubProgram internal constructor(reader: ObjectReader) {
 
     init {
         val version = reader.unityVersion
-        if (version[0] <= 2019 && version < intArrayOf(2021, 2)) {
+        if (version[0] >= 2019 && version < intArrayOf(2021, 2)) {
             reader.readNextIntArray()   //m_GlobalKeywordIndices
             reader.alignStream()
             reader.readNextIntArray()   //m_LocalKeywordIndices
@@ -481,12 +481,11 @@ class SerializedPass internal constructor(reader: ObjectReader) {
     init {
         val version = reader.unityVersion
         if (version >= intArrayOf(2020, 2)) {
-            reader += 4     //numEditorDataHash: Int
             mEditorDataHash = reader.readArrayOf { Hash128(reader) }
             reader.alignStream()
             mPlatforms = reader.readNextByteArray()
             reader.alignStream()
-            if (version <= intArrayOf(2021, 2)) {
+            if (version < intArrayOf(2021, 2)) {
                 mLocalKeywordMask = reader.readNextUShortArray()
                 reader.alignStream()
                 mGlobalKeywordMask = reader.readNextUShortArray()

@@ -8,6 +8,26 @@ import java.nio.ByteBuffer
 import kotlin.math.pow
 import kotlin.math.roundToInt
 
+class StreamingInfo internal constructor(reader: ObjectReader) {
+    val offset = if (reader.unityVersion[0] >= 2020) reader.readLong() else reader.readUInt().toLong()
+    val size = reader.readUInt()
+    val path = reader.readAlignedString()
+}
+
+class GLTextureSettings internal constructor(reader: ObjectReader) {
+    val mFilterMode = reader.readInt()
+    val mAniso = reader.readInt()
+    val mMipBias = reader.readFloat()
+    val mWrapMode: Int
+
+    init {
+        if (reader.unityVersion[0] >= 2017) {
+            mWrapMode = reader.readInt()
+            reader += 8     //m_WrapV, m_WrapW: Int
+        } else mWrapMode = reader.readInt()
+    }
+}
+
 class Texture2D internal constructor(reader: ObjectReader): Texture(reader) {
     val mWidth = reader.readInt()
     val mHeight = reader.readInt()
@@ -126,6 +146,9 @@ class Texture2D internal constructor(reader: ObjectReader): Texture(reader) {
                     out[i + 3] = this[i + 3]
                 }
             }
+            TextureFormat.BGRA32 -> {
+                return this
+            }
             TextureFormat.ARGB32 -> {
                 for (i in dataSizeIndices) {
                     out[i] = this[i + 3]
@@ -175,9 +198,6 @@ class Texture2D internal constructor(reader: ObjectReader): Texture(reader) {
                     out[i * 2 + 2] = this[i]
                     out[i * 2 + 3] = -1
                 }
-            }
-            TextureFormat.BGRA32 -> {
-                return this
             }
             TextureFormat.RHalf -> {
                 for (i in dataSizeIndices) {
@@ -264,32 +284,93 @@ class Texture2D internal constructor(reader: ObjectReader): Texture(reader) {
                     out[i + 3] = -1
                 }
             }
+            TextureFormat.DXT1 -> {
+                swapForXbox()
+            }
+            TextureFormat.DXT1Crunched -> {
+
+            }
+            TextureFormat.DXT5 -> {
+                swapForXbox()
+            }
+            TextureFormat.DXT5Crunched -> {
+
+            }
+            TextureFormat.BC4 -> {
+
+            }
+            TextureFormat.BC5 -> {
+
+            }
+            TextureFormat.BC6H -> {
+
+            }
+            TextureFormat.BC7 -> {
+
+            }
+            TextureFormat.PVRTC_RGB2, TextureFormat.PVRTC_RGBA2 -> {
+
+            }
+            TextureFormat.PVRTC_RGB4, TextureFormat.PVRTC_RGBA4 -> {
+
+            }
+            TextureFormat.ETC_RGB4, TextureFormat.ETC_RGB4_3DS -> {
+
+            }
+            TextureFormat.ETC2_RGB -> {
+
+            }
+            TextureFormat.ETC2_RGBA1 -> {
+
+            }
             TextureFormat.ETC2_RGBA8, TextureFormat.ETC_RGBA8_3DS -> {
                 ETCDecoder.decodeETC2A8(this, mWidth, mHeight, out)
+            }
+            TextureFormat.ETC_RGB4Crunched -> {
+
+            }
+            TextureFormat.ETC2_RGBA8Crunched -> {
+
+            }
+            TextureFormat.ATC_RGB4 -> {
+
+            }
+            TextureFormat.ATC_RGBA8 -> {
+
+            }
+            TextureFormat.ASTC_RGB_4x4, TextureFormat.ASTC_RGBA_4x4, TextureFormat.ASTC_HDR_4x4 -> {
+
+            }
+            TextureFormat.ASTC_RGB_5x5, TextureFormat.ASTC_RGBA_5x5, TextureFormat.ASTC_HDR_5x5 -> {
+
+            }
+            TextureFormat.ASTC_RGB_6x6, TextureFormat.ASTC_RGBA_6x6, TextureFormat.ASTC_HDR_6x6 -> {
+
+            }
+            TextureFormat.ASTC_RGB_8x8, TextureFormat.ASTC_RGBA_8x8, TextureFormat.ASTC_HDR_8x8 -> {
+
+            }
+            TextureFormat.ASTC_RGB_10x10, TextureFormat.ASTC_RGBA_10x10, TextureFormat.ASTC_HDR_10x10 -> {
+
+            }
+            TextureFormat.ASTC_RGB_12x12, TextureFormat.ASTC_RGBA_12x12, TextureFormat.ASTC_HDR_12x12 -> {
+
+            }
+            TextureFormat.EAC_R -> {
+
+            }
+            TextureFormat.EAC_R_SIGNED -> {
+
+            }
+            TextureFormat.EAC_RG -> {
+
+            }
+            TextureFormat.EAC_RG_SIGNED -> {
+
             }
             else -> {  }
         }
         return out
-    }
-}
-
-class StreamingInfo internal constructor(reader: ObjectReader) {
-    val offset = if (reader.unityVersion[0] >= 2020) reader.readLong() else reader.readUInt().toLong()
-    val size = reader.readUInt()
-    val path = reader.readAlignedString()
-}
-
-class GLTextureSettings internal constructor(reader: ObjectReader) {
-    val mFilterMode = reader.readInt()
-    val mAniso = reader.readInt()
-    val mMipBias = reader.readFloat()
-    val mWrapMode: Int
-
-    init {
-        if (reader.unityVersion[0] >= 2017) {
-            mWrapMode = reader.readInt()
-            reader += 8     //m_WrapV, m_WrapW: Int
-        } else mWrapMode = reader.readInt()
     }
 }
 

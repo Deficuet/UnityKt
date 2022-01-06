@@ -71,42 +71,44 @@ public class ETCDecoder {
     }
 
     private static void decodeETC2Block(byte[] data, byte[] buffer) {
-        int j = (data[6] & 0xff) << 8 | (data[7] & 0xff);
-        int k = (data[4] & 0xff) << 8 | (data[5] & 0xff);
+        final int d0 = data[0] & 0xff; final int d1 = data[1] & 0xff; final int d2 = data[2] & 0xff;
+        final int d3 = data[3] & 0xff; final int d4 = data[4] & 0xff; final int d5 = data[5] & 0xff;
+        final int d6 = data[6] & 0xff; final int d7 = data[7] & 0xff;
+        int j = d6 << 8 | d7;
+        int k = d4 << 8 | d5;
         byte[][] c = new byte[3][3];
-        if (((data[3] & 0xff) & 2) != 0) {
-            int r = (data[0] & 0xff) & 0xf8;
-            int dr = ((data[0] & 0xff) << 3 & 0x18) - ((data[0] & 0xff) << 3 & 0x20);
-            int g = (data[1] & 0xff) & 0xf8;
-            int dg = ((data[1] & 0xff) << 3 & 0x18) - ((data[1] & 0xff) << 3 & 0x20);
-            int b = (data[2] & 0xff) & 0xf8;
-            int db = ((data[2] & 0xff) << 3 & 0x18) - ((data[2] & 0xff) << 3 & 0x20);
+        if ((d3 & 2) != 0) {
+            int r = d0 & 0xf8;
+            int dr = (d0 << 3 & 0x18) - (d0 << 3 & 0x20);
+            int g = d1 & 0xf8;
+            int dg = (d1 << 3 & 0x18) - (d1 << 3 & 0x20);
+            int b = d2 & 0xf8;
+            int db = (d2 << 3 & 0x18) - (d2 << 3 & 0x20);
             if (r + dr < 0 || r + dr > 255) {
-                c[0][0] = (byte) (((data[0] & 0xff) << 3 & 0xc0) | ((data[0] & 0xff) << 4 & 0x30) |
-                                  ((data[0] & 0xff) >> 1 & 0xc) | ((data[0] & 0xff) & 3));
-                c[0][1] = (byte) (((data[1] & 0xff) & 0xf0) | (data[1] & 0xff) >> 4);
-                c[0][2] = (byte) (((data[1] & 0xff) & 0x0f) | (data[1] & 0xff) << 4);
-                c[1][0] = (byte) (((data[2] & 0xff) & 0xf0) | (data[2] & 0xff) >> 4);
-                c[1][1] = (byte) (((data[2] & 0xff) & 0x0f) | (data[2] & 0xff) << 4);
-                c[1][2] = (byte) (((data[3] & 0xff) & 0xf0) | (data[3] & 0xff) >> 4);
-                int d = ETC2_DISTANCE_TABLE[((data[3] & 0xff) >> 1 & 6) | ((data[3] & 0xff) & 1)];
+                c[0][0] = (byte) ((d0 << 3 & 0xc0) | (d0 << 4 & 0x30) | (d0 >> 1 & 0xc) | (d0 & 3));
+                c[0][1] = (byte) ((d1 & 0xf0) | d1 >> 4);
+                c[0][2] = (byte) ((d1 & 0x0f) | d1 << 4);
+                c[1][0] = (byte) ((d2 & 0xf0) | d2 >> 4);
+                c[1][1] = (byte) ((d2 & 0x0f) | d2 << 4);
+                c[1][2] = (byte) ((d3 & 0xf0) | d3 >> 4);
+                int d = ETC2_DISTANCE_TABLE[(d3 >> 1 & 6) | (d3 & 1)];
                 int[] colorSet = {getColorRaw(c[0]), getColor(c[1], d), getColorRaw(c[1]), getColor(c[1], -d)};
                 k <<= 1;
                 for (int i = 0; i < 16; i++, j >>= 1, k >>= 1) {
                     Toolkits.putInt(buffer, WRITE_ORDER_TABLE[i], colorSet[(k & 2) | (j & 1)]);
                 }
             } else if (g + dg < 0 || g + dg > 255) {
-                c[0][0] = (byte) (((data[0] & 0xff) << 1 & 0xf0) | ((data[0] & 0xff) >> 3 & 0xf));
-                c[0][1] = (byte) (((data[0] & 0xff) << 5 & 0xe0) | ((data[1] & 0xff) & 0x10));
+                c[0][0] = (byte) ((d0 << 1 & 0xf0) | (d0 >> 3 & 0xf));
+                c[0][1] = (byte) ((d0 << 5 & 0xe0) | (d1 & 0x10));
                 c[0][1] |= (c[0][1] & 0xff) >> 4;
-                c[0][2] = (byte) (((data[1] & 0xff) & 8) | ((data[1] & 0xff) << 1 & 6) | (data[2] & 0xff) >> 7);
+                c[0][2] = (byte) ((d1 & 8) | (d1 << 1 & 6) | d2 >> 7);
                 c[0][2] |= (c[0][2] & 0xff) << 4;
-                c[1][0] = (byte) (((data[2] & 0xff) << 1 & 0xf0) | ((data[2] & 0xff) >> 3 & 0xf));
-                c[1][1] = (byte) (((data[2] & 0xff) << 5 & 0xe0) | ((data[3] & 0xff) >> 3 & 0x10));
+                c[1][0] = (byte) ((d2 << 1 & 0xf0) | (d2 >> 3 & 0xf));
+                c[1][1] = (byte) ((d2 << 5 & 0xe0) | (d3 >> 3 & 0x10));
                 c[1][1] |= (c[1][1] & 0xff) >> 4;
-                c[1][2] = (byte) (((data[3] & 0xff) << 1 & 0xf0) | ((data[3] & 0xff) >> 3 & 0xf));
-                int d = ((data[3] & 0xff) & 4) | ((data[3] & 0xff) << 1 & 2);
-                if (Toolkits.compareArray(c[0], c[1]) >= 0) ++d;
+                c[1][2] = (byte) ((d3 << 1 & 0xf0) | (d3 >> 3 & 0xf));
+                int d = (d3 & 4) | (d3 << 1 & 2);
+                if (Toolkits.compareArrayUnsigned(c[0], c[1]) >= 0) ++d;
                 d = ETC2_DISTANCE_TABLE[d];
                 int[] colorSet = {getColor(c[0], d), getColor(c[0], -d), getColor(c[1], d), getColor(c[1], -d)};
                 k <<= 1;
@@ -114,22 +116,17 @@ public class ETCDecoder {
                     Toolkits.putInt(buffer, WRITE_ORDER_TABLE[i], colorSet[(k & 2) | (j & 1)]);
                 }
             } else if (b + db < 0 || b + db > 255) {
-                c[0][0] = (byte) (((data[0] & 0xff) << 1 & 0xfc) | ((data[0] & 0xff) >> 5 & 3));
-                c[0][1] = (byte) (((data[0] & 0xff) << 7 & 0x80) | ((data[1] & 0xff) & 0x7e) |
-                        ((data[0] & 0xff) & 1));
-                c[0][2] = (byte) (((data[1] & 0xff) << 7 & 0x80) | ((data[2] & 0xff) << 2 & 0x60) |
-                                  ((data[2] & 0xff) << 3 & 0x18) | ((data[3] & 0xff) >> 5 & 4));
+                c[0][0] = (byte) ((d0 << 1 & 0xfc) | (d0 >> 5 & 3));
+                c[0][1] = (byte) ((d0 << 7 & 0x80) | (d1 & 0x7e) | (d0 & 1));
+                c[0][2] = (byte) ((d1 << 7 & 0x80) | (d2 << 2 & 0x60) | (d2 << 3 & 0x18) | (d3 >> 5 & 4));
                 c[0][2] |= (c[0][2] & 0xff) >> 6;
-                c[1][0] = (byte) (((data[3] & 0xff) << 1 & 0xf8) | ((data[3] & 0xff) << 2 & 4) |
-                        ((data[3] & 0xff) >> 5 & 3));
-                c[1][1] = (byte) (((data[4] & 0xff) & 0xfe) | (data[4] & 0xff) >> 7);
-                c[1][2] = (byte) (((data[4] & 0xff) << 7 & 0x80) | ((data[5] & 0xff) >> 1 & 0x7c));
+                c[1][0] = (byte) ((d3 << 1 & 0xf8) | (d3 << 2 & 4) | (d3 >> 5 & 3));
+                c[1][1] = (byte) ((d4 & 0xfe) | d4 >> 7);
+                c[1][2] = (byte) ((d4 << 7 & 0x80) | (d5 >> 1 & 0x7c));
                 c[1][2] |= (c[1][2] & 0xff) >> 6;
-                c[2][0] = (byte) (((data[5] & 0xff) << 5 & 0xe0) | ((data[6] & 0xff) >> 3 & 0x1c) |
-                        ((data[5] & 0xff) >> 1 & 3));
-                c[2][1] = (byte) (((data[6] & 0xff) << 3 & 0xf8) | ((data[7] & 0xff) >> 5 & 0x6) |
-                        ((data[6] & 0xff) >> 4 & 1));
-                c[2][2] = (byte) ((data[7] & 0xff) << 2 | ((data[7] & 0xff) >> 4 & 3));
+                c[2][0] = (byte) ((d5 << 5 & 0xe0) | (d6 >> 3 & 0x1c) | (d5 >> 1 & 3));
+                c[2][1] = (byte) ((d6 << 3 & 0xf8) | (d7 >> 5 & 0x6) | (d6 >> 4 & 1));
+                c[2][2] = (byte) (d7 << 2 | (d7 >> 4 & 3));
                 for (int y = 0, i = 0; y < 4; y++) {
                     for (int x = 0; x < 4; x++, i++) {
                         byte rr = clamp(
@@ -151,8 +148,8 @@ public class ETCDecoder {
                     }
                 }
             } else {
-                int[] code = {(data[3] & 0xff) >> 5, (data[3] & 0xff) >> 2 & 7};
-                int[] table = ETC1_SUB_BLOCK_TABLE[(data[3] & 0xff) & 1];
+                int[] code = {d3 >> 5, d3 >> 2 & 7};
+                int[] table = ETC1_SUB_BLOCK_TABLE[d3 & 1];
                 c[0][0] = (byte) (r | r >> 5);
                 c[0][1] = (byte) (g | g >> 5);
                 c[0][2] = (byte) (b | b >> 5);
@@ -169,14 +166,14 @@ public class ETCDecoder {
                 }
             }
         } else {
-            int[] code = {(data[3] & 0xff) >> 5, (data[3] & 0xff) >> 2 & 7};
-            int[] table = ETC1_SUB_BLOCK_TABLE[(data[3] & 0xff) & 1];
-            c[0][0] = (byte) (((data[0] & 0xff) & 0xf0) | (data[0] & 0xff) >> 4);
-            c[1][0] = (byte) (((data[0] & 0xff) & 0x0f) | (data[0] & 0xff) << 4);
-            c[0][1] = (byte) (((data[1] & 0xff) & 0xf0) | (data[1] & 0xff) >> 4);
-            c[1][1] = (byte) (((data[1] & 0xff) & 0x0f) | (data[1] & 0xff) << 4);
-            c[0][2] = (byte) (((data[2] & 0xff) & 0xf0) | (data[2] & 0xff) >> 4);
-            c[1][2] = (byte) (((data[2] & 0xff) & 0x0f) | (data[2] & 0xff) << 4);
+            int[] code = {d3 >> 5, d3 >> 2 & 7};
+            int[] table = ETC1_SUB_BLOCK_TABLE[d3 & 1];
+            c[0][0] = (byte) ((d0 & 0xf0) | d0 >> 4);
+            c[1][0] = (byte) ((d0 & 0x0f) | d0 << 4);
+            c[0][1] = (byte) ((d1 & 0xf0) | d1 >> 4);
+            c[1][1] = (byte) ((d1 & 0x0f) | d1 << 4);
+            c[0][2] = (byte) ((d2 & 0xf0) | d2 >> 4);
+            c[1][2] = (byte) ((d2 & 0x0f) | d2 << 4);
             for (int i = 0; i < 16; i++, j >>= 1, k >>= 1) {
                 int s = table[i];
                 int m = ETC1_MODIFIER_TABLE[code[s]][j & 1];
