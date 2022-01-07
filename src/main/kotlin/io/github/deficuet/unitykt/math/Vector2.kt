@@ -15,10 +15,9 @@ class Vector2(x: Double, y: Double): Vector() {
 
     val vector4: Vector4 get() = Vector4(this, 0.0, 0.0)
 
-    private fun length2(): Double = x * x + y * y
+    val length2 get() = x * x + y * y
 
     override fun normalize() {
-        val length2 = length2()
         if (length2 > kEpsilonSqrt) {
             with(1 / sqrt(length2)) {
                 x *= this
@@ -43,7 +42,7 @@ class Vector2(x: Double, y: Double): Vector() {
 
     operator fun <N> div(d: N): Vector2 where N: Number, N: Comparable<N> = Vector2(x / d, y / d)
 
-    infix fun approxEquals(other: Vector2): Boolean = minus(other).length2() < kEpsilon2
+    infix fun approxEquals(other: Vector2): Boolean = minus(other).length2 < kEpsilon2
 
     override fun hashCode(): Int {
         return x.hashCode() xor (y.hashCode() shl 2)

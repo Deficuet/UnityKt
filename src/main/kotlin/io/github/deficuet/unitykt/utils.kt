@@ -1,6 +1,5 @@
 package io.github.deficuet.unitykt
 
-import io.github.deficuet.unitykt.data.NamedObject
 import io.github.deficuet.unitykt.data.Object
 
 operator fun List<ImportContext>.get(key: String) = find { it.name.contentEquals(key) }

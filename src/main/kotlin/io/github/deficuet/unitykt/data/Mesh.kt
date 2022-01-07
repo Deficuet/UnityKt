@@ -890,9 +890,6 @@ class GfxPrimitiveType private constructor() {
         const val kPrimitiveTriangles = 0
         const val kPrimitiveTriangleStrip = 1
         const val kPrimitiveQuads = 2
-//        const val kPrimitiveLines = 3
-//        const val kPrimitiveLineStrip = 4
-//        const val kPrimitivePoints = 5
     }
 }
 

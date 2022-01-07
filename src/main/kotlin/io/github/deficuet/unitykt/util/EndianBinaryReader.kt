@@ -1,6 +1,7 @@
 package io.github.deficuet.unitykt.util
 
 import java.nio.ByteBuffer
+import java.nio.ByteOrder
 import java.nio.charset.Charset
 import java.nio.file.Files
 import java.nio.file.Path
@@ -11,8 +12,9 @@ import io.github.deficuet.unitykt.file.ObjectInfo
 import io.github.deficuet.unitykt.file.SerializedFile
 import io.github.deficuet.unitykt.math.*
 
-enum class EndianType {
-    LittleEndian, BigEndian
+enum class EndianType(val order: ByteOrder) {
+    LittleEndian(ByteOrder.LITTLE_ENDIAN),
+    BigEndian(ByteOrder.BIG_ENDIAN)
 }
 
 enum class FileType {
@@ -52,8 +54,9 @@ sealed class EndianBinaryReader(private val manualIgnoredOffset: Long): Closeabl
     abstract val ignoredOffset: Long
     protected abstract val offsetMode: OffsetMode
 
-    val absolutePosition get() = position + ignoredOffset
-
+    var absolutePosition: Long
+        get() = position + ignoredOffset
+        set(value) { position = value - ignoredOffset }
     /**
      * @see [FileType]
      */
@@ -111,7 +114,7 @@ sealed class EndianBinaryReader(private val manualIgnoredOffset: Long): Closeabl
 
     protected fun initOffset(): Long {
         return if (offsetMode == OffsetMode.MANUAL) {
-            manualIgnoredOffset
+            manualIgnoredOffset.also { position = it }
         } else {
             var first: Byte
             do {
@@ -147,14 +150,14 @@ sealed class EndianBinaryReader(private val manualIgnoredOffset: Long): Closeabl
 
     fun readSByte(): Byte = ByteBuffer.wrap(read(1)).get()      //-128~127
     fun readByte(): UByte = readSByte().toUByte()       //0~255
-    fun readShort(): Short = ByteBuffer.wrap(read(2).rearrange(endian)).short
+    fun readShort(): Short = ByteBuffer.wrap(read(2)).order(endian.order).short
     fun readUShort(): UShort = readShort().toUShort()
-    fun readInt(): Int = ByteBuffer.wrap(read(4).rearrange(endian)).int
+    fun readInt(): Int = ByteBuffer.wrap(read(4)).order(endian.order).int
     fun readUInt(): UInt = readInt().toUInt()
-    fun readLong(): Long = ByteBuffer.wrap(read(8).rearrange(endian)).long
+    fun readLong(): Long = ByteBuffer.wrap(read(8)).order(endian.order).long
     fun readULong(): ULong = readLong().toULong()
-    fun readFloat(): Float = ByteBuffer.wrap(read(4).rearrange(endian)).float
-    fun readDouble(): Double = ByteBuffer.wrap(read(8).rearrange(endian)).double
+    fun readFloat(): Float = ByteBuffer.wrap(read(4)).order(endian.order).float
+    fun readDouble(): Double = ByteBuffer.wrap(read(8)).order(endian.order).double
     fun readBool(): Boolean = readSByte() != 0.toByte()
     fun readString(size: Int = -1, encode: Charset = Charsets.UTF_8): String {
         return if (size == -1) readStringUntilNull(charset = encode) else read(size).decodeToString(encode)

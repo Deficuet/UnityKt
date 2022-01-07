@@ -7,16 +7,7 @@ import io.github.deficuet.unitykt.util.compareTo
 class Avatar internal constructor(reader: ObjectReader): NamedObject(reader) {
     val mAvatarSize = reader.readUInt()
     val mAvatar = AvatarConstant(reader)
-    val mTOS: List<Pair<UInt, String>>
-
-    init {
-//        val numTOS = reader.readInt()
-//        val tos = mutableMapOf<UInt, String>()
-//        for (i in 0 until numTOS) {
-//            tos[reader.readUInt()] = reader.readAlignedString()
-//        }
-        mTOS = reader.readArrayOf { with(reader) { readUInt() to readAlignedString() } }
-    }
+    val mTOS = reader.readArrayOf { with(reader) { readUInt() to readAlignedString() } }
 }
 
 class Node internal constructor(reader: ObjectReader) {
@@ -58,38 +49,13 @@ class Axes internal constructor(reader: ObjectReader) {
 }
 
 class Skeleton internal constructor(reader: ObjectReader) {
-    val mNode: List<Node>
-    val mID: List<UInt>
-    val mAxesArray: List<Axes>
-
-    init {
-//        val numNodes = reader.readInt()
-//        val nodes = mutableListOf<Node>()
-//        for (i in 0 until numNodes) {
-//            nodes.add(Node(reader))
-//        }
-        mNode = reader.readArrayOf { Node(reader) }
-        mID = reader.readNextUIntArray()
-//        val numAxes = reader.readInt()
-//        val axes = mutableListOf<Axes>()
-//        for (j in 0 until numAxes) {
-//            axes.add(Axes(reader))
-//        }
-        mAxesArray = reader.readArrayOf { Axes(reader) }
-    }
+    val mNode = reader.readArrayOf { Node(reader) }
+    val mID = reader.readNextUIntArray()
+    val mAxesArray = reader.readArrayOf { Axes(reader) }
 }
 
 class SkeletonPose internal constructor(reader: ObjectReader) {
-    val mX: List<XForm>
-
-    init {
-//        val numX = reader.readInt()
-//        val x = mutableListOf<XForm>()
-//        for (i in 0 until numX) {
-//            x.add(XForm(reader))
-//        }
-        mX = reader.readArrayOf { XForm(reader) }
-    }
+    val mX = reader.readArrayOf { XForm(reader) }
 }
 
 class Hand internal constructor(reader: ObjectReader) {
@@ -141,17 +107,7 @@ class Human internal constructor(reader: ObjectReader) {
         val version = reader.unityVersion
         val v182 = intArrayOf(2018, 2)
         if (version < v182) {
-//            val numHandles = reader.readInt()
-//            val handles = mutableListOf<Handle>()
-//            for (i in 0 until numHandles) {
-//                handles.add(Handle(reader))
-//            }
             mHandles = reader.readArrayOf { Handle(reader) }
-//            val numColliders = reader.readInt()
-//            val colliders = mutableListOf<Collider>()
-//            for (j in 0 until numColliders) {
-//                colliders.add(Collider(reader))
-//            }
             mColliderArray = reader.readArrayOf { Collider(reader) }
         } else {
             mHandles = emptyList(); mColliderArray = emptyList()

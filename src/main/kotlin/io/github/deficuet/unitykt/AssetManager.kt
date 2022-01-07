@@ -19,8 +19,6 @@ object AssetManager {
     var offsetMode = OffsetMode.AUTO
     var manualIgnoredOffset: Long = 0
 
-    private val zipExt = listOf("apk", "zip")
-
     fun loadFromByteArray(data: ByteArray, name: String): ImportContext {
         return ImportContext(data, name, offsetMode, manualIgnoredOffset).also { contexts.add(it) }
     }

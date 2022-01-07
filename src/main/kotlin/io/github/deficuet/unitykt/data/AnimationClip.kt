@@ -337,35 +337,6 @@ class HumanPose internal constructor(reader: ObjectReader) {
             if (reader.unityVersion >= intArrayOf(5, 4)) reader.readVector3() else reader.readVector4().vector3
         }
     } else emptyList()
-
-//    init {
-//        val version = reader.unityVersion
-//        mLookAt = if (version >= intArrayOf(5, 4)) reader.readVector3() else reader.readVector4().vector3
-//        mLookAtWeight = reader.readVector4()
-////        val goalCount = reader.readInt()
-////        val goals = mutableListOf<HumanGoal>()
-////        for (i in 0 until goalCount) {
-////            goals.add(HumanGoal(reader))
-////        }
-//        mGoalArray = reader.readArrayOf { HumanGoal(reader) }
-//        mLeftHandPose = HandPose(reader)
-//        mRightHandPose = HandPose(reader)
-//        mDoFArray = reader.readNextFloatArray()
-//        mTDoFArray =  if (version > intArrayOf(5, 2)) {
-////            val numTDoF = reader.readInt()
-////            val tDoFs = mutableListOf<Vector3>()
-////            for (j in 0 until numTDoF) {
-////                tDoFs.add(
-////                    if (version >= intArrayOf(5, 4)) reader.readVector3()
-////                    else reader.readVector4().vector3
-////                )
-////            }
-////            tDoFs
-//            reader.readArrayOf {
-//                if (version >= intArrayOf(5, 4)) reader.readVector3() else reader.readVector4().vector3
-//            }
-//        } else emptyList()
-//    }
 }
 
 class StreamedCurveKey internal constructor(reader: EndianBinaryReader) {
@@ -389,15 +360,6 @@ class StreamedCurveKey internal constructor(reader: EndianBinaryReader) {
 class StreamedFrame internal constructor(reader: EndianBinaryReader) {
     val time = reader.readFloat()
     val keyList = reader.readArrayOf { StreamedCurveKey(reader) }
-
-//    init {
-//        val keyCount = reader.readInt()
-//        val keys = mutableListOf<StreamedCurveKey>()
-//        for (i in 0 until keyCount) {
-//            keys.add(StreamedCurveKey(reader))
-//        }
-//        keyList = keys
-//    }
 }
 
 class StreamedClip internal constructor(reader: ObjectReader) {
@@ -461,15 +423,6 @@ class ValueConstant internal constructor(reader: ObjectReader) {
 
 class ValueArrayConstant internal constructor(reader: ObjectReader) {
     val mValueArray = reader.readArrayOf { ValueConstant(reader) }
-
-//    init {
-//        val valCount = reader.readInt()
-//        val values = mutableListOf<ValueConstant>()
-//        for (i in 0 until valCount) {
-//            values.add(ValueConstant(reader))
-//        }
-//        mValueArray = values
-//    }
 }
 
 class GenericBinding internal constructor(reader: ObjectReader) {

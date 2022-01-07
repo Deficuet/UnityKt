@@ -6,17 +6,11 @@ import java.nio.file.Path
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.name
 
-internal operator fun ByteArray.get(i: UInt) = get(i.toInt()).toIntBits()
-
 internal operator fun ByteArray.get(i: Int, l: Int) = sliceArray(i until i + l)
 
 internal fun Byte.toIntBits() = toUByte().toInt()
 
 internal fun Short.toIntBits() = toUShort().toInt()
-
-internal fun ByteArray.rearrange(endian: EndianType): ByteArray {
-    return if (size > 1 && endian == EndianType.LittleEndian) reversedArray() else this
-}
 
 internal fun ByteArray.decodeToString(charset: Charset = Charsets.UTF_8) =
     java.lang.String(this, charset) as String
@@ -66,8 +60,6 @@ internal fun Int.clampByte(): Byte {
     }
 }
 
-internal fun Int.clamp() = if (this < 0) 0 else if (this > 255) 255 else this
-
 internal fun String.isFile(): Boolean = Files.isRegularFile(Path.of(this))
 
 internal fun String.isDirectory(): Boolean = Files.isDirectory(Path.of(this))
@@ -81,8 +73,6 @@ internal fun String.listFiles(): List<String> {
 internal fun List<String>.containsIgnoreCase(element: String, sRef: StringRef): Boolean {
     return find { it.contentEquals(element) }?.also { sRef.value = it } != null
 }
-
-//internal infix fun Boolean.imply(other: Boolean) = !this or other
 
 internal fun List<ByteArray>.sum(): ByteArray {
     var bytes = kotlin.byteArrayOf()

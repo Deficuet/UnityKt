@@ -28,10 +28,9 @@ class Vector4(x: Double, y: Double, z: Double, w: Double): Vector() {
 
     val color: Color get() = Color(x, y, z, w)
 
-    private fun length2(): Double = x * x + y * y + z * z + w * w
+    val length2 get() = x * x + y * y + z * z + w * w
 
     override fun normalize() {
-        val length2 = length2()
         if (length2 > kEpsilonSqrt) {
             with(1 / sqrt(length2)) {
                 x *= this
@@ -60,7 +59,7 @@ class Vector4(x: Double, y: Double, z: Double, w: Double): Vector() {
     operator fun <N> div(d: N) where N: Number, N: Comparable<N> =
         Vector4(x / d, y / d, z / d, w / d)
 
-    infix fun approxEquals(other: Vector4): Boolean = minus(other).length2() < kEpsilon2
+    infix fun approxEquals(other: Vector4): Boolean = minus(other).length2 < kEpsilon2
 
     override fun hashCode(): Int {
         return x.hashCode() xor (y.hashCode() shl 2) xor (z.hashCode() shr 2) xor (w.hashCode() shr 1)

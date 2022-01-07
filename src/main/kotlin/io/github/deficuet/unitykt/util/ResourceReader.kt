@@ -39,7 +39,7 @@ class ResourceReader internal constructor(
     }
 
     val bytes: ByteArray by lazy {
-        reader!!.position = offset - reader!!.ignoredOffset
+        reader!!.absolutePosition = offset
         reader!!.read(size.toInt())
     }
 
