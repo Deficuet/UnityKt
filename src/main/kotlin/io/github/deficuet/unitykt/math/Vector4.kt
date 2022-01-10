@@ -79,6 +79,10 @@ class Vector4(x: Double, y: Double, z: Double, w: Double): Vector() {
         return true
     }
 
+    override fun toString(): String {
+        return "Vector(x, y, z, w) = ($x, $y, $z, $w)"
+    }
+
     companion object {
         val Zero = Vector4(0.0, 0.0, 0.0, 0.0)
     }

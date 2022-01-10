@@ -148,7 +148,7 @@ sealed class EndianBinaryReader(private val manualIgnoredOffset: Long): Closeabl
         return result
     }
 
-    fun readSByte(): Byte = ByteBuffer.wrap(read(1)).get()      //-128~127
+    fun readSByte(): Byte = read(1)[0]      //-128~127
     fun readByte(): UByte = readSByte().toUByte()       //0~255
     fun readShort(): Short = ByteBuffer.wrap(read(2)).order(endian.order).short
     fun readUShort(): UShort = readShort().toUShort()

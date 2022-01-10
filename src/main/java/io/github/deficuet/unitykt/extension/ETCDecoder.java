@@ -63,17 +63,18 @@ public class ETCDecoder {
         byte[] buffer = new byte[64];
         for (int by = 0, dataPtr = 0; by < blocksY; by++) {
             for (int bx = 0; bx < blocksX; bx++, dataPtr += 16) {
-                decodeETC2Block(Arrays.copyOfRange(data, dataPtr + 8, data.length), buffer);
-                decodeETC2A8Block(Arrays.copyOfRange(data, dataPtr, data.length), buffer);
+                decodeETC2Block(data, dataPtr + 8, buffer);
+                decodeETC2A8Block(data, dataPtr, buffer);
                 Toolkits.copyBlockBuffer(buffer, out, bx, by, width, height, 4, 4);
             }
         }
     }
 
-    private static void decodeETC2Block(byte[] data, byte[] buffer) {
-        final int d0 = data[0] & 0xff; final int d1 = data[1] & 0xff; final int d2 = data[2] & 0xff;
-        final int d3 = data[3] & 0xff; final int d4 = data[4] & 0xff; final int d5 = data[5] & 0xff;
-        final int d6 = data[6] & 0xff; final int d7 = data[7] & 0xff;
+    private static void decodeETC2Block(byte[] data, int pData, byte[] buffer) {
+        final int d0 = data[pData] & 0xff; final int d1 = data[pData + 1] & 0xff;
+        final int d2 = data[pData + 2] & 0xff; final int d3 = data[pData + 3] & 0xff;
+        final int d4 = data[pData + 4] & 0xff; final int d5 = data[pData + 5] & 0xff;
+        final int d6 = data[pData + 6] & 0xff; final int d7 = data[pData + 7] & 0xff;
         int j = d6 << 8 | d7;
         int k = d4 << 8 | d5;
         byte[][] c = new byte[3][3];
@@ -182,18 +183,19 @@ public class ETCDecoder {
         }
     }
 
-    private static void decodeETC2A8Block(byte[] data, byte[] buffer) {
-        if (((data[1] & 0xff) & 0xf0) != 0) {
-            int multiplier = (data[1] & 0xff) >> 4;
-            byte[] table = ETC2_ALPHA_MOD_TABLE[(data[1] & 0xff) & 0xf];
-            long l = ByteBuffer.wrap(Arrays.copyOfRange(data, 0, 8)).getLong();
+    private static void decodeETC2A8Block(byte[] data, int pData, byte[] buffer) {
+        final int d1 = data[pData + 1] & 0xff;
+        if ((d1 & 0xf0) != 0) {
+            int multiplier = d1 >> 4;
+            byte[] table = ETC2_ALPHA_MOD_TABLE[d1 & 0xf];
+            long l = ByteBuffer.wrap(Arrays.copyOfRange(data, pData, pData + 8)).getLong();
             for (int i = 0; i < 16; i++, l >>>= 3) {
                 buffer[WRITE_ORDER_TABLE_REV[i] * 4 + 3] =
-                        clamp((data[0] & 0xff) + multiplier * table[(int) (l & 7)]);
+                        clamp((data[pData] & 0xff) + multiplier * table[(int) (l & 7)]);
             }
         } else {
             for (int i = 0; i < 16; i++) {
-                buffer[i * 4 + 3] = data[0];
+                buffer[i * 4 + 3] = data[pData];
             }
         }
     }

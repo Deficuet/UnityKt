@@ -76,6 +76,12 @@ data class Matrix4x4(private val data: DoubleArray) {
         return true
     }
 
+    override fun toString(): String {
+        return intArrayOf(0, 1, 2, 3).map { column(it) }.map { doubleArrayOf(it.x, it.y, it.z, it.w) }
+            .map { it.maxOf { d -> "%.4f".format(d).length } }.joinToString("  ") { "%-${it}.4f" }
+            .let { "| $it |\n" }.repeat(4).format(*data.toTypedArray()).trim()
+    }
+
     companion object {
         //Secondary constructor in order to avoid signature conflict due to type erasure
         operator fun invoke(data: List<Float>) = Matrix4x4(data.map { it.toDouble() }.toDoubleArray())

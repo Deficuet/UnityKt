@@ -60,6 +60,10 @@ class Vector2(x: Double, y: Double): Vector() {
         return true
     }
 
+    override fun toString(): String {
+        return "Vector(x, y) = ($x, $y)"
+    }
+
     companion object {
         val Zero = Vector2(0.0, 0.0)
     }
