@@ -10,20 +10,20 @@ class AnimationClip internal constructor(reader: ObjectReader): NamedObject(read
     val mLegacy: Boolean
     val mCompressed: Boolean
     val mUseHighQualityCurve: Boolean
-    val mRotationCurves: List<QuaternionCurve>
-    val mCompressedRotationCurves: List<CompressedAnimationCurve>
-    val mEulerCurves: List<Vector3Curve>
-    val mPositionCurves: List<Vector3Curve>
-    val mScaleCurves: List<Vector3Curve>
-    val mFloatCurves: List<FloatCurve>
-    val mPPtrCurves: List<PPtrCurve>
+    val mRotationCurves: Array<QuaternionCurve>
+    val mCompressedRotationCurves: Array<CompressedAnimationCurve>
+    val mEulerCurves: Array<Vector3Curve>
+    val mPositionCurves: Array<Vector3Curve>
+    val mScaleCurves: Array<Vector3Curve>
+    val mFloatCurves: Array<FloatCurve>
+    val mPPtrCurves: Array<PPtrCurve>
     val mSampleRate: Float
     val mWrapMode: Int
     val mBounds: AABB?
     val mMuscleClipSize: UInt
     val mMuscleClip: ClipMuscleConstant?
     val mClipBindingConstant: AnimationClipBindingConstant?
-    val mEvents: List<AnimationEvent>
+    val mEvents: Array<AnimationEvent>
 
     init {
         val v43 = intArrayOf(4, 3)
@@ -44,13 +44,13 @@ class AnimationClip internal constructor(reader: ObjectReader): NamedObject(read
         mCompressedRotationCurves = reader.readArrayOf { CompressedAnimationCurve(reader) }
         mEulerCurves = if (unityVersion >= intArrayOf(5, 3)) {
             reader.readArrayOf { Vector3Curve(reader) }
-        } else emptyList()
+        } else emptyArray()
         mPositionCurves = reader.readArrayOf { Vector3Curve(reader) }
         mScaleCurves = reader.readArrayOf { Vector3Curve(reader) }
         mFloatCurves = reader.readArrayOf { FloatCurve(reader) }
         mPPtrCurves = if (unityVersion >= v43) {
             reader.readArrayOf { PPtrCurve(reader) }
-        } else emptyList()
+        } else emptyArray()
         mSampleRate = reader.readFloat()
         mWrapMode = reader.readInt()
         mBounds = if (unityVersion >= intArrayOf(3, 4)) AABB(reader) else null
@@ -336,7 +336,7 @@ class HumanPose internal constructor(reader: ObjectReader) {
         reader.readArrayOf {
             if (reader.unityVersion >= intArrayOf(5, 4)) reader.readVector3() else reader.readVector4().vector3
         }
-    } else emptyList()
+    } else emptyArray()
 }
 
 class StreamedCurveKey internal constructor(reader: EndianBinaryReader) {
@@ -347,7 +347,7 @@ class StreamedCurveKey internal constructor(reader: EndianBinaryReader) {
     var inSlope = 0f
 
     fun nextInSlope(deltaX: Float, rhs: StreamedCurveKey): Float {
-        if (coeff.subList(0, 3).all { it == 0f }) return Float.POSITIVE_INFINITY
+        if (coeff.sliceArray(0..2).all { it == 0f }) return Float.POSITIVE_INFINITY
         val dx = maxOf(deltaX, 0.0001f)
         val dy = rhs.value - value
         val length = 1f / dx / dx
@@ -502,9 +502,9 @@ class ClipMuscleConstant internal constructor(reader: ObjectReader) {
     val mLevel: Float
     val mCycleOffset: Float
     val mAverageAngularSpeed: Float
-    val mIndexArray: List<Int>
-    val mValueArrayDelta: List<ValueDelta>
-    val mValueArrayReferencePose: List<Float>
+    val mIndexArray: IntArray
+    val mValueArrayDelta: Array<ValueDelta>
+    val mValueArrayReferencePose: FloatArray
     val mMirror: Boolean
     val mLoopTime: Boolean
     val mLoopBlend: Boolean
@@ -543,7 +543,7 @@ class ClipMuscleConstant internal constructor(reader: ObjectReader) {
         mIndexArray = reader.readNextIntArray()
         if (version < intArrayOf(4, 3)) reader.readNextIntArray()   //m_AdditionalCurveIndexArray: List<Int>
         mValueArrayDelta = reader.readArrayOf { ValueDelta(reader) }
-        mValueArrayReferencePose = if (version >= intArrayOf(5, 3)) reader.readNextFloatArray() else emptyList()
+        mValueArrayReferencePose = if (version >= intArrayOf(5, 3)) reader.readNextFloatArray() else floatArrayOf()
         mMirror = reader.readBool()
         mLoopTime = if (version >= intArrayOf(4, 3)) reader.readBool() else false
         mLoopBlend = reader.readBool()

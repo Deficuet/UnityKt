@@ -4,9 +4,9 @@ import io.github.deficuet.unitykt.util.ObjectReader
 import io.github.deficuet.unitykt.util.compareTo
 
 abstract class Renderer internal constructor(reader: ObjectReader): Component(reader) {
-    val mMaterials: List<PPtr<Material>>
+    val mMaterials: Array<PPtr<Material>>
     val mStaticBatchInfo: StaticBatchInfo?
-    val mSubsetIndices: List<UInt>
+    val mSubsetIndices: Array<UInt>
 
     init {
         val v43 = intArrayOf(4, 3)
@@ -54,11 +54,11 @@ abstract class Renderer internal constructor(reader: ObjectReader): Component(re
         if (unityVersion[0] < 3) {
             reader += 16    //m_LightmapTilingOffset: Vector4
             mStaticBatchInfo = null
-            mSubsetIndices = emptyList()
+            mSubsetIndices = emptyArray()
         } else {
             if (unityVersion >= intArrayOf(5, 5)) {
                 mStaticBatchInfo = StaticBatchInfo(reader)
-                mSubsetIndices = emptyList()
+                mSubsetIndices = emptyArray()
             } else {
                 mSubsetIndices = reader.readNextUIntArray()
                 mStaticBatchInfo = null

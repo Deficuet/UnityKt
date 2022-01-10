@@ -6,7 +6,7 @@ import io.github.deficuet.unitykt.util.ObjectReader
 import io.github.deficuet.unitykt.util.compareTo
 
 class AnimatorController internal constructor(reader: ObjectReader): RuntimeAnimatorController(reader) {
-    val mAnimationClips: List<PPtr<AnimationClip>>
+    val mAnimationClips: Array<PPtr<AnimationClip>>
 
     init {
         reader += 4     //m_ControllerSize: UInt
@@ -123,8 +123,8 @@ class BlendTreeNodeConstant internal constructor(reader: ObjectReader) {
     val mBlendType: UInt
     val mBlendEventID: UInt
     val mBlendEventYID: UInt
-    val mChildIndices: List<UInt>
-    val mChildThresholdArray: List<Float>
+    val mChildIndices: Array<UInt>
+    val mChildThresholdArray: FloatArray
     val mBlend1dData: Blend1dDataConstant?
     val mBlend2dData: Blend2dDataConstant?
     val mBlendDirectData: BlendDirectDataConstant?
@@ -141,7 +141,7 @@ class BlendTreeNodeConstant internal constructor(reader: ObjectReader) {
         mBlendEventID = reader.readUInt()
         mBlendEventYID = if (version >= v41) reader.readUInt() else 0u
         mChildIndices = reader.readNextUIntArray()
-        mChildThresholdArray = if (version < v41) reader.readNextFloatArray() else emptyList()
+        mChildThresholdArray = if (version < v41) reader.readNextFloatArray() else floatArrayOf()
         if (version >= v41) {
             mBlend1dData = Blend1dDataConstant(reader)
             mBlend2dData = Blend2dDataConstant(reader)
@@ -174,7 +174,7 @@ class StateConstant internal constructor(reader: ObjectReader) {
     val mBlendTreeConstantIndexArray = reader.readNextIntArray()
     val mLeafInfoArray = if (reader.unityVersion < intArrayOf(5, 2)) {
         reader.readArrayOf { LeafInfoConstant(reader) }
-    } else emptyList()
+    } else emptyArray()
     val mBlendTreeConstantArray = reader.readArrayOf { BlendTreeConstant(reader) }
     val mNameID = reader.readUInt()
     val mPathID = if (reader.unityVersion >= intArrayOf(4, 3)) reader.readUInt() else 0u
@@ -230,26 +230,26 @@ class StateMachineConstant internal constructor(reader: ObjectReader) {
     val mAnyStateTransitionConstantArray = reader.readArrayOf { TransitionConstant(reader) }
     val mSelectorStateConstantArray = if (reader.unityVersion[0] >= 5) {
         reader.readArrayOf { SelectorStateConstant(reader) }
-    } else emptyList()
+    } else emptyArray()
     val mDefaultState = reader.readUInt()
     val mMotionSetCount = reader.readUInt()
 }
 
 class ValueArray internal constructor(reader: ObjectReader) {
-    val mBoolValues: List<Boolean>
-    val mIntValues: List<Int>
-    val mFloatValues: List<Float>
-    val mVectorValues: List<Vector4>
-    val mPositionValues: List<Vector3>
-    val mQuaternionValues: List<Vector4>
-    val mScaleValues: List<Vector3>
+    val mBoolValues: BooleanArray
+    val mIntValues: IntArray
+    val mFloatValues: FloatArray
+    val mVectorValues: Array<Vector4>
+    val mPositionValues: Array<Vector3>
+    val mQuaternionValues: Array<Vector4>
+    val mScaleValues: Array<Vector3>
 
     init {
         val version = reader.unityVersion
         val v55 = intArrayOf(5, 5); val v54 = intArrayOf(5, 4)
-        var bool: List<Boolean> = emptyList()
-        var ints: List<Int> = emptyList()
-        var floats: List<Float> = emptyList()
+        var bool: BooleanArray = booleanArrayOf()
+        var ints: IntArray = intArrayOf()
+        var floats: FloatArray = floatArrayOf()
         if (version < v55) {
             bool = reader.readNextBoolArray()
             reader.alignStream()
@@ -258,11 +258,11 @@ class ValueArray internal constructor(reader: ObjectReader) {
         }
         if (version < intArrayOf(4, 3)) {
             mVectorValues = reader.readNextVector4Array()
-            mPositionValues = emptyList()
-            mQuaternionValues = emptyList()
-            mScaleValues = emptyList()
+            mPositionValues = emptyArray()
+            mQuaternionValues = emptyArray()
+            mScaleValues = emptyArray()
         } else {
-            mVectorValues = emptyList()
+            mVectorValues = emptyArray()
             mPositionValues = reader.readArrayOf {
                 if (version >= v54) reader.readVector3()
                 else reader.readVector4().vector3

@@ -45,7 +45,7 @@ class UnityPropertySheet internal constructor(reader: ObjectReader) {
     val mTexEnvs = reader.readArrayOf { reader.readAlignedString() to UnityTexEnv(reader) }
     val mInts = if (reader.unityVersion[0] >= 2021) {
         reader.readArrayOf { with(reader) { readAlignedString() to readInt() } }
-    } else emptyList()
+    } else emptyArray()
     val mFloats = reader.readArrayOf { with(reader) { readAlignedString() to readFloat() } }
     val mColors = reader.readArrayOf { with(reader) { readAlignedString() to readColor4() } }
 }

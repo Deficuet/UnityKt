@@ -9,7 +9,7 @@ data class SerializedType(
     val typeTree: Tree = Tree(),
     val scriptID: ByteArray = byteArrayOf(),
     val oldTypeHash: ByteArray = byteArrayOf(),
-    val typeDependencies: List<Int> = listOf(),
+    val typeDependencies: IntArray = intArrayOf(),
     val className: String = "",
     val nameSpace: String = "",
     val asmName: String = ""
@@ -242,7 +242,7 @@ data class SerializedType(
         if (typeTree != other.typeTree) return false
         if (!scriptID.contentEquals(other.scriptID)) return false
         if (!oldTypeHash.contentEquals(other.oldTypeHash)) return false
-        if (typeDependencies != other.typeDependencies) return false
+        if (!typeDependencies.contentEquals(other.typeDependencies)) return false
         if (className != other.className) return false
         if (nameSpace != other.nameSpace) return false
         if (asmName != other.asmName) return false
@@ -257,7 +257,7 @@ data class SerializedType(
         result = 31 * result + typeTree.hashCode()
         result = 31 * result + scriptID.contentHashCode()
         result = 31 * result + oldTypeHash.contentHashCode()
-        result = 31 * result + typeDependencies.hashCode()
+        result = 31 * result + typeDependencies.contentHashCode()
         result = 31 * result + className.hashCode()
         result = 31 * result + nameSpace.hashCode()
         result = 31 * result + asmName.hashCode()

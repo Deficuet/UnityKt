@@ -4,7 +4,7 @@ import io.github.deficuet.unitykt.data.*
 
 fun main() {
 //    //D:\ALFiles\assets\AssetBundles\paintingface\hailunna_2
-    val a = AssetManager.loadFile("D:/leidian/Painting/baoduoliuhua")
+    val a = AssetManager.loadFile("F:\\CS30Final\\example\\baoduoliuhua")
 
     val rect = a.objects.firstObjectOf<RectTransform>()
     println(rect.dump())

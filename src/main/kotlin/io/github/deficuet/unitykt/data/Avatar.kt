@@ -86,11 +86,11 @@ class Human internal constructor(reader: ObjectReader) {
     val mSkeletonPose = SkeletonPose(reader)
     val mLeftHand = Hand(reader)
     val mRightHand = Hand(reader)
-    val mHandles: List<Handle>
-    val mColliderArray: List<Collider>
-    val mHumanBoneIndex: List<Int>
-    val mHumanBoneMass: List<Float>
-    val mColliderIndex: List<Int>
+    val mHandles: Array<Handle>
+    val mColliderArray: Array<Collider>
+    val mHumanBoneIndex: IntArray
+    val mHumanBoneMass: FloatArray
+    val mColliderIndex: IntArray
     val mScale: Float
     val mAriTwist: Float
     val mForeArmTwist: Float
@@ -110,11 +110,11 @@ class Human internal constructor(reader: ObjectReader) {
             mHandles = reader.readArrayOf { Handle(reader) }
             mColliderArray = reader.readArrayOf { Collider(reader) }
         } else {
-            mHandles = emptyList(); mColliderArray = emptyList()
+            mHandles = emptyArray(); mColliderArray = emptyArray()
         }
         mHumanBoneIndex = reader.readNextIntArray()
         mHumanBoneMass = reader.readNextFloatArray()
-        mColliderIndex = if (version < v182) reader.readNextIntArray() else emptyList()
+        mColliderIndex = if (version < v182) reader.readNextIntArray() else intArrayOf()
         mScale = reader.readFloat()
         mAriTwist = reader.readFloat()
         mForeArmTwist = reader.readFloat()
@@ -134,15 +134,15 @@ class AvatarConstant internal constructor(reader: ObjectReader) {
     val mAvatarSkeleton = Skeleton(reader)
     val mAvatarSkeletonPose = SkeletonPose(reader)
     val mDefaultPose: SkeletonPose?
-    val mSkeletonNameIDArray: List<UInt>
+    val mSkeletonNameIDArray: Array<UInt>
     val mHuman: Human
-    val mHumanSkeletonIndexArray: List<Int>
-    val mHumanSkeletonReverseIndexArray: List<Int>
+    val mHumanSkeletonIndexArray: IntArray
+    val mHumanSkeletonReverseIndexArray: IntArray
     val mRootMotionBoneIndex: Int
     val mRootMotionBoneX: XForm
     val mRootMotionSkeleton: Skeleton?
     val mRootMotionSkeletonPose: SkeletonPose?
-    val mRootMotionSkeletonIndexArray: List<Int>
+    val mRootMotionSkeletonIndexArray: IntArray
 
     init {
         val version = reader.unityVersion
@@ -151,13 +151,13 @@ class AvatarConstant internal constructor(reader: ObjectReader) {
             mDefaultPose = SkeletonPose(reader)
             mSkeletonNameIDArray = reader.readNextUIntArray()
         } else {
-            mDefaultPose = null; mSkeletonNameIDArray = emptyList()
+            mDefaultPose = null; mSkeletonNameIDArray = emptyArray()
         }
         mHuman = Human(reader)
         mHumanSkeletonIndexArray = reader.readNextIntArray()
         mHumanSkeletonReverseIndexArray = if (version >= v43) {
             reader.readNextIntArray()
-        } else emptyList()
+        } else intArrayOf()
         mRootMotionBoneIndex = reader.readInt()
         mRootMotionBoneX = XForm(reader)
         if (version >= v43) {
@@ -167,7 +167,7 @@ class AvatarConstant internal constructor(reader: ObjectReader) {
         } else {
             mRootMotionSkeleton = null
             mRootMotionSkeletonPose = null
-            mRootMotionSkeletonIndexArray = emptyList()
+            mRootMotionSkeletonIndexArray = intArrayOf()
         }
     }
 }

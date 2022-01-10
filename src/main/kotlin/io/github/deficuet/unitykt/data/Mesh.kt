@@ -10,43 +10,43 @@ import kotlin.NoSuchElementException
 import kotlin.math.sqrt
 
 class Mesh internal constructor(reader: ObjectReader): NamedObject(reader) {
-    val mSubMeshes: List<SubMash>
+    val mSubMeshes: Array<SubMash>
     val mShapes: BlendShapeData?
-    val mIndices: List<UInt>
-    var mBindPose: List<Matrix4x4> = emptyList()
+    val mIndices: Array<UInt>
+    var mBindPose: Array<Matrix4x4> = emptyArray()
         private set
-    var mBoneNameHashes: List<UInt> = emptyList()
+    var mBoneNameHashes: Array<UInt> = emptyArray()
         private set
     var mVertexCount: Int = 0
         private set
-    var mVertices: List<Float> = emptyList()
+    var mVertices: FloatArray = floatArrayOf()
         private set
-    var mSkin: List<BoneWeights4> = emptyList()
+    var mSkin: Array<BoneWeights4> = emptyArray()
         private set
-    var mNormals: List<Float> = emptyList()
+    var mNormals: FloatArray = floatArrayOf()
         private set
-    var mColors: List<Float> = emptyList()
+    var mColors: FloatArray = floatArrayOf()
         private set
-    var mUV0: List<Float> = emptyList()
+    var mUV0: FloatArray = floatArrayOf()
         private set
-    var mUV1: List<Float> = emptyList()
+    var mUV1: FloatArray = floatArrayOf()
         private set
-    var mUV2: List<Float> = emptyList()
+    var mUV2: FloatArray = floatArrayOf()
         private set
-    var mUV3: List<Float> = emptyList()
+    var mUV3: FloatArray = floatArrayOf()
         private set
-    var mUV4: List<Float> = emptyList()
+    var mUV4: FloatArray = floatArrayOf()
         private set
-    var mUV5: List<Float> = emptyList()
+    var mUV5: FloatArray = floatArrayOf()
         private set
-    var mUV6: List<Float> = emptyList()
+    var mUV6: FloatArray = floatArrayOf()
         private set
-    var mUV7: List<Float> = emptyList()
+    var mUV7: FloatArray = floatArrayOf()
         private set
-    var mTangents: List<Float> = emptyList()
+    var mTangents: FloatArray = floatArrayOf()
         private set
     private var mUse16BitIndices: Boolean
-    private var mIndexBuffer: List<UInt> = emptyList()
+    private var mIndexBuffer: Array<UInt> = emptyArray()
     private lateinit var mVertexData: VertexData
     private val mCompressedMesh: CompressedMesh?
     private val mStreamData: StreamingInfo?
@@ -118,8 +118,8 @@ class Mesh internal constructor(reader: ObjectReader): NamedObject(reader) {
                     tangents[v * 3 + 2] = reader.readFloat()
                     tangents[v * 3 + 3] = reader.readFloat()
                 }
-                mNormals = normals.toList()
-                mTangents = tangents.toList()
+                mNormals = normals
+                mTangents = tangents
             } else {
                 mNormals = reader.readNextFloatArray(reader.readInt() * 3)
                 mTangents = reader.readNextFloatArray(reader.readInt() * 4)
@@ -138,7 +138,9 @@ class Mesh internal constructor(reader: ObjectReader): NamedObject(reader) {
         } else null
         reader += 24
         if (unityVersion <= intArrayOf(3, 4)) {
-            mColors = reader.readArrayOf(reader.readInt() * 4) { (reader.readByte() / 0xFFu).toFloat() }
+            mColors = reader.readArrayOf(reader.readInt() * 4) {
+                (reader.readByte() / 0xFFu).toFloat()
+            }.toFloatArray()
             val collisionTrianglesSize = reader.readInt()
             reader += collisionTrianglesSize * 4 + 4    //m_CollisionVertexCount
         }
@@ -206,18 +208,18 @@ class Mesh internal constructor(reader: ObjectReader): NamedObject(reader) {
                         }
                         if (unityVersion[0] >= 2018) {
                             when (chn) {
-                                0 -> mVertices = (array as FloatArray).toList()
-                                1 -> mNormals = (array as FloatArray).toList()
-                                2 -> mTangents = (array as FloatArray).toList()
-                                3 -> mColors = (array as FloatArray).toList()
-                                4 -> mUV0 = (array as FloatArray).toList()
-                                5 -> mUV1 = (array as FloatArray).toList()
-                                6 -> mUV2 = (array as FloatArray).toList()
-                                7 -> mUV3 = (array as FloatArray).toList()
-                                8 -> mUV4 = (array as FloatArray).toList()
-                                9 -> mUV5 = (array as FloatArray).toList()
-                                10 -> mUV6 = (array as FloatArray).toList()
-                                11 -> mUV7 = (array as FloatArray).toList()
+                                0 -> mVertices = array as FloatArray
+                                1 -> mNormals = array as FloatArray
+                                2 -> mTangents = array as FloatArray
+                                3 -> mColors = array as FloatArray
+                                4 -> mUV0 = array as FloatArray
+                                5 -> mUV1 = array as FloatArray
+                                6 -> mUV2 = array as FloatArray
+                                7 -> mUV3 = array as FloatArray
+                                8 -> mUV4 = array as FloatArray
+                                9 -> mUV5 = array as FloatArray
+                                10 -> mUV6 = array as FloatArray
+                                11 -> mUV7 = array as FloatArray
                                 12 -> {
                                     if (mSkin.isEmpty()) {
                                         mSkin = reader.readArrayOf(mVertexCount) { BoneWeights4() }
@@ -241,20 +243,20 @@ class Mesh internal constructor(reader: ObjectReader): NamedObject(reader) {
                             }
                         } else {
                             when (chn) {
-                                0 -> mVertices = (array as FloatArray).toList()
-                                1 -> mNormals = (array as FloatArray).toList()
-                                2 -> mColors = (array as FloatArray).toList()
-                                3 -> mUV0 = (array as FloatArray).toList()
-                                4 -> mUV1 = (array as FloatArray).toList()
+                                0 -> mVertices = array as FloatArray
+                                1 -> mNormals = array as FloatArray
+                                2 -> mColors = array as FloatArray
+                                3 -> mUV0 = array as FloatArray
+                                4 -> mUV1 = array as FloatArray
                                 5 -> {
                                     if (unityVersion[0] >= 5) {
-                                        mUV2 = (array as FloatArray).toList()
+                                        mUV2 = array as FloatArray
                                     } else {
-                                        mTangents = (array as FloatArray).toList()
+                                        mTangents = array as FloatArray
                                     }
                                 }
-                                6 -> mUV3 = (array as FloatArray).toList()
-                                7 -> mTangents = (array as FloatArray).toList()
+                                6 -> mUV3 = array as FloatArray
+                                7 -> mTangents = array as FloatArray
                             }
                         }
                     }
@@ -266,7 +268,7 @@ class Mesh internal constructor(reader: ObjectReader): NamedObject(reader) {
             //region DecompressCompressedMesh
             if (mCompressedMesh!!.mVertices.mNumItems > 0u) {
                 mVertexCount = (mCompressedMesh.mVertices.mNumItems / 3u).toInt()
-                mVertices = mCompressedMesh.mVertices.unpackFloats(3, 12).toList()
+                mVertices = mCompressedMesh.mVertices.unpackFloats(3, 12)
             }
             if (mCompressedMesh.mUV.mNumItems > 0u) {
                 val uvInfo = mCompressedMesh.mUVInfo
@@ -279,7 +281,7 @@ class Mesh internal constructor(reader: ObjectReader): NamedObject(reader) {
                             val uvDim = 1 + texCoordBits.and(kUVDimensionMask).toInt()
                             val mUV = mCompressedMesh.mUV.unpackFloats(
                                 uvDim, uvDim * 4, uvSrcOffset, mVertexCount
-                            ).toList()
+                            )
                             //region setUV
                             when (uv) {
                                 0 -> mUV0 = mUV
@@ -299,11 +301,11 @@ class Mesh internal constructor(reader: ObjectReader): NamedObject(reader) {
                 } else {
                     mUV0 = mCompressedMesh.mUV.unpackFloats(
                         2, 8, 0, mVertexCount
-                    ).toList()
+                    )
                     if (mCompressedMesh.mUV.mNumItems >= (mVertexCount * 4).toUInt()) {
                         mUV1 = mCompressedMesh.mUV.unpackFloats(
                             2, 8, mVertexCount * 2, mVertexCount
-                        ).toList()
+                        )
                     }
                 }
             }
@@ -345,7 +347,7 @@ class Mesh internal constructor(reader: ObjectReader): NamedObject(reader) {
                     normals[i * 3 + 1] = y
                     normals[i * 3 + 2] = z
                 }
-                mNormals = normals.toList()
+                mNormals = normals
             }
             if (mCompressedMesh.mTangents.mNumItems > 0u) {
                 val tangentData = mCompressedMesh.mTangents.unpackFloats(2, 8)
@@ -374,11 +376,11 @@ class Mesh internal constructor(reader: ObjectReader): NamedObject(reader) {
                     tangents[i * 4 + 2] = z
                     tangents[i * 4 + 3] = w
                 }
-                mTangents = tangents.toList()
+                mTangents = tangents
             }
             if (unityVersion[0] >= 5) {
                 if (mCompressedMesh.mFloatColors!!.mNumItems > 0u) {
-                    mColors = mCompressedMesh.mFloatColors.unpackFloats(1, 4).toList()
+                    mColors = mCompressedMesh.mFloatColors.unpackFloats(1, 4)
                 }
             }
             if (mCompressedMesh.mWeights.mNumItems > 0u) {
@@ -413,7 +415,7 @@ class Mesh internal constructor(reader: ObjectReader): NamedObject(reader) {
                 }
             }
             if (mCompressedMesh.mTriangles.mNumItems > 0u) {
-                mIndexBuffer = mCompressedMesh.mTriangles.unpackInts().map { it.toUInt() }
+                mIndexBuffer = with(mCompressedMesh.mTriangles.unpackInts()) { Array(size) { this[it].toUInt() } }
             }
             if (with(mCompressedMesh.mColors) { this != null && mNumItems > 0u }) {
                 mCompressedMesh.mColors!!.mNumItems *= 4u
@@ -472,7 +474,7 @@ class Mesh internal constructor(reader: ObjectReader): NamedObject(reader) {
         }
         //endregion
         //endregion
-        mIndices = indices
+        mIndices = indices.toTypedArray()
     }
 
     private fun ByteArray.toIntArray(vertexFormat: VertexFormat): IntArray {
@@ -727,14 +729,14 @@ internal data class ChannelInfoInternal(
 class VertexData internal constructor(reader: ObjectReader) {
     val mCurrentChannels = if (reader.unityVersion[0] < 2018) reader.readUInt() else 0u
     val mVertexCount = reader.readUInt()
-    val mChannels: List<ChannelInfo>
-    val mStreams: List<StreamInfo>
+    val mChannels: Array<ChannelInfo>
+    val mStreams: Array<StreamInfo>
     var mDataSize: ByteArray
         internal set
 
     init {
         val version = reader.unityVersion
-        var channels = emptyList<ChannelInfo>()
+        var channels = emptyArray<ChannelInfo>()
         if (version[0] >= 4) {
             channels = reader.readArrayOf { ChannelInfo(reader) }
         }
@@ -777,7 +779,7 @@ class VertexData internal constructor(reader: ObjectReader) {
                         }
                     }
                 }
-                channels = internalChannels.map { ChannelInfo(it) }
+                channels = with(internalChannels) { Array(size) { ChannelInfo(this[it]) } }
                 //endregion
             }
         } else {
@@ -801,7 +803,7 @@ class VertexData internal constructor(reader: ObjectReader) {
                 offset += mVertexCount * stride
                 offset = (offset + 15u).and(15u.inv())
             }
-            mStreams = streams
+            mStreams = streams.toTypedArray()
             //endregion
         }
         mDataSize = reader.readNextByteArray()
@@ -814,8 +816,8 @@ class BoneWeights4 {
     val boneIndex: IntArray
 
     internal constructor(reader: ObjectReader) {
-        weight = reader.readNextFloatArray(4).toFloatArray()
-        boneIndex = reader.readNextIntArray(4).toIntArray()
+        weight = reader.readNextFloatArray(4)
+        boneIndex = reader.readNextIntArray(4)
     }
 
     internal constructor() {
@@ -862,10 +864,10 @@ class MeshBlendShapeChannel internal constructor(reader: ObjectReader) {
 }
 
 class BlendShapeData internal constructor(reader: ObjectReader) {
-    val vertices: List<BlendShapeVertex>
-    val shapes: List<MeshBlendShape>
-    val channels: List<MeshBlendShapeChannel>
-    val fullWeights: List<Float>
+    val vertices: Array<BlendShapeVertex>
+    val shapes: Array<MeshBlendShape>
+    val channels: Array<MeshBlendShapeChannel>
+    val fullWeights: FloatArray
 
     init {
         if (reader.unityVersion >= intArrayOf(4, 3)) {
@@ -877,10 +879,10 @@ class BlendShapeData internal constructor(reader: ObjectReader) {
             reader.readArrayOf { MeshBlendShape(reader) }       //m_Shapes
             reader.alignStream()
             reader.readArrayOf { BlendShapeVertex(reader) }     //m_ShapeVertices
-            vertices = emptyList()
-            shapes = emptyList()
-            channels = emptyList()
-            fullWeights = emptyList()
+            vertices = emptyArray()
+            shapes = emptyArray()
+            channels = emptyArray()
+            fullWeights = floatArrayOf()
         }
     }
 }

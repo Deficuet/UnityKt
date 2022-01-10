@@ -370,7 +370,7 @@ class SerializedFile(
         var className = ""
         var nameSpace = ""
         var asmName = ""
-        val typeDependencies = mutableListOf<Int>()
+        var typeDependencies: IntArray = intArrayOf()
         if (hVersion >= FormatVersion.kRefactoredClassId) isStrippedType = reader.readBool()
         if (hVersion >= FormatVersion.kRefactorTypeData) scriptTypeIndex = reader.readShort()
         if (hVersion >= FormatVersion.kHasTypeTreeHashes) {
@@ -394,7 +394,7 @@ class SerializedFile(
                 nameSpace = reader.readStringUntilNull()
                 asmName = reader.readStringUntilNull()
             } else {
-                typeDependencies += reader.readNextIntArray()
+                typeDependencies = reader.readNextIntArray()
             }
         }
         return SerializedType(

@@ -15,10 +15,10 @@ class Sprite internal constructor(reader: ObjectReader): NamedObject(reader) {
     val mExtrude = reader.readUInt()
     val mIsPolygon: Boolean
     val mRenderDataKey: Map<ByteArray, Long>
-    val mAtlasTags: List<String>
+    val mAtlasTags: Array<String>
     val mSpriteAtlas: PPtr<SpriteAtlas>?
     val mRD: SpriteRenderData
-    val mPhysicsShape: List<List<Vector2>>
+    val mPhysicsShape: Array<Array<Vector2>>
 
     init {
         val version = reader.unityVersion
@@ -34,13 +34,13 @@ class Sprite internal constructor(reader: ObjectReader): NamedObject(reader) {
             mSpriteAtlas = PPtr(reader)
         } else {
             mRenderDataKey = emptyMap()
-            mAtlasTags = emptyList()
+            mAtlasTags = emptyArray()
             mSpriteAtlas = null
         }
         mRD = SpriteRenderData(reader)
         mPhysicsShape = if (version[0] >= 2017) {
             reader.readArrayOf { reader.readNextVector2Array() }
-        } else emptyList()
+        } else emptyArray()
     }
 }
 
@@ -106,14 +106,14 @@ class SpriteRenderData internal constructor(reader: ObjectReader) {
     val alphaTexture = if (reader.unityVersion >= intArrayOf(5, 2)) PPtr<Texture2D>(reader) else null
     val secondaryTexturesSize = if (reader.unityVersion[0] >= 2019) {
         reader.readArrayOf { SecondarySpriteTexture(reader) }
-    } else emptyList()
-    val mSubMeshes: List<SubMash>
+    } else emptyArray()
+    val mSubMeshes: Array<SubMash>
     val mIndexBuffer: ByteArray
     val mVertexData: VertexData?
-    val vertices: List<SpriteVertex>
-    val indices: List<UShort>
-    val mBindPose: List<Matrix4x4>
-    val mSourceSkin: List<BoneWeights4>
+    val vertices: Array<SpriteVertex>
+    val indices: Array<UShort>
+    val mBindPose: Array<Matrix4x4>
+    val mSourceSkin: Array<BoneWeights4>
     val textureRect: Rectangle
     val textureRectOffset: Vector2
     val atlasRectOffset: Vector2
@@ -128,13 +128,13 @@ class SpriteRenderData internal constructor(reader: ObjectReader) {
             mIndexBuffer = reader.readNextByteArray()
             reader.alignStream()
             mVertexData = VertexData(reader)
-            vertices = emptyList()
-            indices = emptyList()
+            vertices = emptyArray()
+            indices = emptyArray()
         } else {
             vertices = reader.readArrayOf { SpriteVertex(reader) }
             indices = reader.readNextUShortArray()
             reader.alignStream()
-            mSubMeshes = emptyList()
+            mSubMeshes = emptyArray()
             mIndexBuffer = byteArrayOf()
             mVertexData = null
         }
@@ -142,10 +142,10 @@ class SpriteRenderData internal constructor(reader: ObjectReader) {
             mBindPose = reader.readNextMatrixArray()
             mSourceSkin = if (version[0] == 2018 && version[1] < 2) {
                 reader.readArrayOf { BoneWeights4(reader) }
-            } else emptyList()
+            } else emptyArray()
         } else {
-            mBindPose = emptyList()
-            mSourceSkin = emptyList()
+            mBindPose = emptyArray()
+            mSourceSkin = emptyArray()
         }
         textureRect = reader.readRectangle()
         textureRectOffset = reader.readVector2()

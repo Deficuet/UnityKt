@@ -4,7 +4,7 @@ import io.github.deficuet.unitykt.util.ObjectReader
 import io.github.deficuet.unitykt.util.compareTo
 
 class GameObject internal constructor(reader: ObjectReader): EditorExtension(reader) {
-    val mComponents: List<PPtr<Component>>
+    val mComponents: Array<PPtr<Component>>
     val mName: String
     val mTransform = mutableListOf<Transform>()
     val mMeshRenderer = mutableListOf<MeshRenderer>()
@@ -14,13 +14,19 @@ class GameObject internal constructor(reader: ObjectReader): EditorExtension(rea
     val mAnimation = mutableListOf<Animation>()
 
     init {
-        val componentSize = reader.readInt()
-        val components = mutableListOf<PPtr<Component>>()
-        for (i in 0 until componentSize) {
+//        val componentSize = reader.readInt()
+//        val components = mutableListOf<PPtr<Component>>()
+//        for (i in 0 until componentSize) {
+//            if (unityVersion < intArrayOf(5, 5)) {
+//                reader += 4     //first: Int
+//            }
+//            components.add(PPtr(reader))
+//        }
+        val components = reader.readArrayOf {
             if (unityVersion < intArrayOf(5, 5)) {
                 reader += 4     //first: Int
             }
-            components.add(PPtr(reader))
+            PPtr<Component>(reader)
         }
         reader += 4     //m_Layer: Int
         mName = reader.readAlignedString()

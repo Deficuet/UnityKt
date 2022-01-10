@@ -186,46 +186,38 @@ sealed class EndianBinaryReader(private val manualIgnoredOffset: Long): Closeabl
         plusAssign((alignment - position % alignment) % alignment)
     }
     fun readNextByteArray(): ByteArray = read(readInt())
-    private fun <R> readArray(frequency: Int, lambda: () -> R): List<R> {
-        return mutableListOf<R>().apply {
-            for (i in 1..frequency) {
-                add(lambda())
-            }
-        }
+    inline fun <reified R> readArray(frequency: Int, lambda: () -> R): Array<R> {
+        return Array(frequency) { lambda() }
     }
-    private fun <R> readArrayIndexed(frequency: Int, lambda: (Int) -> R): List<R> {
-        return mutableListOf<R>().apply {
-            for (i in 0 until frequency) {
-                add(lambda(i))
-            }
-        }
+    inline fun <reified R> readArrayIndexed(frequency: Int, lambda: (Int) -> R): Array<R> {
+        return Array(frequency) { lambda(it) }
     }
-    fun readNextBoolArray(): List<Boolean> = readArray(readInt(), this::readBool)
-    fun readNextUShortArray(): List<UShort> = readArray(readInt(), this::readUShort)
-    fun readNextIntArray(frequency: Int = 0): List<Int> =
-        readArray(if (frequency == 0) readInt() else frequency, this::readInt)
-    fun readNextUIntArray(frequency: Int = 0): List<UInt> =
+    fun readNextBoolArray(): BooleanArray = readArray(readInt(), this::readBool).toBooleanArray()
+    fun readNextUShortArray(): Array<UShort> = readArray(readInt(), this::readUShort)
+    fun readNextIntArray(frequency: Int = 0): IntArray =
+        readArray(if (frequency == 0) readInt() else frequency, this::readInt).toIntArray()
+    fun readNextUIntArray(frequency: Int = 0): Array<UInt> =
         readArray(if (frequency == 0) readInt() else frequency, this::readUInt)
-    fun readNestedUIntArray(frequency: Int = 0): List<List<UInt>> =
+    fun readNestedUIntArray(frequency: Int = 0): Array<Array<UInt>> =
         readArray(if (frequency == 0) readInt() else frequency, this::readNextUIntArray)
-    fun readNextFloatArray(frequency: Int = 0): List<Float> =
-        readArray(if (frequency == 0) readInt() else frequency, this::readFloat)
-    fun readNextStringArray(): List<String> = readArray(readInt(), this::readAlignedString)
+    fun readNextFloatArray(frequency: Int = 0): FloatArray =
+        readArray(if (frequency == 0) readInt() else frequency, this::readFloat).toFloatArray()
+    fun readNextStringArray(): Array<String> = readArray(readInt(), this::readAlignedString)
     fun readRectangle(): Rectangle = Rectangle(readFloat(), readFloat(), readFloat(), readFloat())
     fun readQuaternion(): Quaternion = Quaternion(readFloat(), readFloat(), readFloat(), readFloat())
-    private fun readMatrix4x4(): Matrix4x4 = Matrix4x4(readNextFloatArray(16))
+    private fun readMatrix4x4(): Matrix4x4 = Matrix4x4(*readNextFloatArray(16))
     fun readVector2(): Vector2 = Vector2(readFloat(), readFloat())
     fun readVector3(): Vector3 = Vector3(readFloat(), readFloat(), readFloat())
     fun readVector4(): Vector4 = Vector4(readFloat(), readFloat(), readFloat(), readFloat())
     fun readColor4(): Color = Color(readFloat(), readFloat(), readFloat(), readFloat())
-    fun readNextMatrixArray(): List<Matrix4x4> = readArray(readInt(), this::readMatrix4x4)
-    fun readNextVector2Array(): List<Vector2> = readArray(readInt(), this::readVector2)
-    fun readNextVector4Array(): List<Vector4> = readArray(readInt(), this::readVector4)
-    fun <T> readArrayOf(frequency: Int = 0, constructor: () -> T): List<T> {
+    fun readNextMatrixArray(): Array<Matrix4x4> = readArray(readInt(), this::readMatrix4x4)
+    fun readNextVector2Array(): Array<Vector2> = readArray(readInt(), this::readVector2)
+    fun readNextVector4Array(): Array<Vector4> = readArray(readInt(), this::readVector4)
+    inline fun <reified T> readArrayOf(frequency: Int = 0, constructor: () -> T): Array<T> {
         val num = if (frequency == 0) readInt() else frequency
         return readArray(num, constructor)
     }
-    fun <T> readArrayIndexedOf(frequency: Int = 0, constructor: (Int) -> T): List<T> {
+    inline fun <reified T> readArrayIndexedOf(frequency: Int = 0, constructor: (Int) -> T): Array<T> {
         val num = if (frequency == 0) readInt() else frequency
         return readArrayIndexed(num, constructor)
     }

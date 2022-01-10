@@ -9,16 +9,18 @@ class Shader internal constructor(reader: ObjectReader): NamedObject(reader) {
     val decompressedSize: UInt
     val mSubProgramBlob: ByteArray
     val mParsedForm: SerializedShader?
-    val platforms: List<ShaderCompilerPlatform>
-    val offsets: List<UInt>
-    val compressedLengths: List<UInt>
-    val decompressedLengths: List<UInt>
+    val platforms: Array<ShaderCompilerPlatform>
+    val offsets: Array<UInt>
+    val compressedLengths: Array<UInt>
+    val decompressedLengths: Array<UInt>
     val compressedBlob: ByteArray
 
     init {
         if (unityVersion >= intArrayOf(5, 5)) {
             mParsedForm = SerializedShader(reader)
-            platforms = reader.readNextUIntArray().map { ShaderCompilerPlatform.of(it.toInt()) }
+            platforms = with(reader.readNextUIntArray()) {
+                Array(size) { ShaderCompilerPlatform.of(this[it].toInt()) }
+            }
             if (unityVersion >= intArrayOf(2019, 3)) {
                 offsets = reader.readNestedUIntArray()[0]
                 compressedLengths = reader.readNestedUIntArray()[0]
@@ -54,10 +56,10 @@ class Shader internal constructor(reader: ObjectReader): NamedObject(reader) {
                 mSubProgramBlob = byteArrayOf()
             }
             mParsedForm = null
-            platforms = emptyList()
-            offsets = emptyList()
-            compressedLengths = emptyList()
-            decompressedLengths = emptyList()
+            platforms = emptyArray()
+            offsets = emptyArray()
+            compressedLengths = emptyArray()
+            decompressedLengths = emptyArray()
             compressedBlob = byteArrayOf()
         }
     }
@@ -88,8 +90,8 @@ class VectorParameter internal constructor(reader: EndianBinaryReader) {
 }
 
 class StructParameter internal constructor(reader: EndianBinaryReader) {
-    val mMatrixParams: List<MatrixParameter>
-    val mVectorParams: List<VectorParameter>
+    val mMatrixParams: Array<MatrixParameter>
+    val mVectorParams: Array<VectorParameter>
 
     init {
         reader += 16    //m_NameIndex, m_Index, m_ArraySize, m_StructSize: Int
@@ -305,7 +307,7 @@ class ConstantBuffer internal constructor(reader: ObjectReader) {
     val mVectorParams = reader.readArrayOf { VectorParameter(reader) }
     val mStructParams = if (reader.unityVersion >= intArrayOf(2017, 3)) {
         reader.readArrayOf { StructParameter(reader) }
-    } else emptyList()
+    } else emptyArray()
     val mSize = reader.readInt()
     val mIsPartialCB = if (with(reader.unityVersion) {
             (this[0] == 2020 && this >= intArrayOf(2020, 3, 2)) ||
@@ -379,18 +381,18 @@ class SerializedProgramParameters internal constructor(reader: ObjectReader) {
 class SerializedSubProgram internal constructor(reader: ObjectReader) {
     val mBlobIndex = reader.readUInt()
     val mChannels = ParserBindChannels(reader)
-    val mKeywordIndices: List<UShort>
+    val mKeywordIndices: Array<UShort>
     val mShaderHardwareTier: Byte
     val mGpuProgramType: ShaderGpuProgramType
     val mParameters: SerializedProgramParameters?
-    val mVectorParams: List<VectorParameter>
-    val mMatrixParams: List<MatrixParameter>
-    val mTextureParams: List<TextureParameter>
-    val mBufferParams: List<BufferBinding>
-    val mConstantBuffers: List<ConstantBuffer>
-    val mConstantBufferBindings: List<BufferBinding>
-    val mUAVParams: List<UAVParameter>
-    val mSamplers: List<SamplerParameter>
+    val mVectorParams: Array<VectorParameter>
+    val mMatrixParams: Array<MatrixParameter>
+    val mTextureParams: Array<TextureParameter>
+    val mBufferParams: Array<BufferBinding>
+    val mConstantBuffers: Array<ConstantBuffer>
+    val mConstantBufferBindings: Array<BufferBinding>
+    val mUAVParams: Array<UAVParameter>
+    val mSamplers: Array<SamplerParameter>
 
     init {
         val version = reader.unityVersion
@@ -399,7 +401,7 @@ class SerializedSubProgram internal constructor(reader: ObjectReader) {
             reader.alignStream()
             reader.readNextIntArray()   //m_LocalKeywordIndices
             reader.alignStream()
-            mKeywordIndices = emptyList()
+            mKeywordIndices = emptyArray()
         } else {
             mKeywordIndices = reader.readNextUShortArray()
             if (version[0] >= 2017) reader.alignStream()
@@ -412,14 +414,14 @@ class SerializedSubProgram internal constructor(reader: ObjectReader) {
             (version[0] == 2021 && version >= intArrayOf(2021, 2, 4))
         ) {
             mParameters = SerializedProgramParameters(reader)
-            mVectorParams = emptyList()
-            mMatrixParams = emptyList()
-            mTextureParams = emptyList()
-            mBufferParams = emptyList()
-            mConstantBuffers = emptyList()
-            mConstantBufferBindings = emptyList()
-            mUAVParams = emptyList()
-            mSamplers = emptyList()
+            mVectorParams = emptyArray()
+            mMatrixParams = emptyArray()
+            mTextureParams = emptyArray()
+            mBufferParams = emptyArray()
+            mConstantBuffers = emptyArray()
+            mConstantBufferBindings = emptyArray()
+            mUAVParams = emptyArray()
+            mSamplers = emptyArray()
         } else {
             mVectorParams = reader.readArrayOf { VectorParameter(reader) }
             mMatrixParams = reader.readArrayOf { MatrixParameter(reader) }
@@ -428,7 +430,7 @@ class SerializedSubProgram internal constructor(reader: ObjectReader) {
             mConstantBuffers = reader.readArrayOf { ConstantBuffer(reader) }
             mConstantBufferBindings = reader.readArrayOf { BufferBinding(reader) }
             mUAVParams = reader.readArrayOf { UAVParameter(reader) }
-            mSamplers = if (version[0] >= 2017) reader.readArrayOf { SamplerParameter(reader) } else emptyList()
+            mSamplers = if (version[0] >= 2017) reader.readArrayOf { SamplerParameter(reader) } else emptyArray()
             mParameters = null
         }
         if (version >= intArrayOf(2017, 2)) {
@@ -457,11 +459,11 @@ enum class PassType(val id: Int) {
 }
 
 class SerializedPass internal constructor(reader: ObjectReader) {
-    val mEditorDataHash: List<Hash128>
+    val mEditorDataHash: Array<Hash128>
     val mPlatforms: ByteArray
-    val mLocalKeywordMask: List<UShort>
-    val mGlobalKeywordMask: List<UShort>
-    val mNameIndices: List<Pair<String, Int>>
+    val mLocalKeywordMask: Array<UShort>
+    val mGlobalKeywordMask: Array<UShort>
+    val mNameIndices: Array<Pair<String, Int>>
     val mType: PassType
     val mState: SerializedShaderState
     val mProgramMask: UInt
@@ -476,7 +478,7 @@ class SerializedPass internal constructor(reader: ObjectReader) {
     val mName: String
     val mTextureName: String
     val mTags: SerializedTagMap
-    val mSerializedKeywordStateMask: List<UShort>
+    val mSerializedKeywordStateMask: Array<UShort>
 
     init {
         val version = reader.unityVersion
@@ -491,14 +493,14 @@ class SerializedPass internal constructor(reader: ObjectReader) {
                 mGlobalKeywordMask = reader.readNextUShortArray()
                 reader.alignStream()
             } else {
-                mLocalKeywordMask = emptyList()
-                mGlobalKeywordMask = emptyList()
+                mLocalKeywordMask = emptyArray()
+                mGlobalKeywordMask = emptyArray()
             }
         } else {
-            mEditorDataHash = emptyList()
+            mEditorDataHash = emptyArray()
             mPlatforms = byteArrayOf()
-            mLocalKeywordMask = emptyList()
-            mGlobalKeywordMask = emptyList()
+            mLocalKeywordMask = emptyArray()
+            mGlobalKeywordMask = emptyArray()
         }
         mNameIndices = reader.readArrayOf { with(reader) { readAlignedString() to readInt() } }
         mType = PassType.of(reader.readInt())
@@ -521,7 +523,7 @@ class SerializedPass internal constructor(reader: ObjectReader) {
             mSerializedKeywordStateMask = reader.readNextUShortArray()
             reader.alignStream()
         } else {
-            mSerializedKeywordStateMask = emptyList()
+            mSerializedKeywordStateMask = emptyArray()
         }
     }
 }
@@ -545,13 +547,13 @@ class SerializedCustomEditorForRenderPipeline internal constructor(reader: Endia
 class SerializedShader internal constructor(reader: ObjectReader) {
     val mPropInfo = SerializedProperties(reader)
     val mSubShaders = reader.readArrayOf { SerializedSubShader(reader) }
-    val mKeywordNames: List<String>
+    val mKeywordNames: Array<String>
     val mKeywordFlags: ByteArray
     val mName: String
     val mCustomEditorName: String
     val mFallbackName: String
-    val mDependencies: List<SerializedShaderDependency>
-    val mCustomEditorForRenderPipelines: List<SerializedCustomEditorForRenderPipeline>
+    val mDependencies: Array<SerializedShaderDependency>
+    val mCustomEditorForRenderPipelines: Array<SerializedCustomEditorForRenderPipeline>
     val mDisableNoSubShadersMessage: Boolean
 
     init {
@@ -561,7 +563,7 @@ class SerializedShader internal constructor(reader: ObjectReader) {
             mKeywordFlags = reader.readNextByteArray()
             reader.alignStream()
         } else {
-            mKeywordNames = emptyList()
+            mKeywordNames = emptyArray()
             mKeywordFlags = byteArrayOf()
         }
         mName = reader.readAlignedString()
@@ -570,7 +572,7 @@ class SerializedShader internal constructor(reader: ObjectReader) {
         mDependencies = reader.readArrayOf { SerializedShaderDependency(reader) }
         mCustomEditorForRenderPipelines = if (version[0] >= 2021) {
             reader.readArrayOf { SerializedCustomEditorForRenderPipeline(reader) }
-        } else emptyList()
+        } else emptyArray()
         mDisableNoSubShadersMessage = reader.readBool()
         reader.alignStream()
     }

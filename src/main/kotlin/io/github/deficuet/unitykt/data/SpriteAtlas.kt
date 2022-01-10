@@ -34,12 +34,12 @@ class SpriteAtlasData internal constructor(reader: ObjectReader) {
     val uvTransform = reader.readVector4()
     val downScaleMultiplier = reader.readFloat()
     val settingsRaw = SpriteSettings(reader)
-    val secondaryTextures: List<SecondarySpriteTexture>
+    val secondaryTextures: Array<SecondarySpriteTexture>
 
     init {
         if (reader.unityVersion >= intArrayOf(2020, 2)) {
             secondaryTextures = reader.readArrayOf { SecondarySpriteTexture(reader) }
             reader.alignStream()
-        } else secondaryTextures = emptyList()
+        } else secondaryTextures = emptyArray()
     }
 }
