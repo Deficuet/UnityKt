@@ -40,6 +40,10 @@ class Quaternion(a: Double, b: Double, c: Double, d: Double) {
         return true
     }
 
+    override fun toString(): String {
+        return "Quaternion(a, b, c, d) = ($a, $b, $c, $d)"
+    }
+
     companion object {
         internal const val kEpsilon = 0.000001
     }

@@ -41,3 +41,7 @@ fun List<Object>.allInstanceOf(vararg type: String): List<Object> {
         }
     }
 }
+
+fun List<Object>.objectFromPathID(pathId: Long): Object? {
+    return firstOrNull { it.mPathID == pathId }
+}
