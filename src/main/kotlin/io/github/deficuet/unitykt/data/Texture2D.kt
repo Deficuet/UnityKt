@@ -1,6 +1,6 @@
 package io.github.deficuet.unitykt.data
 
-import io.github.deficuet.unitykt.extension.ETCDecoder
+import io.github.deficuet.unitykt.extension.TextureDecoder
 import io.github.deficuet.unitykt.file.BuildTarget
 import io.github.deficuet.unitykt.util.*
 import java.awt.image.*
@@ -248,7 +248,7 @@ class Texture2D internal constructor(reader: ObjectReader): Texture(reader) {
                 }
             }
             TextureFormat.YUY2 -> {
-                var p = 0; var o = 0
+                var p = 0u; var o = 0
                 for (y in 0 until mHeight) {
                     for (x in 0 until mWidth / 2) {
                         val y0 = this[p++]
@@ -286,91 +286,113 @@ class Texture2D internal constructor(reader: ObjectReader): Texture(reader) {
             }
             TextureFormat.DXT1 -> {
                 swapForXbox()
+                TextureDecoder.decodeDXT1(this, mWidth, mHeight, out)
             }
             TextureFormat.DXT1Crunched -> {
-
+                unpackCrunch()?.let {
+                    TextureDecoder.decodeDXT1(it, mWidth, mHeight, out)
+                }
             }
             TextureFormat.DXT5 -> {
                 swapForXbox()
+                TextureDecoder.decodeDXT5(this, mWidth, mHeight, out)
             }
             TextureFormat.DXT5Crunched -> {
-
+                unpackCrunch()?.let {
+                    TextureDecoder.decodeDXT5(it, mWidth, mHeight, out)
+                }
             }
             TextureFormat.BC4 -> {
-
+                TextureDecoder.decodeBC4(this, mWidth, mHeight, out)
             }
             TextureFormat.BC5 -> {
-
+                TextureDecoder.decodeBC5(this, mWidth, mHeight, out)
             }
             TextureFormat.BC6H -> {
-
+                TextureDecoder.decodeBC6(this, mWidth, mHeight, out)
             }
             TextureFormat.BC7 -> {
-
+                TextureDecoder.decodeBC7(this, mWidth, mHeight, out)
             }
             TextureFormat.PVRTC_RGB2, TextureFormat.PVRTC_RGBA2 -> {
-
+                TextureDecoder.decodePVRTC(this, mWidth, mHeight, out, true)
             }
             TextureFormat.PVRTC_RGB4, TextureFormat.PVRTC_RGBA4 -> {
-
+                TextureDecoder.decodePVRTC(this, mWidth, mHeight, out, false)
             }
             TextureFormat.ETC_RGB4, TextureFormat.ETC_RGB4_3DS -> {
-
+                TextureDecoder.decodeETC1(this, mWidth, mHeight, out)
             }
             TextureFormat.ETC2_RGB -> {
-
+                TextureDecoder.decodeETC2(this, mWidth, mHeight, out)
             }
             TextureFormat.ETC2_RGBA1 -> {
-
+                TextureDecoder.decodeETC2A1(this, mWidth, mHeight, out)
             }
             TextureFormat.ETC2_RGBA8, TextureFormat.ETC_RGBA8_3DS -> {
-                ETCDecoder.decodeETC2A8(this, mWidth, mHeight, out)
+                TextureDecoder.decodeETC2A8(this, mWidth, mHeight, out)
             }
             TextureFormat.ETC_RGB4Crunched -> {
-
+                unpackCrunch()?.let {
+                    TextureDecoder.decodeETC1(it, mWidth, mHeight, out)
+                }
             }
             TextureFormat.ETC2_RGBA8Crunched -> {
-
+                unpackCrunch()?.let {
+                    TextureDecoder.decodeETC2A8(it, mWidth, mHeight, out)
+                }
             }
             TextureFormat.ATC_RGB4 -> {
-
+                TextureDecoder.decodeATCRGB4(this, mWidth, mHeight, out)
             }
             TextureFormat.ATC_RGBA8 -> {
-
+                TextureDecoder.decodeATCRGBA8(this, mWidth, mHeight, out)
             }
             TextureFormat.ASTC_RGB_4x4, TextureFormat.ASTC_RGBA_4x4, TextureFormat.ASTC_HDR_4x4 -> {
-
+                TextureDecoder.decodeASTC(this, mWidth, mHeight, out, 4)
             }
             TextureFormat.ASTC_RGB_5x5, TextureFormat.ASTC_RGBA_5x5, TextureFormat.ASTC_HDR_5x5 -> {
-
+                TextureDecoder.decodeASTC(this, mWidth, mHeight, out, 5)
             }
             TextureFormat.ASTC_RGB_6x6, TextureFormat.ASTC_RGBA_6x6, TextureFormat.ASTC_HDR_6x6 -> {
-
+                TextureDecoder.decodeASTC(this, mWidth, mHeight, out, 6)
             }
             TextureFormat.ASTC_RGB_8x8, TextureFormat.ASTC_RGBA_8x8, TextureFormat.ASTC_HDR_8x8 -> {
-
+                TextureDecoder.decodeASTC(this, mWidth, mHeight, out, 8)
             }
             TextureFormat.ASTC_RGB_10x10, TextureFormat.ASTC_RGBA_10x10, TextureFormat.ASTC_HDR_10x10 -> {
-
+                TextureDecoder.decodeASTC(this, mWidth, mHeight, out, 10)
             }
             TextureFormat.ASTC_RGB_12x12, TextureFormat.ASTC_RGBA_12x12, TextureFormat.ASTC_HDR_12x12 -> {
-
+                TextureDecoder.decodeASTC(this, mWidth, mHeight, out, 12)
             }
             TextureFormat.EAC_R -> {
-
+                TextureDecoder.decodeEACR(this, mWidth, mHeight, out)
             }
             TextureFormat.EAC_R_SIGNED -> {
-
+                TextureDecoder.decodeEACRSigned(this, mWidth, mHeight, out)
             }
             TextureFormat.EAC_RG -> {
-
+                TextureDecoder.decodeEACRG(this, mWidth, mHeight, out)
             }
             TextureFormat.EAC_RG_SIGNED -> {
-
+                TextureDecoder.decodeEACRGSigned(this, mWidth, mHeight, out)
             }
             else -> {  }
         }
         return out
+    }
+
+    private fun unpackCrunch(): ByteArray? {
+        return if (
+            unityVersion >= intArrayOf(2017, 3) ||
+            mTextureFormat == TextureFormat.ETC_RGB4Crunched ||
+            mTextureFormat == TextureFormat.ETC2_RGBA8Crunched
+        ) {
+            TextureDecoder.unpackUnityCrunch(imageData.bytes)
+        } else {
+            TextureDecoder.unpackCrunch(imageData.bytes)
+        }
     }
 }
 

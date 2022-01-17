@@ -194,14 +194,14 @@ sealed class EndianBinaryReader(private val manualIgnoredOffset: Long): Closeabl
     }
     fun readNextBoolArray(): BooleanArray = readArray(readInt(), this::readBool).toBooleanArray()
     fun readNextUShortArray(): Array<UShort> = readArray(readInt(), this::readUShort)
-    fun readNextIntArray(frequency: Int = 0): IntArray =
-        readArray(if (frequency == 0) readInt() else frequency, this::readInt).toIntArray()
-    fun readNextUIntArray(frequency: Int = 0): Array<UInt> =
-        readArray(if (frequency == 0) readInt() else frequency, this::readUInt)
-    fun readNestedUIntArray(frequency: Int = 0): Array<Array<UInt>> =
-        readArray(if (frequency == 0) readInt() else frequency, this::readNextUIntArray)
-    fun readNextFloatArray(frequency: Int = 0): FloatArray =
-        readArray(if (frequency == 0) readInt() else frequency, this::readFloat).toFloatArray()
+    fun readNextIntArray(frequency: Int = -1): IntArray =
+        readArray(if (frequency == -1) readInt() else frequency, this::readInt).toIntArray()
+    fun readNextUIntArray(frequency: Int = -1): Array<UInt> =
+        readArray(if (frequency == -1) readInt() else frequency, this::readUInt)
+    fun readNestedUIntArray(frequency: Int = -1): Array<Array<UInt>> =
+        readArray(if (frequency == -1) readInt() else frequency, this::readNextUIntArray)
+    fun readNextFloatArray(frequency: Int = -1): FloatArray =
+        readArray(if (frequency == -1) readInt() else frequency, this::readFloat).toFloatArray()
     fun readNextStringArray(): Array<String> = readArray(readInt(), this::readAlignedString)
     fun readRectangle(): Rectangle = Rectangle(readFloat(), readFloat(), readFloat(), readFloat())
     fun readQuaternion(): Quaternion = Quaternion(readFloat(), readFloat(), readFloat(), readFloat())
@@ -213,12 +213,12 @@ sealed class EndianBinaryReader(private val manualIgnoredOffset: Long): Closeabl
     fun readNextMatrixArray(): Array<Matrix4x4> = readArray(readInt(), this::readMatrix4x4)
     fun readNextVector2Array(): Array<Vector2> = readArray(readInt(), this::readVector2)
     fun readNextVector4Array(): Array<Vector4> = readArray(readInt(), this::readVector4)
-    inline fun <reified T> readArrayOf(frequency: Int = 0, constructor: () -> T): Array<T> {
-        val num = if (frequency == 0) readInt() else frequency
+    inline fun <reified T> readArrayOf(frequency: Int = -1, constructor: () -> T): Array<T> {
+        val num = if (frequency == -1) readInt() else frequency
         return readArray(num, constructor)
     }
-    inline fun <reified T> readArrayIndexedOf(frequency: Int = 0, constructor: (Int) -> T): Array<T> {
-        val num = if (frequency == 0) readInt() else frequency
+    inline fun <reified T> readArrayIndexedOf(frequency: Int = -1, constructor: (Int) -> T): Array<T> {
+        val num = if (frequency == -1) readInt() else frequency
         return readArrayIndexed(num, constructor)
     }
 

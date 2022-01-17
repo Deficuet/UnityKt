@@ -68,7 +68,7 @@ class Mesh internal constructor(reader: ObjectReader): NamedObject(reader) {
         if (unityVersion >= intArrayOf(4, 3)) {
             mBindPose = reader.readNextMatrixArray()
             mBoneNameHashes = reader.readNextUIntArray()
-            reader += 4     //m_RootBoneNameHash: Int
+            reader += 4     //m_RootBoneNameHash: UInt
         }
         if (unityVersion >= intArrayOf(2, 6)) {
             if (unityVersion[0] >= 2019) {
@@ -85,8 +85,8 @@ class Mesh internal constructor(reader: ObjectReader): NamedObject(reader) {
             reader.alignStream()
             if (
                 unityVersion >= intArrayOf(2017, 4) ||
-                (unityVersion.contentEquals(intArrayOf(2017, 3, 1)) && buildType.isPatch) ||
-                (unityVersion.contentEquals(intArrayOf(2017, 3)) && meshCompression == 0u.toUByte())
+                ((unityVersion[0] == 2017 && unityVersion[1] == 3 && unityVersion[2] == 1) && buildType.isPatch) ||
+                ((unityVersion[0] == 2017 && unityVersion[1] == 3) && meshCompression == 0u.toUByte())
             ) {
                 mUse16BitIndices = reader.readInt() == 0
             }
@@ -141,8 +141,7 @@ class Mesh internal constructor(reader: ObjectReader): NamedObject(reader) {
             mColors = reader.readArrayOf(reader.readInt() * 4) {
                 (reader.readByte() / 0xFFu).toFloat()
             }.toFloatArray()
-            val collisionTrianglesSize = reader.readInt()
-            reader += collisionTrianglesSize * 4 + 4    //m_CollisionVertexCount
+            reader += reader.readInt() * 4 + 4    //m_CollisionVertexCount
         }
         reader += 4     //m_MeshUsageFlags: Int
         if (unityVersion[0] >= 5) {
@@ -353,7 +352,7 @@ class Mesh internal constructor(reader: ObjectReader): NamedObject(reader) {
                 val tangentData = mCompressedMesh.mTangents.unpackFloats(2, 8)
                 val signs = mCompressedMesh.mTangentSigns.unpackInts()
                 val tangents = FloatArray((mCompressedMesh.mTangents.mNumItems / 2u * 4u).toInt())
-                for (i in 0 until mCompressedMesh.mTangents.mNumItems.toInt()) {
+                for (i in 0 until mCompressedMesh.mTangents.mNumItems.toInt() / 2) {
                     var x = tangentData[i * 2]
                     var y = tangentData[i * 2 + 1]
                     val zsqr = 1 - x * x - y * y

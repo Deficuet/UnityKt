@@ -6,6 +6,8 @@ import java.nio.file.Path
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.name
 
+internal operator fun ByteArray.get(i: UInt) = get(i.toInt()).toIntBits()
+
 internal operator fun ByteArray.get(i: Int, l: Int) = sliceArray(i until i + l)
 
 internal fun Byte.toIntBits() = toUByte().toInt()

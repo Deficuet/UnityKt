@@ -12,7 +12,8 @@ object AssetManager {
     val assetFiles = mutableMapOf<String, SerializedFile>()
     val resourceFiles = mutableMapOf<String, ResourceFile>()
     val contexts = mutableListOf<ImportContext>()
-    val objectDict = mutableListOf<Pair<Long, Object>>()
+    val objects get() = contexts.flatMap { context -> context.objects.filter { it.mPathID != 1L } }
+    val objectDict get() = objects.map { it.mPathID to it }
     /**
      * @see [OffsetMode]
      */

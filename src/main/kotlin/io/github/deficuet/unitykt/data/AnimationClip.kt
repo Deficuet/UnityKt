@@ -122,30 +122,33 @@ class PackedFloatVector internal constructor(reader: ObjectReader) {
         start: Int = 0,
         chunkCount: Int = -1
     ): FloatArray {
-        var bitPos = start * mBitSize.toInt()
-        var indexPos = bitPos / 8
+        val bitSize = mBitSize.toInt()
+        var bitPos = start * bitSize
+        var indexPos = (bitPos / 8).toUInt()
         bitPos %= 8
         val scale = 1.0f / mRange
         val numChunks = if (chunkCount == -1) {
-            (mNumItems / itemCountInChunk.toUInt()).toInt()
+            mNumItems.toInt() / itemCountInChunk
         } else chunkCount
         val end = chunkStride * numChunks / 4
         val data = mutableListOf<Float>()
-        for (idx in 0 until end step chunkStride / 4) {
+        var idx = 0
+        while (idx != end) {
             for (i in 0 until itemCountInChunk) {
                 var x = 0u
                 var bits = 0
-                while (bits < mBitSize.toInt()) {
-                    x = x or ((mData[indexPos].toInt() shr bitPos) shl bits).toUInt()
-                    val num = minOf(mBitSize.toInt() - bits, 8 - bitPos)
+                while (bits < bitSize) {
+                    x = x.or(mData[indexPos].shr(bitPos).shl(bits).toUInt())
+                    val num = minOf(bitSize - bits, 8 - bitPos)
                     bitPos += num; bits += num
                     if (bitPos == 8) {
                         indexPos++; bitPos = 0
                     }
                 }
-                x = x and ((1 shl mBitSize.toInt()).toUInt() - 1u)
-                data.add(x.toFloat() / (scale * ((1 shl mBitSize.toInt()) - 1) + mStart))
+                x = x.and(1.shl(bitSize).toUInt() - 1u)
+                data.add(x.toFloat() / (scale * (1.shl(bitSize) - 1)) + mStart)
             }
+            idx += chunkStride / 4
         }
         return data.toFloatArray()
     }
@@ -167,18 +170,19 @@ class PackedIntVector internal constructor(reader: ObjectReader) {
 
     fun unpackInts(): IntArray {
         val data = IntArray(mNumItems.toInt())
-        var indexPos = 0; var bitPos = 0
+        var indexPos = 0u; var bitPos = 0
+        val bitSize = mBitSize.toInt()
         for (i in 0 until mNumItems.toInt()) {
             var bits = 0; var value = 0
-            while (bits < mBitSize.toInt()) {
-                value = value or ((mData[indexPos].toInt() shr bitPos) shl bits)
-                val num = minOf(mBitSize.toInt() - bits, 8 - bitPos)
+            while (bits < bitSize) {
+                value = value.or(mData[indexPos].shr(bitPos).shl(bits))
+                val num = minOf(bitSize - bits, 8 - bitPos)
                 bitPos += num; bits += num
                 if (bitPos == 8) {
                     indexPos++; bitPos = 0
                 }
             }
-            data[i] = value and ((1 shl mBitSize.toInt()) - 1)
+            data[i] = value.and(1.shl(bitSize) - 1)
         }
         return data
     }

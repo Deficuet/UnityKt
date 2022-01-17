@@ -1,6 +1,5 @@
 package io.github.deficuet.unitykt.file
 
-import io.github.deficuet.unitykt.AssetManager
 import io.github.deficuet.unitykt.data.*
 import io.github.deficuet.unitykt.util.*
 import java.io.File
@@ -353,7 +352,6 @@ class SerializedFile(
             }
         }
         root.objects.addAll(objects)
-        AssetManager.objectDict.addAll(objects.filter { it.mPathID != 1L }.map { it.mPathID to it })
         objectInfoList.clear()
         initSp.clear()
         reader.close()
