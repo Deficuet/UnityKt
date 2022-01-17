@@ -200,7 +200,7 @@ class Mesh internal constructor(reader: ObjectReader): NamedObject(reader) {
                         if (reader.endian == EndianType.LittleEndian && componentByteSize > 1) {
                             componentBytes.reverse()
                         }
-                        val array = if (vertexFormat.isIntFormat()) {
+                        val array = if (vertexFormat.isIntFormat) {
                             componentBytes.toIntArray(vertexFormat)
                         } else {
                             componentBytes.toFloatArray(vertexFormat)
@@ -617,7 +617,7 @@ internal enum class VertexFormat(val size: UInt) {
     kVertexFormatUInt32(4u),
     kVertexFormatSInt32(4u);
 
-    fun isIntFormat() = this >= kVertexFormatUInt8
+    val isIntFormat get() = this >= kVertexFormatUInt8
 
     companion object {
         fun of(value: Int): VertexFormat {
