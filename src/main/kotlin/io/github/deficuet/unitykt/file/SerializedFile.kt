@@ -1,6 +1,6 @@
 package io.github.deficuet.unitykt.file
 
-import io.github.deficuet.unitykt.data.*
+import io.github.deficuet.unitykt.dataImpl.*
 import io.github.deficuet.unitykt.util.*
 import java.io.File
 
@@ -147,8 +147,8 @@ class SerializedFile(
     var buildType = BuildType("")
         private set
     val externals: List<FileIdentifier>
-    val objects: List<Object>// = mutableListOf()
-    val objectDict: Map<Long, Object>
+    val objects: List<ObjectImpl>// = mutableListOf()
+    val objectDict: Map<Long, ObjectImpl>
         get() = objects.associateBy { it.mPathID }
 
     init {
@@ -282,62 +282,62 @@ class SerializedFile(
             userInformation = reader.readStringUntilNull()
         }
         //region readObjects
-        val initSp = mutableListOf<Object>()
-        val objectList = mutableListOf<Object>()
+        val initSp = mutableListOf<ObjectImpl>()
+        val objectList = mutableListOf<ObjectImpl>()
         for (info in objectInfoList) {
             val objReader = ObjectReader(reader, this, info)
             val obj = when (objReader.type) {
-                ClassIDType.Animation -> Animation(objReader)
-                ClassIDType.AnimationClip -> AnimationClip(objReader)
-                ClassIDType.Animator -> Animator(objReader)
-                ClassIDType.AnimatorController -> AnimatorController(objReader)
-                ClassIDType.AnimatorOverrideController -> AnimatorOverrideController(objReader)
-                ClassIDType.AssetBundle -> AssetBundle(objReader)
-                ClassIDType.AudioClip -> AudioClip(objReader)
-                ClassIDType.Avatar -> Avatar(objReader)
-                ClassIDType.Font -> Font(objReader)
-                ClassIDType.GameObject -> GameObject(objReader).also { initSp.add(it) }
-                ClassIDType.Material -> Material(objReader)
-                ClassIDType.Mesh -> Mesh(objReader)
-                ClassIDType.MeshFilter -> MeshFilter(objReader)
-                ClassIDType.MeshRenderer -> MeshRenderer(objReader)
-                ClassIDType.MonoBehaviour -> MonoBehavior(objReader)
-                ClassIDType.MonoScript -> MonoScript(objReader)
-                ClassIDType.MovieTexture -> MovieTexture(objReader)
-                ClassIDType.PlayerSettings -> PlayerSetting(objReader)
-                ClassIDType.RectTransform -> RectTransform(objReader)
-                ClassIDType.Shader -> Shader(objReader)
-                ClassIDType.SkinnedMeshRenderer -> SkinnedMeshRenderer(objReader)
-                ClassIDType.Sprite -> Sprite(objReader)
-                ClassIDType.SpriteAtlas -> SpriteAtlas(objReader).also { initSp.add(it) }
-                ClassIDType.TextAsset -> TextAsset(objReader)
-                ClassIDType.Texture2D -> Texture2D(objReader)
-                ClassIDType.Transform -> Transform(objReader)
-                ClassIDType.VideoClip -> VideoClip(objReader)
-                ClassIDType.ResourceManager -> ResourceManager(objReader)
-                else -> Object(objReader)
+                ClassIDType.Animation -> AnimationImpl(objReader)
+                ClassIDType.AnimationClip -> AnimationClipImpl(objReader)
+                ClassIDType.Animator -> AnimatorImpl(objReader)
+                ClassIDType.AnimatorController -> AnimatorControllerImpl(objReader)
+                ClassIDType.AnimatorOverrideController -> AnimatorOverrideControllerImpl(objReader)
+                ClassIDType.AssetBundle -> AssetBundleImpl(objReader)
+                ClassIDType.AudioClip -> AudioClipImpl(objReader)
+                ClassIDType.Avatar -> AvatarImpl(objReader)
+                ClassIDType.Font -> FontImpl(objReader)
+                ClassIDType.GameObject -> GameObjectImpl(objReader).also { initSp.add(it) }
+                ClassIDType.Material -> MaterialImpl(objReader)
+                ClassIDType.Mesh -> MeshImpl(objReader)
+                ClassIDType.MeshFilter -> MeshFilterImpl(objReader)
+                ClassIDType.MeshRenderer -> MeshRendererImpl(objReader)
+                ClassIDType.MonoBehaviour -> MonoBehaviorImpl(objReader)
+                ClassIDType.MonoScript -> MonoScriptImpl(objReader)
+                ClassIDType.MovieTexture -> MovieTextureImpl(objReader)
+                ClassIDType.PlayerSettings -> PlayerSettingImpl(objReader)
+                ClassIDType.RectTransform -> RectTransformImpl(objReader)
+                ClassIDType.Shader -> ShaderImpl(objReader)
+                ClassIDType.SkinnedMeshRenderer -> SkinnedMeshRendererImpl(objReader)
+                ClassIDType.Sprite -> SpriteImpl(objReader)
+                ClassIDType.SpriteAtlas -> SpriteAtlasImpl(objReader).also { initSp.add(it) }
+                ClassIDType.TextAsset -> TextAssetImpl(objReader)
+                ClassIDType.Texture2D -> Texture2DImpl(objReader)
+                ClassIDType.Transform -> TransformImpl(objReader)
+                ClassIDType.VideoClip -> VideoClipImpl(objReader)
+                ClassIDType.ResourceManager -> ResourceManagerImpl(objReader)
+                else -> ObjectImpl(objReader)
             }
             objectList.add(obj)
         }
         objects = objectList
         for (sp in initSp) {
             when (sp) {
-                is GameObject -> sp.apply {
+                is GameObjectImpl -> sp.apply {
                     for (pptr in mComponents) {
                         val obj = pptr.obj
                         if (obj != null) {
                             when (obj) {
-                                is Transform -> mTransform.add(obj)
-                                is MeshRenderer -> mMeshRenderer.add(obj)
-                                is MeshFilter -> mMeshFilter.add(obj)
-                                is SkinnedMeshRenderer -> mSkinnedMeshRenderer.add(obj)
-                                is Animator -> mAnimator.add(obj)
-                                is Animation -> mAnimation.add(obj)
+                                is TransformImpl -> mTransform.add(obj)
+                                is MeshRendererImpl -> mMeshRenderer.add(obj)
+                                is MeshFilterImpl -> mMeshFilter.add(obj)
+                                is SkinnedMeshRendererImpl -> mSkinnedMeshRenderer.add(obj)
+                                is AnimatorImpl -> mAnimator.add(obj)
+                                is AnimationImpl -> mAnimation.add(obj)
                             }
                         }
                     }
                 }
-                is SpriteAtlas -> sp.apply {
+                is SpriteAtlasImpl -> sp.apply {
                     if (!mIsVariant) {
                         for (pack in mPackedSprites) {
                             val sprite = pack.obj

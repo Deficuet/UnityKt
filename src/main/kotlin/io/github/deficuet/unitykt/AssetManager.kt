@@ -1,6 +1,5 @@
 package io.github.deficuet.unitykt
 
-import io.github.deficuet.unitykt.data.Object
 import io.github.deficuet.unitykt.file.*
 import io.github.deficuet.unitykt.util.*
 import java.nio.file.Files

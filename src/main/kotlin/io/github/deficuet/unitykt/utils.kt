@@ -1,6 +1,6 @@
 package io.github.deficuet.unitykt
 
-import io.github.deficuet.unitykt.data.Object
+import io.github.deficuet.unitykt.dataImpl.ObjectImpl
 
 operator fun List<ImportContext>.get(key: String) = find { it.name.contentEquals(key) }
 
@@ -18,7 +18,7 @@ fun <K, V> List<Pair<K, V>>.first(key: K) = get(key)[0]
 
 fun <K, V> List<Pair<K, V>>.firstOrNull(key: K) = with(get(key)) { if (isEmpty()) null else this[0] }
 
-inline fun <reified O: Object> List<Object>.allObjectsOf(): List<O> {
+inline fun <reified O: ObjectImpl> List<ObjectImpl>.allObjectsOf(): List<O> {
     return mutableListOf<O>().apply {
         for (obj in this@allObjectsOf) {
             if (obj is O) add(obj)
@@ -26,14 +26,14 @@ inline fun <reified O: Object> List<Object>.allObjectsOf(): List<O> {
     }
 }
 
-inline fun <reified O: Object> List<Object>.firstObjectOf() = allObjectsOf<O>()[0]
+inline fun <reified O: ObjectImpl> List<ObjectImpl>.firstObjectOf() = allObjectsOf<O>()[0]
 
-inline fun <reified O: Object> List<Object>.firstOfOrNull(): O? {
+inline fun <reified O: ObjectImpl> List<ObjectImpl>.firstOfOrNull(): O? {
     return with(allObjectsOf<O>()) { if (isEmpty()) null else this[0] }
 }
 
-fun List<Object>.allInstanceOf(vararg type: String): List<Object> {
-    return mutableListOf<Object>().apply {
+fun List<ObjectImpl>.allInstanceOf(vararg type: String): List<ObjectImpl> {
+    return mutableListOf<ObjectImpl>().apply {
         for (obj in this@allInstanceOf) {
             if (obj.type.name in type) {
                 add(obj)
@@ -42,6 +42,6 @@ fun List<Object>.allInstanceOf(vararg type: String): List<Object> {
     }
 }
 
-fun List<Object>.objectFromPathID(pathId: Long): Object? {
+fun List<ObjectImpl>.objectFromPathID(pathId: Long): ObjectImpl? {
     return firstOrNull { it.mPathID == pathId }
 }
