@@ -162,7 +162,7 @@ class MeshImpl internal constructor(reader: ObjectReader): NamedObjectImpl(reade
             if (mVertexData.mVertexCount > 0u) {
                 println(mStreamData.path)
                 val resourceReader = ResourceReader(
-                    mStreamData.path, asserFile, mStreamData.offset, mStreamData.size.toLong()
+                    mStreamData.path, assetFile, mStreamData.offset, mStreamData.size.toLong()
                 )
                 mVertexData.mDataSize = resourceReader.bytes
             }

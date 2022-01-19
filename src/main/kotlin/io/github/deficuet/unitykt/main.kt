@@ -1,12 +1,10 @@
 package io.github.deficuet.unitykt
 
 import io.github.deficuet.unitykt.dataImpl.*
-import java.io.File
-import javax.imageio.ImageIO
 
 fun main() {
-//    val b = AssetManager.loadFile("F:\\CS30Final\\example\\baoduoliuhua")
-//    val mesh = b.objects.firstObjectOf<Mesh>()
+//    val b = AssetManager.loadFile("D:/leidian\\Painting\\baoduoliuhua_tex")
+//    val mesh = b.objects.firstObjectOf<MeshImpl>()
 //    println(mesh.dump())
 //    val tex = b.objects.firstObjectOf<Texture2D>()
 //    println(tex.mTextureFormat)
@@ -14,26 +12,31 @@ fun main() {
 //        tex.image, "png",
 //        File("F:\\UnityKt\\build\\libs\\artifacts\\unitykt_main_jar\\test.png")
 //    )
-    println("2010")
-    val b = Bar("2019")
+    println("2018")
+    val b = Bar("abcd")
+    println("end")
+    println(b.c)
     println(b.a)
 }
 
-abstract class MetaObject<T: FooImpl>(implConstructor: () -> T) {
-    protected val objImpl by lazy(implConstructor)
+class ImplementationContainer<out T: FooImpl>(implConstructor: () -> T) {
+    val obj by lazy(implConstructor)
 }
 
-open class Foo<T: FooImpl>(implConstructor: () -> T): MetaObject<T>(implConstructor) {
-    val a get() = objImpl.a
-    val b get() = objImpl.b
+open class Foo protected constructor(private val subObj: ImplementationContainer<FooImpl>) {
+    constructor(p: String): this(ImplementationContainer { FooImpl(p) })
 
-    companion object {
-        operator fun invoke(p: String): Foo<FooImpl> = Foo { FooImpl(p) }
-    }
+    val a get() = subObj.obj.a
+    val b get() = subObj.obj.b
 }
 
-class Bar(p: String): Foo<BarImpl>({ BarImpl(p) }) {
-    val c get() = objImpl.c
+abstract class Med(private val subObj: ImplementationContainer<MedImpl>): Foo(subObj) {
+    val d get() = subObj.obj.d
+}
+
+class Bar private constructor(private val obj: ImplementationContainer<BarImpl>): Med(obj) {
+    constructor(p: String): this(ImplementationContainer { BarImpl(p) })
+    val c get() = obj.obj.c
 }
 
 open class FooImpl(private val p: String) {
@@ -41,11 +44,19 @@ open class FooImpl(private val p: String) {
     val b = p.hashCode()
 
     init {
-        println("initialized")
+        println("Foo")
     }
 }
 
-class BarImpl(private val p: String): FooImpl(p) {
+abstract class MedImpl(p: String): FooImpl(p) {
+    val d = p[0].hashCode()
+
+    init {
+        println("med")
+    }
+}
+
+class BarImpl(private val p: String): MedImpl(p) {
     val c = p == "abc"
 
     init {

@@ -70,7 +70,7 @@ class Texture2DImpl internal constructor(reader: ObjectReader): TextureImpl(read
             StreamingInfo(reader)
         } else null
         imageData = if (mStreamData?.path?.isNotEmpty() == true) {
-            ResourceReader(mStreamData.path, asserFile, mStreamData.offset, mStreamData.size.toLong())
+            ResourceReader(mStreamData.path, assetFile, mStreamData.offset, mStreamData.size.toLong())
         } else {
             ResourceReader(reader, reader.absolutePosition, imageDataSize.toLong())
         }

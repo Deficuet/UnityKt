@@ -1,11 +1,10 @@
 package io.github.deficuet.unitykt.dataImpl
 
 import io.github.deficuet.unitykt.file.BuildTarget
-import io.github.deficuet.unitykt.file.SerializedType
 import io.github.deficuet.unitykt.util.ObjectReader
 
 open class ObjectImpl internal constructor(private val reader: ObjectReader) {
-    val asserFile = reader.assetFile
+    val assetFile = reader.assetFile
     val type = reader.type
     val mPathID = reader.mPathID
     val unityVersion = reader.unityVersion
@@ -21,7 +20,5 @@ open class ObjectImpl internal constructor(private val reader: ObjectReader) {
     }
 
     fun dump() = serializedType?.typeTree?.readTypeString(reader)
-    fun dump(tree: SerializedType.Tree) = tree.readTypeString(reader)
     fun toType() = serializedType?.typeTree?.readType(reader)
-    fun toType(tree: SerializedType.Tree) = tree.readType(reader)
 }

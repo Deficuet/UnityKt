@@ -27,7 +27,7 @@ class VideoClipImpl internal constructor(reader: ObjectReader): NamedObjectImpl(
         if (unityVersion[0] >= 2020) reader += 1    //m_sRGB
         mVideoData = if (mExternamResource.mSource.isNotEmpty()) {
             with(mExternamResource) {
-                ResourceReader(mSource, asserFile, mOffset, mSize)
+                ResourceReader(mSource, assetFile, mOffset, mSize)
             }
         } else {
             ResourceReader(reader, reader.absolutePosition, mExternamResource.mSize)

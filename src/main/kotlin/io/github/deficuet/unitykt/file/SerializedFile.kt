@@ -65,7 +65,7 @@ data class ObjectInfo(
 )
 
 class SerializedFile(
-    private val reader: EndianBinaryReader,
+    internal val reader: EndianBinaryReader,
     override val bundleParent: AssetBundleFile,
     override val name: String
 ): RawAssetFile() {

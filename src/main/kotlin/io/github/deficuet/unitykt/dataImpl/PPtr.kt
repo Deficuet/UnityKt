@@ -67,7 +67,7 @@ class PPtr<T: ObjectImpl> private constructor(reader: ObjectReader, private val 
         }
     internal set(value) {
         if (value == null) throw IllegalArgumentException("The value set to PPtr can not be null.")
-        val name = value.asserFile.name
+        val name = value.assetFile.name
         if (name.contentEquals(assetFile.name)) {
             mFileID = 0
         } else {
@@ -75,7 +75,7 @@ class PPtr<T: ObjectImpl> private constructor(reader: ObjectReader, private val 
             if (mFileID == -1) {
                 (assetFile.externals as MutableList).add(
                     SerializedFile.FileIdentifier(
-                        kotlin.byteArrayOf(), 0, value.asserFile.name
+                        kotlin.byteArrayOf(), 0, value.assetFile.name
                     )
                 )
                 mFileID = assetFile.externals.size

@@ -40,7 +40,7 @@ class AudioClipImpl internal constructor(reader: ObjectReader): NamedObjectImpl(
                 val tSize = if (mSize % 4 != 0L) mSize + 4 - mSize % 4 else mSize
                 if (reader.byteSize.toLong() + reader.byteStart - reader.absolutePosition != tSize) {
                     mOffset = reader.readUInt().toLong()
-                    mSource = "${asserFile.name}.resS"
+                    mSource = "${assetFile.name}.resS"
                 } else {
                     mOffset = 0
                     mSource = ""
@@ -84,7 +84,7 @@ class AudioClipImpl internal constructor(reader: ObjectReader): NamedObjectImpl(
             mUseHardware = false
         }
         mAudioData = if (mSource.isNotEmpty()) {
-            ResourceReader(mSource, asserFile, mOffset, mSize)
+            ResourceReader(mSource, assetFile, mOffset, mSize)
         } else {
             ResourceReader(reader, reader.absolutePosition, mSize)
         }

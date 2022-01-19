@@ -308,11 +308,14 @@ class EndianFileStreamReader(
 /**
  * Wrapper for the parent `reader`
  */
-class ObjectReader(
+class ObjectReader internal constructor(
     private val reader: EndianBinaryReader,
     val assetFile: SerializedFile,
     private val info: ObjectInfo
 ) : EndianBinaryReader(0) {
+    internal constructor(assetFile: SerializedFile, info: ObjectInfo):
+        this(assetFile.reader, assetFile, info)
+
     val mPathID = info.mPathID
     val byteSize = info.byteSize
     val byteStart = info.byteStart
