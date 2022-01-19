@@ -3,9 +3,9 @@ package io.github.deficuet.unitykt
 import io.github.deficuet.unitykt.dataImpl.*
 
 fun main() {
-//    val b = AssetManager.loadFile("D:/leidian\\Painting\\baoduoliuhua_tex")
-//    val mesh = b.objects.firstObjectOf<MeshImpl>()
-//    println(mesh.dump())
+    val b = AssetManager.loadFile("F:/CS30Final/example\\baoduoliuhua")
+    val mesh = b.objects.firstObjectOf<RectTransformImpl>()
+    println(mesh.dump())
 //    val tex = b.objects.firstObjectOf<Texture2D>()
 //    println(tex.mTextureFormat)
 //    ImageIO.write(
@@ -13,10 +13,10 @@ fun main() {
 //        File("F:\\UnityKt\\build\\libs\\artifacts\\unitykt_main_jar\\test.png")
 //    )
     println("2018")
-    val b = Bar("abcd")
+    val bb = Bar("abcd")
     println("end")
-    println(b.c)
-    println(b.a)
+    println(bb.c)
+    println(bb.a)
 }
 
 class ImplementationContainer<out T: FooImpl>(implConstructor: () -> T) {

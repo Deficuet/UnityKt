@@ -77,10 +77,6 @@ class Texture2DImpl internal constructor(reader: ObjectReader): TextureImpl(read
     }
 
     val decompressedImageData by lazy { imageData.bytes.decompressTexture() }
-
-    /**
-     * Usually up-side-down
-     */
     val image by lazy {
         BufferedImage(mWidth, mHeight, BufferedImage.TYPE_4BYTE_ABGR).apply {
             data = Raster.createRaster(

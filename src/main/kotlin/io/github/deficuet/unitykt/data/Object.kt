@@ -5,7 +5,7 @@ import io.github.deficuet.unitykt.file.ObjectInfo
 import io.github.deficuet.unitykt.file.SerializedFile
 import io.github.deficuet.unitykt.util.ObjectReader
 
-open class Object protected constructor(private val container: ImplementationContainer<ObjectImpl>) {
+open class Object internal constructor(private val container: ImplementationContainer<ObjectImpl>) {
     internal constructor(assetFile: SerializedFile, info: ObjectInfo):
         this(ImplementationContainer { ObjectImpl(ObjectReader(assetFile, info)) })
 

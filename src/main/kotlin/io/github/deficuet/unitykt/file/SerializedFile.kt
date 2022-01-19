@@ -282,7 +282,6 @@ class SerializedFile(
             userInformation = reader.readStringUntilNull()
         }
         //region readObjects
-        val initSp = mutableListOf<ObjectImpl>()
         val objectList = mutableListOf<ObjectImpl>()
         for (info in objectInfoList) {
             val objReader = ObjectReader(reader, this, info)
@@ -296,7 +295,7 @@ class SerializedFile(
                 ClassIDType.AudioClip -> AudioClipImpl(objReader)
                 ClassIDType.Avatar -> AvatarImpl(objReader)
                 ClassIDType.Font -> FontImpl(objReader)
-                ClassIDType.GameObject -> GameObjectImpl(objReader).also { initSp.add(it) }
+                ClassIDType.GameObject -> GameObjectImpl(objReader)
                 ClassIDType.Material -> MaterialImpl(objReader)
                 ClassIDType.Mesh -> MeshImpl(objReader)
                 ClassIDType.MeshFilter -> MeshFilterImpl(objReader)
@@ -309,7 +308,7 @@ class SerializedFile(
                 ClassIDType.Shader -> ShaderImpl(objReader)
                 ClassIDType.SkinnedMeshRenderer -> SkinnedMeshRendererImpl(objReader)
                 ClassIDType.Sprite -> SpriteImpl(objReader)
-                ClassIDType.SpriteAtlas -> SpriteAtlasImpl(objReader).also { initSp.add(it) }
+                ClassIDType.SpriteAtlas -> SpriteAtlasImpl(objReader)
                 ClassIDType.TextAsset -> TextAssetImpl(objReader)
                 ClassIDType.Texture2D -> Texture2DImpl(objReader)
                 ClassIDType.Transform -> TransformImpl(objReader)
@@ -320,40 +319,8 @@ class SerializedFile(
             objectList.add(obj)
         }
         objects = objectList
-        for (sp in initSp) {
-            when (sp) {
-                is GameObjectImpl -> sp.apply {
-                    for (pptr in mComponents) {
-                        val obj = pptr.obj
-                        if (obj != null) {
-                            when (obj) {
-                                is TransformImpl -> mTransform.add(obj)
-                                is MeshRendererImpl -> mMeshRenderer.add(obj)
-                                is MeshFilterImpl -> mMeshFilter.add(obj)
-                                is SkinnedMeshRendererImpl -> mSkinnedMeshRenderer.add(obj)
-                                is AnimatorImpl -> mAnimator.add(obj)
-                                is AnimationImpl -> mAnimation.add(obj)
-                            }
-                        }
-                    }
-                }
-                is SpriteAtlasImpl -> sp.apply {
-                    if (!mIsVariant) {
-                        for (pack in mPackedSprites) {
-                            val sprite = pack.obj
-                            if (sprite != null) {
-                                if (sprite.mSpriteAtlas != null && sprite.mSpriteAtlas.isNull) {
-                                    sprite.mSpriteAtlas.obj = this
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
         root.objects.addAll(objects)
         objectInfoList.clear()
-        initSp.clear()
         reader.close()
         //endregion
     }

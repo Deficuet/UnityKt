@@ -20,6 +20,16 @@ class SpriteAtlasImpl internal constructor(reader: ObjectReader): NamedObjectImp
         reader.readAlignedString()      //m_Tag
         mIsVariant = reader.readBool()
         reader.alignStream()
+        if (!mIsVariant) {
+            for (pack in mPackedSprites) {
+                val sprite = pack.obj
+                if (sprite != null) {
+                    if (sprite.mSpriteAtlas != null && sprite.mSpriteAtlas.isNull) {
+                        sprite.mSpriteAtlas.obj = this
+                    }
+                }
+            }
+        }
     }
 }
 

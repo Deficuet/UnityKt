@@ -14,14 +14,6 @@ class GameObjectImpl internal constructor(reader: ObjectReader): EditorExtension
     val mAnimation = mutableListOf<AnimationImpl>()
 
     init {
-//        val componentSize = reader.readInt()
-//        val components = mutableListOf<PPtr<Component>>()
-//        for (i in 0 until componentSize) {
-//            if (unityVersion < intArrayOf(5, 5)) {
-//                reader += 4     //first: Int
-//            }
-//            components.add(PPtr(reader))
-//        }
         val components = reader.readArrayOf {
             if (unityVersion < intArrayOf(5, 5)) {
                 reader += 4     //first: Int
@@ -31,5 +23,18 @@ class GameObjectImpl internal constructor(reader: ObjectReader): EditorExtension
         reader += 4     //m_Layer: Int
         mName = reader.readAlignedString()
         mComponents = components
+        for (pptr in mComponents) {
+            val obj = pptr.obj
+            if (obj != null) {
+                when (obj) {
+                    is TransformImpl -> mTransform.add(obj)
+                    is MeshRendererImpl -> mMeshRenderer.add(obj)
+                    is MeshFilterImpl -> mMeshFilter.add(obj)
+                    is SkinnedMeshRendererImpl -> mSkinnedMeshRenderer.add(obj)
+                    is AnimatorImpl -> mAnimator.add(obj)
+                    is AnimationImpl -> mAnimation.add(obj)
+                }
+            }
+        }
     }
 }
