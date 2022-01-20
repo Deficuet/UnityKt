@@ -9,7 +9,7 @@ class TextAsset private constructor(
     private val container: ImplementationContainer<TextAssetImpl>
 ): NamedObject(container) {
     internal constructor(assetFile: SerializedFile, info: ObjectInfo):
-        this(ImplementationContainer { TextAssetImpl(ObjectReader(assetFile, info)) })
+        this(ImplementationContainer(assetFile, info) { TextAssetImpl(ObjectReader(assetFile, info)) })
 
     val mScript get() = container.impl.mScript
 }

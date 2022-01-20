@@ -9,5 +9,5 @@ class MeshRenderer private constructor(
     container: ImplementationContainer<MeshRendererImpl>
 ): Renderer(container) {
     internal constructor(assetFile: SerializedFile, info: ObjectInfo):
-        this(ImplementationContainer { MeshRendererImpl(ObjectReader(assetFile, info)) })
+        this(ImplementationContainer(assetFile, info) { MeshRendererImpl(ObjectReader(assetFile, info)) })
 }

@@ -9,7 +9,7 @@ class GameObject private constructor(
     private val container: ImplementationContainer<GameObjectImpl>
 ): EditorExtension(container) {
     internal constructor(assetFile: SerializedFile, info: ObjectInfo):
-        this(ImplementationContainer { GameObjectImpl(ObjectReader(assetFile, info)) })
+        this(ImplementationContainer(assetFile, info) { GameObjectImpl(ObjectReader(assetFile, info)) })
 
     val mComponents get() = container.impl.mComponents
     val mName get() = container.impl.mName

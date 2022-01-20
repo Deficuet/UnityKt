@@ -9,7 +9,7 @@ class Shader private constructor(
     private val container: ImplementationContainer<ShaderImpl>
 ): NamedObject(container) {
     internal constructor(assetFile: SerializedFile, info: ObjectInfo):
-        this(ImplementationContainer { ShaderImpl(ObjectReader(assetFile, info)) })
+        this(ImplementationContainer(assetFile, info) { ShaderImpl(ObjectReader(assetFile, info)) })
 
     val mScript get() = container.impl.mScript
     val decompressedSize get() = container.impl.decompressedSize

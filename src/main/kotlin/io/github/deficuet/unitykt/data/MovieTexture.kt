@@ -9,7 +9,7 @@ class MovieTexture private constructor(
     private val container: ImplementationContainer<MovieTextureImpl>
 ): Texture(container) {
     internal constructor(assetFile: SerializedFile, info: ObjectInfo):
-        this(ImplementationContainer { MovieTextureImpl(ObjectReader(assetFile, info)) })
+        this(ImplementationContainer(assetFile, info) { MovieTextureImpl(ObjectReader(assetFile, info)) })
 
     val mMovieData get() = container.impl.mMovieData
     val mAudioClip get() = container.impl.mAudioClip

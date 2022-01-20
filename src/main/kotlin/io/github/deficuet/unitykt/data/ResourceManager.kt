@@ -9,7 +9,7 @@ class ResourceManager private constructor(
     private val container: ImplementationContainer<ResourceManagerImpl>
 ): Object(container) {
     internal constructor(assetFile: SerializedFile, info: ObjectInfo):
-        this(ImplementationContainer { ResourceManagerImpl(ObjectReader(assetFile, info)) })
+        this(ImplementationContainer(assetFile, info) { ResourceManagerImpl(ObjectReader(assetFile, info)) })
 
     val mContainer get() = container.impl.mContainer
 }

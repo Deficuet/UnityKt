@@ -9,7 +9,7 @@ class RectTransform private constructor(
     private val container: ImplementationContainer<RectTransformImpl>
 ): Transform(container) {
     internal constructor(assetFile: SerializedFile, info: ObjectInfo):
-        this(ImplementationContainer { RectTransformImpl(ObjectReader(assetFile, info)) })
+        this(ImplementationContainer(assetFile, info) { RectTransformImpl(ObjectReader(assetFile, info)) })
 
     val mAnchorMin get() = container.impl.mAnchorMin
     val mAnchorMax get() = container.impl.mAnchorMax

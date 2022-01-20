@@ -9,7 +9,7 @@ class MonoScript private constructor(
     private val container: ImplementationContainer<MonoScriptImpl>
 ): NamedObject(container) {
     internal constructor(assetFile: SerializedFile, info: ObjectInfo):
-        this(ImplementationContainer { MonoScriptImpl(ObjectReader(assetFile, info)) })
+        this(ImplementationContainer(assetFile, info) { MonoScriptImpl(ObjectReader(assetFile, info)) })
 
     val mClassName get() = container.impl.mClassName
     val mNameSpace get() = container.impl.mNameSpace

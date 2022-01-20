@@ -7,15 +7,15 @@ import io.github.deficuet.unitykt.util.ObjectReader
 
 open class Object internal constructor(private val container: ImplementationContainer<ObjectImpl>) {
     internal constructor(assetFile: SerializedFile, info: ObjectInfo):
-        this(ImplementationContainer { ObjectImpl(ObjectReader(assetFile, info)) })
+        this(ImplementationContainer(assetFile, info) { ObjectImpl(ObjectReader(assetFile, info)) })
 
-    val assetFile get() = container.impl.assetFile
-    val type get() = container.impl.type
-    val mPathID get() = container.impl.mPathID
-    val unityVersion get() = container.impl.unityVersion
-    val byteSize get() = container.impl.byteSize
-    val platform get() = container.impl.platform
-    val serializedType get() = container.impl.serializedType
+    val assetFile = container.assetFile
+    val type = container.info.type
+    val mPathID = container.info.mPathID
+    val unityVersion = container.assetFile.version
+    val byteSize = container.info.byteSize
+    val platform = assetFile.targetPlatform
+    val serializedType = container.info.serializedType
     val bytes get() = container.impl.bytes
 
     fun dump() = container.impl.dump()

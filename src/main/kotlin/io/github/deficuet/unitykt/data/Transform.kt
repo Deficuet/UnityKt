@@ -9,7 +9,7 @@ open class Transform internal constructor(
     private val container: ImplementationContainer<TransformImpl>
 ): Component(container) {
     internal constructor(assetFile: SerializedFile, info: ObjectInfo):
-        this(ImplementationContainer { TransformImpl(ObjectReader(assetFile, info)) })
+        this(ImplementationContainer(assetFile, info) { TransformImpl(ObjectReader(assetFile, info)) })
 
     val mLocalRotation get() = container.impl.mLocalRotation
     val mLocalPosition get() = container.impl.mLocalPosition

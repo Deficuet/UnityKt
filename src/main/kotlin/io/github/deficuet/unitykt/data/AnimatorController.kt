@@ -9,7 +9,7 @@ class AnimatorController private constructor(
     private val container: ImplementationContainer<AnimatorControllerImpl>
 ): RuntimeAnimatorController(container) {
     internal constructor(assetFile: SerializedFile, info: ObjectInfo):
-        this(ImplementationContainer { AnimatorControllerImpl(ObjectReader(assetFile, info)) })
+        this(ImplementationContainer(assetFile, info) { AnimatorControllerImpl(ObjectReader(assetFile, info)) })
 
     val mAnimationClips get() = container.impl.mAnimationClips
 }

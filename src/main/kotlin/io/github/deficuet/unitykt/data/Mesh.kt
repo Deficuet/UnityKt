@@ -9,7 +9,7 @@ class Mesh private constructor(
     private val container: ImplementationContainer<MeshImpl>
 ): NamedObject(container) {
     internal constructor(assetFile: SerializedFile, info: ObjectInfo):
-        this(ImplementationContainer { MeshImpl(ObjectReader(assetFile, info)) })
+        this(ImplementationContainer(assetFile, info) { MeshImpl(ObjectReader(assetFile, info)) })
 
     val mSubMeshes get() = container.impl.mSubMeshes
     val mShapes get() = container.impl.mShapes

@@ -9,7 +9,7 @@ class Texture2D private constructor(
     private val container: ImplementationContainer<Texture2DImpl>
 ): Texture(container) {
     internal constructor(assetFile: SerializedFile, info: ObjectInfo):
-        this(ImplementationContainer { Texture2DImpl(ObjectReader(assetFile, info)) })
+        this(ImplementationContainer(assetFile, info) { Texture2DImpl(ObjectReader(assetFile, info)) })
 
     val mWidth get() = container.impl.mWidth
     val mHeight get() = container.impl.mHeight

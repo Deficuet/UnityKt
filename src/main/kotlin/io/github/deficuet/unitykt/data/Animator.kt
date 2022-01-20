@@ -9,7 +9,7 @@ class Animator private constructor(
     private val container: ImplementationContainer<AnimatorImpl>
 ): Behaviour(container) {
     internal constructor(assetFile: SerializedFile, info: ObjectInfo):
-        this(ImplementationContainer { AnimatorImpl(ObjectReader(assetFile, info)) })
+        this(ImplementationContainer(assetFile, info) { AnimatorImpl(ObjectReader(assetFile, info)) })
 
     val mAvatar get() = container.impl.mAvatar
     val mController get() = container.impl.mController

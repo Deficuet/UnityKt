@@ -9,7 +9,7 @@ class AssetBundle private constructor(
     private val container: ImplementationContainer<AssetBundleImpl>
 ): NamedObject(container) {
     internal constructor(assetFile: SerializedFile, info: ObjectInfo):
-        this(ImplementationContainer { AssetBundleImpl(ObjectReader(assetFile, info)) })
+        this(ImplementationContainer(assetFile, info) { AssetBundleImpl(ObjectReader(assetFile, info)) })
 
     val mPreloadTable get() = container.impl.mPreloadTable
     val mContainer get() = container.impl.mContainer

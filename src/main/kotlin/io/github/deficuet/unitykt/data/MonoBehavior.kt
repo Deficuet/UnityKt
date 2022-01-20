@@ -9,7 +9,7 @@ class MonoBehavior private constructor(
     private val container: ImplementationContainer<MonoBehaviorImpl>
 ): Behaviour(container) {
     internal constructor(assetFile: SerializedFile, info: ObjectInfo):
-        this(ImplementationContainer { MonoBehaviorImpl(ObjectReader(assetFile, info)) })
+        this(ImplementationContainer(assetFile, info) { MonoBehaviorImpl(ObjectReader(assetFile, info)) })
 
     val mScript get() = container.impl.mScript
     val mName get() = container.impl.mName

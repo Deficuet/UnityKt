@@ -9,7 +9,7 @@ class SkinnedMeshRenderer private constructor(
     private val container: ImplementationContainer<SkinnedMeshRendererImpl>
 ): Renderer(container) {
     internal constructor(assetFile: SerializedFile, info: ObjectInfo):
-        this(ImplementationContainer { SkinnedMeshRendererImpl(ObjectReader(assetFile, info)) })
+        this(ImplementationContainer(assetFile, info) { SkinnedMeshRendererImpl(ObjectReader(assetFile, info)) })
 
     val mMesh get() = container.impl.mMesh
     val mBones get() = container.impl.mBones

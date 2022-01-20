@@ -9,7 +9,7 @@ class AnimatorOverrideController private constructor(
     private val container: ImplementationContainer<AnimatorOverrideControllerImpl>
 ): RuntimeAnimatorController(container) {
     internal constructor(assetFile: SerializedFile, info: ObjectInfo):
-        this(ImplementationContainer { AnimatorOverrideControllerImpl(ObjectReader(assetFile, info)) })
+        this(ImplementationContainer(assetFile, info) { AnimatorOverrideControllerImpl(ObjectReader(assetFile, info)) })
 
     val mController get() = container.impl.mController
     val mClips get() = container.impl.mClips

@@ -9,7 +9,7 @@ class MeshFilter private constructor(
     private val container: ImplementationContainer<MeshFilterImpl>
 ): Component(container) {
     internal constructor(assetFile: SerializedFile, info: ObjectInfo):
-        this(ImplementationContainer { MeshFilterImpl(ObjectReader(assetFile, info)) })
+        this(ImplementationContainer(assetFile, info) { MeshFilterImpl(ObjectReader(assetFile, info)) })
 
     val mMesh get() = container.impl.mMesh
 }

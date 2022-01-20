@@ -9,7 +9,7 @@ class Font private constructor(
     private val container: ImplementationContainer<FontImpl>
 ): NamedObject(container) {
     internal constructor(assetFile: SerializedFile, info: ObjectInfo):
-        this(ImplementationContainer { FontImpl(ObjectReader(assetFile, info)) })
+        this(ImplementationContainer(assetFile, info) { FontImpl(ObjectReader(assetFile, info)) })
 
     val mFontData get() = container.impl.mFontData
 }

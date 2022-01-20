@@ -9,7 +9,7 @@ class SpriteAtlas private constructor(
     private val container: ImplementationContainer<SpriteAtlasImpl>
 ): NamedObject(container) {
     internal constructor(assetFile: SerializedFile, info: ObjectInfo):
-        this(ImplementationContainer { SpriteAtlasImpl(ObjectReader(assetFile, info)) })
+        this(ImplementationContainer(assetFile, info) { SpriteAtlasImpl(ObjectReader(assetFile, info)) })
 
     val mPackedSprites get() = container.impl.mPackedSprites
     val mRenderDataMap get() = container.impl.mRenderDataMap

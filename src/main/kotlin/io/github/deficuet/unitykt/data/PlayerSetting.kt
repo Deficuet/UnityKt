@@ -9,7 +9,7 @@ class PlayerSetting private constructor(
     private val container: ImplementationContainer<PlayerSettingImpl>
 ): Object(container) {
     internal constructor(assetFile: SerializedFile, info: ObjectInfo):
-        this(ImplementationContainer { PlayerSettingImpl(ObjectReader(assetFile, info)) })
+        this(ImplementationContainer(assetFile, info) { PlayerSettingImpl(ObjectReader(assetFile, info)) })
 
     val companyName get() = container.impl.companyName
     val productName get() = container.impl.productName

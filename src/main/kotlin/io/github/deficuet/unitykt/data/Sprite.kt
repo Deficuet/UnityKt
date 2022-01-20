@@ -9,7 +9,7 @@ class Sprite private constructor(
     private val container: ImplementationContainer<SpriteImpl>
 ): NamedObject(container) {
     internal constructor(assetFile: SerializedFile, info: ObjectInfo):
-        this(ImplementationContainer { SpriteImpl(ObjectReader(assetFile, info)) })
+        this(ImplementationContainer(assetFile, info) { SpriteImpl(ObjectReader(assetFile, info)) })
 
     val mRect get() = container.impl.mRect
     val mOffset get() = container.impl.mOffset

@@ -9,7 +9,7 @@ class AnimationClip private constructor(
     private val container: ImplementationContainer<AnimationClipImpl>
 ): NamedObject(container) {
     internal constructor(assetFile: SerializedFile, info: ObjectInfo):
-        this(ImplementationContainer { AnimationClipImpl(ObjectReader(assetFile, info)) })
+        this(ImplementationContainer(assetFile, info) { AnimationClipImpl(ObjectReader(assetFile, info)) })
 
     val mAnimationType get() = container.impl.mAnimationType
     val mLegacy get() = container.impl.mLegacy

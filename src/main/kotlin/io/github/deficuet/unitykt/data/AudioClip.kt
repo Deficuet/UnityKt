@@ -9,7 +9,7 @@ class AudioClip private constructor(
     private val container: ImplementationContainer<AudioClipImpl>
 ): NamedObject(container) {
     internal constructor(assetFile: SerializedFile, info: ObjectInfo):
-        this(ImplementationContainer { AudioClipImpl(ObjectReader(assetFile, info)) })
+        this(ImplementationContainer(assetFile, info) { AudioClipImpl(ObjectReader(assetFile, info)) })
 
     val mFormat get() = container.impl.mFormat
     val mType get() = container.impl.mType

@@ -9,7 +9,7 @@ class Avatar private constructor(
     private val container: ImplementationContainer<AvatarImpl>
 ): NamedObject(container) {
     internal constructor(assetFile: SerializedFile, info: ObjectInfo):
-        this(ImplementationContainer { AvatarImpl(ObjectReader(assetFile, info)) })
+        this(ImplementationContainer(assetFile, info) { AvatarImpl(ObjectReader(assetFile, info)) })
 
     val mAvatarSize get() = container.impl.mAvatarSize
     val mAvatar get() = container.impl.mAvatar
