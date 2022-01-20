@@ -7,7 +7,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.io.FileInputStream
 import java.io.Closeable
-import io.github.deficuet.unitykt.file.ClassIDType
 import io.github.deficuet.unitykt.file.ObjectInfo
 import io.github.deficuet.unitykt.file.SerializedFile
 import io.github.deficuet.unitykt.math.*
@@ -323,9 +322,7 @@ class ObjectReader internal constructor(
     val unityVersion = assetFile.version
     val buildType = assetFile.buildType
     val platform = assetFile.targetPlatform
-    val type = if (ClassIDType.isDefined(info.classID)) {
-        ClassIDType.values().first { it.id == info.classID }
-    } else ClassIDType.UnknownType
+    val type = info.type
     val serializedType = info.serializedType
 
     override val ignoredOffset = byteStart

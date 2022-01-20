@@ -1,6 +1,6 @@
 package io.github.deficuet.unitykt.file
 
-import io.github.deficuet.unitykt.dataImpl.*
+import io.github.deficuet.unitykt.data.*
 import io.github.deficuet.unitykt.util.*
 import java.io.File
 
@@ -62,7 +62,9 @@ data class ObjectInfo(
     val stripped: UByte,
     val mPathID: Long,
     val serializedType: SerializedType?
-)
+) {
+    val type = ClassIDType.of(classID)
+}
 
 class SerializedFile(
     internal val reader: EndianBinaryReader,
@@ -131,12 +133,12 @@ class SerializedFile(
 
     private var unityVersion = "2.5.0.f5"
 
-    private var enableTypeTree = true
+    private val enableTypeTree: Boolean
     private var bigIDEnabled = 0
     private val objectInfoList: List<ObjectInfo>
     private val scriptTypes = mutableListOf<ObjectIdentifier>()
     private val refTypes = mutableListOf<SerializedType>()
-    private var userInformation = ""
+    private val userInformation: String
     private val types: List<SerializedType>
 
     val header: Header get() = Header(hMetadataSize, hFileSize, hVersion, hDataOffset, hEndian)
@@ -147,8 +149,8 @@ class SerializedFile(
     var buildType = BuildType("")
         private set
     val externals: List<FileIdentifier>
-    val objects: List<ObjectImpl>// = mutableListOf()
-    val objectDict: Map<Long, ObjectImpl>
+    val objects: List<Object>// = mutableListOf()
+    val objectDict: Map<Long, Object>
         get() = objects.associateBy { it.mPathID }
 
     init {
@@ -182,7 +184,7 @@ class SerializedFile(
                 targetPlatform = BuildTarget.values().first { it.id == targetPlatformID }
             }
         }
-        if (hVersion >= FormatVersion.kHasTypeTreeHashes) enableTypeTree = reader.readBool()
+        enableTypeTree = if (hVersion >= FormatVersion.kHasTypeTreeHashes) reader.readBool() else true
         val typeCount = reader.readInt()
         val typesList = mutableListOf<SerializedType>()
         for (i in 0 until typeCount) {
@@ -278,43 +280,42 @@ class SerializedFile(
                 refTypes.add(readSerializedType(true))
             }
         }
-        if (hVersion >= FormatVersion.kUnknown_5) {
-            userInformation = reader.readStringUntilNull()
-        }
+        userInformation = if (hVersion >= FormatVersion.kUnknown_5) {
+            reader.readStringUntilNull()
+        } else ""
         //region readObjects
-        val objectList = mutableListOf<ObjectImpl>()
+        val objectList = mutableListOf<Object>()
         for (info in objectInfoList) {
-            val objReader = ObjectReader(reader, this, info)
-            val obj = when (objReader.type) {
-                ClassIDType.Animation -> AnimationImpl(objReader)
-                ClassIDType.AnimationClip -> AnimationClipImpl(objReader)
-                ClassIDType.Animator -> AnimatorImpl(objReader)
-                ClassIDType.AnimatorController -> AnimatorControllerImpl(objReader)
-                ClassIDType.AnimatorOverrideController -> AnimatorOverrideControllerImpl(objReader)
-                ClassIDType.AssetBundle -> AssetBundleImpl(objReader)
-                ClassIDType.AudioClip -> AudioClipImpl(objReader)
-                ClassIDType.Avatar -> AvatarImpl(objReader)
-                ClassIDType.Font -> FontImpl(objReader)
-                ClassIDType.GameObject -> GameObjectImpl(objReader)
-                ClassIDType.Material -> MaterialImpl(objReader)
-                ClassIDType.Mesh -> MeshImpl(objReader)
-                ClassIDType.MeshFilter -> MeshFilterImpl(objReader)
-                ClassIDType.MeshRenderer -> MeshRendererImpl(objReader)
-                ClassIDType.MonoBehaviour -> MonoBehaviorImpl(objReader)
-                ClassIDType.MonoScript -> MonoScriptImpl(objReader)
-                ClassIDType.MovieTexture -> MovieTextureImpl(objReader)
-                ClassIDType.PlayerSettings -> PlayerSettingImpl(objReader)
-                ClassIDType.RectTransform -> RectTransformImpl(objReader)
-                ClassIDType.Shader -> ShaderImpl(objReader)
-                ClassIDType.SkinnedMeshRenderer -> SkinnedMeshRendererImpl(objReader)
-                ClassIDType.Sprite -> SpriteImpl(objReader)
-                ClassIDType.SpriteAtlas -> SpriteAtlasImpl(objReader)
-                ClassIDType.TextAsset -> TextAssetImpl(objReader)
-                ClassIDType.Texture2D -> Texture2DImpl(objReader)
-                ClassIDType.Transform -> TransformImpl(objReader)
-                ClassIDType.VideoClip -> VideoClipImpl(objReader)
-                ClassIDType.ResourceManager -> ResourceManagerImpl(objReader)
-                else -> ObjectImpl(objReader)
+            val obj = when (info.type) {
+                ClassIDType.Animation -> Animation(this, info)
+                ClassIDType.AnimationClip -> AnimationClip(this, info)
+                ClassIDType.Animator -> Animator(this, info)
+                ClassIDType.AnimatorController -> AnimatorController(this, info)
+                ClassIDType.AnimatorOverrideController -> AnimatorOverrideController(this, info)
+                ClassIDType.AssetBundle -> AssetBundle(this, info)
+                ClassIDType.AudioClip -> AudioClip(this, info)
+                ClassIDType.Avatar -> Avatar(this, info)
+                ClassIDType.Font -> Font(this, info)
+                ClassIDType.GameObject -> GameObject(this, info)
+                ClassIDType.Material -> Material(this, info)
+                ClassIDType.Mesh -> Mesh(this, info)
+                ClassIDType.MeshFilter -> MeshFilter(this, info)
+                ClassIDType.MeshRenderer -> MeshRenderer(this, info)
+                ClassIDType.MonoBehaviour -> MonoBehavior(this, info)
+                ClassIDType.MonoScript -> MonoScript(this, info)
+                ClassIDType.MovieTexture -> MovieTexture(this, info)
+                ClassIDType.PlayerSettings -> PlayerSetting(this, info)
+                ClassIDType.RectTransform -> RectTransform(this, info)
+                ClassIDType.Shader -> Shader(this, info)
+                ClassIDType.SkinnedMeshRenderer -> SkinnedMeshRenderer(this, info)
+                ClassIDType.Sprite -> Sprite(this, info)
+                ClassIDType.SpriteAtlas -> SpriteAtlas(this, info)
+                ClassIDType.TextAsset -> TextAsset(this, info)
+                ClassIDType.Texture2D -> Texture2D(this, info)
+                ClassIDType.Transform -> Transform(this, info)
+                ClassIDType.VideoClip -> VideoClip(this, info)
+                ClassIDType.ResourceManager -> ResourceManager(this, info)
+                else -> Object(this, info)
             }
             objectList.add(obj)
         }

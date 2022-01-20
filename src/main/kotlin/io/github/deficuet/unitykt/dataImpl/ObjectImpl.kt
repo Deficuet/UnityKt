@@ -5,16 +5,15 @@ import io.github.deficuet.unitykt.util.ObjectReader
 
 open class ObjectImpl internal constructor(private val reader: ObjectReader) {
     val assetFile = reader.assetFile
-    val type = reader.type
     val mPathID = reader.mPathID
     val unityVersion = reader.unityVersion
     protected val buildType = reader.buildType
-    val byteSize = reader.byteSize
     val platform = reader.platform
-    val serializedType = reader.serializedType
+    private val serializedType = reader.serializedType
     val bytes by lazy { reader.bytes }
 
     init {
+        println("Object with mPathID $mPathID and type ${reader.type} initialized")
         reader.position = 0
         if (platform == BuildTarget.NoTarget) reader += 4   //m_ObjectHideFlags: UInt
     }

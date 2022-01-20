@@ -1,12 +1,13 @@
 package io.github.deficuet.unitykt.dataImpl
 
+import io.github.deficuet.unitykt.data.AnimationClip
 import io.github.deficuet.unitykt.math.Vector3
 import io.github.deficuet.unitykt.math.Vector4
 import io.github.deficuet.unitykt.util.ObjectReader
 import io.github.deficuet.unitykt.util.compareTo
 
 class AnimatorControllerImpl internal constructor(reader: ObjectReader): RuntimeAnimatorControllerImpl(reader) {
-    val mAnimationClips: Array<PPtr<AnimationClipImpl>>
+    val mAnimationClips: Array<PPtr<AnimationClip>>
 
     init {
         reader += 4     //m_ControllerSize: UInt

@@ -1,5 +1,7 @@
 package io.github.deficuet.unitykt.dataImpl
 
+import io.github.deficuet.unitykt.data.Material
+import io.github.deficuet.unitykt.data.Texture
 import io.github.deficuet.unitykt.util.ObjectReader
 import io.github.deficuet.unitykt.util.compareTo
 
@@ -9,9 +11,9 @@ class FontImpl internal constructor(reader: ObjectReader): NamedObjectImpl(reade
     init {
         if (unityVersion >= intArrayOf(5, 5)) {
             reader += 4     //m_LineSpacing: Float
-            PPtr<MaterialImpl>(reader)      //m_DefaultMaterial
+            PPtr<Material>(reader)      //m_DefaultMaterial
             reader += 4     //m_FontSize: Float
-            PPtr<TextureImpl>(reader)      //m_Texture
+            PPtr<Texture>(reader)      //m_Texture
             //m_AsciiStartOffset: Int, m_Tracking: Float m_CharacterSpacing: Int,
             //m_CharacterPadding: Int, m_ConvertCase: Int
             reader += 20
@@ -42,7 +44,7 @@ class FontImpl internal constructor(reader: ObjectReader): NamedObjectImpl(reade
                 reader += 8     //m_CharacterSpacing, m_CharacterPadding: Int
             }
             reader += 4     //m_ConvertCase: Int
-            PPtr<MaterialImpl>(reader)
+            PPtr<Material>(reader)
             val charRectSize = reader.readInt()
             for (i in 1..charRectSize) {
                 reader += 40
@@ -51,7 +53,7 @@ class FontImpl internal constructor(reader: ObjectReader): NamedObjectImpl(reade
                     reader.alignStream()
                 }
             }
-            PPtr<TextureImpl>(reader)
+            PPtr<Texture>(reader)
             val kerningValueSize = reader.readInt()
             for (j in 1..kerningValueSize) {
                 reader += 8

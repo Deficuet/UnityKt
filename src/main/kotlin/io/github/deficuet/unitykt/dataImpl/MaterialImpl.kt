@@ -1,10 +1,12 @@
 package io.github.deficuet.unitykt.dataImpl
 
+import io.github.deficuet.unitykt.data.Shader
+import io.github.deficuet.unitykt.data.Texture
 import io.github.deficuet.unitykt.util.ObjectReader
 import io.github.deficuet.unitykt.util.compareTo
 
 class MaterialImpl internal constructor(reader: ObjectReader): NamedObjectImpl(reader) {
-    val mShader = PPtr<ShaderImpl>(reader)
+    val mShader = PPtr<Shader>(reader)
     val mSavedProperties: UnityPropertySheet
 
     init {
@@ -36,7 +38,7 @@ class MaterialImpl internal constructor(reader: ObjectReader): NamedObjectImpl(r
 }
 
 class UnityTexEnv internal constructor(reader: ObjectReader) {
-    val mTexture = PPtr<TextureImpl>(reader)
+    val mTexture = PPtr<Texture>(reader)
     val mScale = reader.readVector2()
     val mOffset = reader.readVector2()
 }

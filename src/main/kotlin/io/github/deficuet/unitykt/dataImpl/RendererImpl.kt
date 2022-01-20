@@ -1,10 +1,13 @@
 package io.github.deficuet.unitykt.dataImpl
 
+import io.github.deficuet.unitykt.data.GameObject
+import io.github.deficuet.unitykt.data.Material
+import io.github.deficuet.unitykt.data.Transform
 import io.github.deficuet.unitykt.util.ObjectReader
 import io.github.deficuet.unitykt.util.compareTo
 
 abstract class RendererImpl internal constructor(reader: ObjectReader): ComponentImpl(reader) {
-    val mMaterials: Array<PPtr<MaterialImpl>>
+    val mMaterials: Array<PPtr<Material>>
     val mStaticBatchInfo: StaticBatchInfo?
     val mSubsetIndices: Array<UInt>
 
@@ -63,18 +66,18 @@ abstract class RendererImpl internal constructor(reader: ObjectReader): Componen
                 mSubsetIndices = reader.readNextUIntArray()
                 mStaticBatchInfo = null
             }
-            PPtr<TransformImpl>(reader)     //m_StaticBatchRoot
+            PPtr<Transform>(reader)     //m_StaticBatchRoot
         }
         if (unityVersion >= intArrayOf(5, 4)) {
-            PPtr<TransformImpl>(reader)     //m_ProbeAnchor
-            PPtr<GameObjectImpl>(reader)    //m_LightProbeVolumeOverride
+            PPtr<Transform>(reader)     //m_ProbeAnchor
+            PPtr<GameObject>(reader)    //m_LightProbeVolumeOverride
         } else if (unityVersion >= intArrayOf(3, 5)) {
             reader += 1     //m_UseLightProbes: Boolean
             reader.alignStream()
             if (unityVersion[0] >= 5) {
                 reader += 4     //m_ReflectionProbeUsage: Int
             }
-            PPtr<TransformImpl>(reader)     //m_LightProbeAnchor
+            PPtr<Transform>(reader)     //m_LightProbeAnchor
         }
         if (unityVersion >= v43) {
             //m_SortingLayer: Short / m_SortingLayerID: UInt

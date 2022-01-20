@@ -1,5 +1,6 @@
 package io.github.deficuet.unitykt.dataImpl
 
+import io.github.deficuet.unitykt.data.Shader
 import io.github.deficuet.unitykt.util.EndianBinaryReader
 import io.github.deficuet.unitykt.util.ObjectReader
 import io.github.deficuet.unitykt.util.compareTo
@@ -32,11 +33,11 @@ class ShaderImpl internal constructor(reader: ObjectReader): NamedObjectImpl(rea
             }
             compressedBlob = reader.readNextByteArray()
             reader.alignStream()
-            reader.readArrayOf { PPtr<ShaderImpl>(reader) }     //m_Dependencies
+            reader.readArrayOf { PPtr<Shader>(reader) }     //m_Dependencies
             if (unityVersion[0] >= 2018) {
                 reader.readArrayOf {
                     reader.readAlignedString()
-                    PPtr<ShaderImpl>(reader)    // m_NonModifiableTextures
+                    PPtr<Shader>(reader)    // m_NonModifiableTextures
                 }
             }
             reader += 1     //m_ShaderIsBaked

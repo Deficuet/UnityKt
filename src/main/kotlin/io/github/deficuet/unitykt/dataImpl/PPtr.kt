@@ -1,14 +1,16 @@
 package io.github.deficuet.unitykt.dataImpl
 
+import io.github.deficuet.unitykt.data.Object
 import io.github.deficuet.unitykt.AssetManager
 import io.github.deficuet.unitykt.ImportContext
 import io.github.deficuet.unitykt.file.FormatVersion
 import io.github.deficuet.unitykt.file.SerializedFile
 import io.github.deficuet.unitykt.util.*
+import io.github.deficuet.unitykt.get
 import java.io.File
 import kotlin.reflect.KClass
 
-class PPtr<T: ObjectImpl> private constructor(reader: ObjectReader, private val clazz: KClass<T>) {
+class PPtr<T: Object> private constructor(reader: ObjectReader, private val clazz: KClass<T>) {
     var mFileID = reader.readInt()
         private set
     var mPathID = with(reader) { if (formatVersion < FormatVersion.kUnknown_14) readInt().toLong() else readLong() }
@@ -86,8 +88,12 @@ class PPtr<T: ObjectImpl> private constructor(reader: ObjectReader, private val 
         mPathID = value.mPathID
     }
 
+    internal inline fun <reified O: T> setObj(o: ObjectImpl) {
+        obj = AssetManager.objectDict[o.mPathID] as O
+    }
+
     companion object {
-        internal inline operator fun <reified O: ObjectImpl> invoke(reader: ObjectReader): PPtr<O> {
+        internal inline operator fun <reified O: Object> invoke(reader: ObjectReader): PPtr<O> {
             return PPtr(reader, O::class)
         }
     }

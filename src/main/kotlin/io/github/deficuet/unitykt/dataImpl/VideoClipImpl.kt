@@ -1,5 +1,6 @@
 package io.github.deficuet.unitykt.dataImpl
 
+import io.github.deficuet.unitykt.data.Shader
 import io.github.deficuet.unitykt.util.ObjectReader
 import io.github.deficuet.unitykt.util.ResourceReader
 import io.github.deficuet.unitykt.util.compareTo
@@ -20,7 +21,7 @@ class VideoClipImpl internal constructor(reader: ObjectReader): NamedObjectImpl(
         reader.readNextUIntArray()      //m_AudioSampleRate
         reader.readNextStringArray()    //m_AudioLanguage
         if (unityVersion[0] >= 2020) {
-            reader.readArrayOf { PPtr<ShaderImpl>(reader) }     //m_VideoShaders
+            reader.readArrayOf { PPtr<Shader>(reader) }     //m_VideoShaders
         }
         mExternamResource = StreamedResource(reader)
         reader += 1     //m_HasSplitAlpha: Boolean

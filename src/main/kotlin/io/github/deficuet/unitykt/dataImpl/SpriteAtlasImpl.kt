@@ -1,11 +1,14 @@
 package io.github.deficuet.unitykt.dataImpl
 
+import io.github.deficuet.unitykt.data.Sprite
+import io.github.deficuet.unitykt.data.SpriteAtlas
+import io.github.deficuet.unitykt.data.Texture2D
 import io.github.deficuet.unitykt.math.Vector2
 import io.github.deficuet.unitykt.util.ObjectReader
 import io.github.deficuet.unitykt.util.compareTo
 
 class SpriteAtlasImpl internal constructor(reader: ObjectReader): NamedObjectImpl(reader) {
-    val mPackedSprites = reader.readArrayOf { PPtr<SpriteImpl>(reader) }
+    val mPackedSprites = reader.readArrayOf { PPtr<Sprite>(reader) }
     val mRenderDataMap: Map<Pair<ByteArray, Long>, SpriteAtlasData>
     val mIsVariant: Boolean
 
@@ -24,8 +27,8 @@ class SpriteAtlasImpl internal constructor(reader: ObjectReader): NamedObjectImp
             for (pack in mPackedSprites) {
                 val sprite = pack.obj
                 if (sprite != null) {
-                    if (sprite.mSpriteAtlas != null && sprite.mSpriteAtlas.isNull) {
-                        sprite.mSpriteAtlas.obj = this
+                    if (sprite.mSpriteAtlas != null && sprite.mSpriteAtlas!!.isNull) {
+                        sprite.mSpriteAtlas!!.setObj<SpriteAtlas>(this)
                     }
                 }
             }
@@ -34,8 +37,8 @@ class SpriteAtlasImpl internal constructor(reader: ObjectReader): NamedObjectImp
 }
 
 class SpriteAtlasData internal constructor(reader: ObjectReader) {
-    val texture = PPtr<Texture2DImpl>(reader)
-    val alphaText = PPtr<Texture2DImpl>(reader)
+    val texture = PPtr<Texture2D>(reader)
+    val alphaText = PPtr<Texture2D>(reader)
     val textureRect = reader.readRectangle()
     val textureRectOffset = reader.readVector2()
     val atlasRectOffset = if (reader.unityVersion >= intArrayOf(2017, 2)) {

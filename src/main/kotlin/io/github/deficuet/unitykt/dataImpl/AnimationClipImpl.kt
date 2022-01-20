@@ -1,5 +1,6 @@
 package io.github.deficuet.unitykt.dataImpl
 
+import io.github.deficuet.unitykt.data.*
 import io.github.deficuet.unitykt.file.ClassIDType
 import io.github.deficuet.unitykt.math.*
 import io.github.deficuet.unitykt.util.*
@@ -259,7 +260,7 @@ class FloatCurve internal constructor(reader: ObjectReader) {
     val attribute = reader.readAlignedString()
     val path = reader.readAlignedString()
     val classID: ClassIDType
-    val script: PPtr<MonoScriptImpl>
+    val script: PPtr<MonoScript>
 
     init {
         val id = reader.readInt()
@@ -270,7 +271,7 @@ class FloatCurve internal constructor(reader: ObjectReader) {
 
 class PPtrKeyFrame internal constructor(reader: ObjectReader) {
     val time = reader.readFloat()
-    val value = PPtr<ObjectImpl>(reader)
+    val value = PPtr<Object>(reader)
 }
 
 class PPtrCurve internal constructor(reader: ObjectReader) {
@@ -278,7 +279,7 @@ class PPtrCurve internal constructor(reader: ObjectReader) {
     val attribute = reader.readAlignedString()
     val path = reader.readAlignedString()
     val classID = reader.readInt()
-    val script = PPtr<MonoScriptImpl>(reader)
+    val script = PPtr<MonoScript>(reader)
 }
 
 class AABB internal constructor(reader: ObjectReader) {
@@ -432,7 +433,7 @@ class ValueArrayConstant internal constructor(reader: ObjectReader) {
 class GenericBinding internal constructor(reader: ObjectReader) {
     val path = reader.readUInt()
     val attribute = reader.readUInt()
-    val script = PPtr<ObjectImpl>(reader)
+    val script = PPtr<Object>(reader)
     val typeID: ClassIDType
     val customType: UByte
     val isPPtrCurve: UByte
@@ -450,7 +451,7 @@ class GenericBinding internal constructor(reader: ObjectReader) {
 
 class AnimationClipBindingConstant internal constructor(reader: ObjectReader) {
     val genericBindings = reader.readArrayOf { GenericBinding(reader) }
-    val pptrCurveMapping = reader.readArrayOf { PPtr<ObjectImpl>(reader) }
+    val pptrCurveMapping = reader.readArrayOf { PPtr<Object>(reader) }
 
     fun findBinding(index: Int): GenericBinding? {
         var curves = 0
@@ -567,7 +568,7 @@ class AnimationEvent internal constructor(reader: ObjectReader) {
     val time = reader.readFloat()
     val functionName = reader.readAlignedString()
     val data = reader.readAlignedString()
-    val objectReferenceParameter = PPtr<ObjectImpl>(reader)
+    val objectReferenceParameter = PPtr<Object>(reader)
     val floatParameter = reader.readFloat()
     val intParameter = if (reader.unityVersion[0] >= 3) reader.readInt() else 0
     val messageOptions = reader.readInt()

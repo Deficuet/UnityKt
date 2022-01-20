@@ -372,8 +372,6 @@ enum class ClassIDType(val id: Int) {
     ScriptedImporter(2089858483);
 
     companion object {
-        fun isDefined(v: Int) = values().any { it.id == v }
-
         fun of(value: Int): ClassIDType {
             return values().firstOrNull { it.id == value } ?: Object
         }

@@ -1,11 +1,13 @@
 package io.github.deficuet.unitykt.dataImpl
 
+import io.github.deficuet.unitykt.data.Avatar
+import io.github.deficuet.unitykt.data.RuntimeAnimatorController
 import io.github.deficuet.unitykt.util.ObjectReader
 import io.github.deficuet.unitykt.util.compareTo
 
 class AnimatorImpl internal constructor(reader: ObjectReader): BehaviourImpl(reader) {
-    val mAvatar = PPtr<AvatarImpl>(reader)
-    val mController = PPtr<RuntimeAnimatorControllerImpl>(reader)
+    val mAvatar = PPtr<Avatar>(reader)
+    val mController = PPtr<RuntimeAnimatorController>(reader)
     val mHasTransformHierarchy: Boolean
 
     init {

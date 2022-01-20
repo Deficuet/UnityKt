@@ -1,5 +1,6 @@
 package io.github.deficuet.unitykt.dataImpl
 
+import io.github.deficuet.unitykt.data.*
 import io.github.deficuet.unitykt.math.*
 import io.github.deficuet.unitykt.util.ObjectReader
 import io.github.deficuet.unitykt.util.compareTo
@@ -16,7 +17,7 @@ class SpriteImpl internal constructor(reader: ObjectReader): NamedObjectImpl(rea
     val mIsPolygon: Boolean
     val mRenderDataKey: Map<ByteArray, Long>
     val mAtlasTags: Array<String>
-    val mSpriteAtlas: PPtr<SpriteAtlasImpl>?
+    val mSpriteAtlas: PPtr<SpriteAtlas>?
     val mRD: SpriteRenderData
     val mPhysicsShape: Array<Array<Vector2>>
 
@@ -45,7 +46,7 @@ class SpriteImpl internal constructor(reader: ObjectReader): NamedObjectImpl(rea
 }
 
 class SecondarySpriteTexture internal constructor(reader: ObjectReader) {
-    val texture = PPtr<Texture2DImpl>(reader)
+    val texture = PPtr<Texture2D>(reader)
     val name = reader.readStringUntilNull()
 }
 
@@ -102,8 +103,8 @@ class SpriteVertex internal constructor(reader: ObjectReader) {
 }
 
 class SpriteRenderData internal constructor(reader: ObjectReader) {
-    val texture = PPtr<Texture2DImpl>(reader)
-    val alphaTexture = if (reader.unityVersion >= intArrayOf(5, 2)) PPtr<Texture2DImpl>(reader) else null
+    val texture = PPtr<Texture2D>(reader)
+    val alphaTexture = if (reader.unityVersion >= intArrayOf(5, 2)) PPtr<Texture2D>(reader) else null
     val secondaryTexturesSize = if (reader.unityVersion[0] >= 2019) {
         reader.readArrayOf { SecondarySpriteTexture(reader) }
     } else emptyArray()
