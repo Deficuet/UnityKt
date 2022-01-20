@@ -51,6 +51,10 @@ class MeshImpl internal constructor(reader: ObjectReader): NamedObjectImpl(reade
     private val mCompressedMesh: CompressedMesh?
     private val mStreamData: StreamingInfo?
 
+    val geometricVertices by lazy {
+
+    }
+
     init {
         val indices = mutableListOf<UInt>()
         mUse16BitIndices = if (unityVersion < intArrayOf(3, 5)) reader.readInt() > 0 else true

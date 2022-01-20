@@ -1,6 +1,14 @@
 package io.github.deficuet.unitykt
 
 import io.github.deficuet.unitykt.data.Object
+import io.github.deficuet.unitykt.dataImpl.PPtr
+import io.github.deficuet.unitykt.file.SerializedFile
+import io.github.deficuet.unitykt.util.StringRef
+import java.io.File
+import java.nio.file.Files
+import java.nio.file.Path
+import kotlin.io.path.isRegularFile
+import kotlin.io.path.name
 
 operator fun List<ImportContext>.get(key: String) = find { it.name.contentEquals(key) }
 
@@ -44,4 +52,18 @@ fun List<Object>.allObjectsOf(vararg type: String): List<Object> {
 
 fun List<Object>.objectFromPathID(pathId: Long): Object? {
     return firstOrNull { it.mPathID == pathId }
+}
+
+fun <V> Map<String, V>.tryGetOrUppercase(key: String): V? {
+    return this[key] ?: this[key.uppercase()]
+}
+
+fun String.listFiles(): List<String> {
+    return Files.newDirectoryStream(Path.of(this)).use { stream ->
+        stream.filter { it.isRegularFile() }.map { it.name }
+    }
+}
+
+fun List<String>.containsIgnoreCase(element: String, sRef: StringRef): Boolean {
+    return find { it.contentEquals(element) }?.also { sRef.value = it } != null
 }

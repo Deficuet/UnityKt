@@ -28,7 +28,7 @@ class SpriteAtlasImpl internal constructor(reader: ObjectReader): NamedObjectImp
                 val sprite = pack.obj
                 if (sprite != null) {
                     if (sprite.mSpriteAtlas != null && sprite.mSpriteAtlas!!.isNull) {
-                        sprite.mSpriteAtlas!!.setObj<SpriteAtlas>(this)
+                        sprite.mSpriteAtlas!!.setObjImplWrapper<SpriteAtlas>(this)
                     }
                 }
             }

@@ -1,6 +1,7 @@
 package io.github.deficuet.unitykt.dataImpl
 
 import io.github.deficuet.unitykt.data.*
+import io.github.deficuet.unitykt.getObj
 import io.github.deficuet.unitykt.util.ObjectReader
 import io.github.deficuet.unitykt.util.compareTo
 
@@ -25,7 +26,7 @@ class GameObjectImpl internal constructor(reader: ObjectReader): EditorExtension
         mName = reader.readAlignedString()
         mComponents = components
         for (pptr in mComponents) {
-            val obj = pptr.obj
+            val obj = pptr.getObj()
             if (obj != null) {
                 when (obj) {
                     is Transform -> mTransform.add(obj)

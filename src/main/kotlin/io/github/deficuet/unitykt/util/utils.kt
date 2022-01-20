@@ -66,28 +66,8 @@ internal fun String.isFile(): Boolean = Files.isRegularFile(Path.of(this))
 
 internal fun String.isDirectory(): Boolean = Files.isDirectory(Path.of(this))
 
-internal fun String.listFiles(): List<String> {
-    return Files.newDirectoryStream(Path.of(this)).use { stream ->
-        stream.filter { it.isRegularFile() }.map { it.name }
-    }
-}
-
-internal fun List<String>.containsIgnoreCase(element: String, sRef: StringRef): Boolean {
-    return find { it.contentEquals(element) }?.also { sRef.value = it } != null
-}
-
 internal fun List<ByteArray>.sum(): ByteArray {
     var bytes = kotlin.byteArrayOf()
     forEach { bytes += it }
     return bytes
-}
-
-internal fun <V> Map<String, V>.tryGetOrUppercase(key: String): V? {
-    return if (key in this) {
-        getValue(key)
-    } else if (key.uppercase() in this) {
-        getValue(key.uppercase())
-    } else {
-        null
-    }
 }
