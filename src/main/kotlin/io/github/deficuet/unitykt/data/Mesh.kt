@@ -30,4 +30,6 @@ class Mesh private constructor(
     val mUV6 get() = container.impl.mUV6
     val mUV7 get() = container.impl.mUV7
     val mTangents get() = container.impl.mTangents
+
+    val exportString get() = container.impl.exportString
 }
