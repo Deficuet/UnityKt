@@ -2,6 +2,7 @@ package io.github.deficuet.unitykt.dataImpl
 
 import io.github.deficuet.unitykt.data.GameObject
 import io.github.deficuet.unitykt.data.Material
+import io.github.deficuet.unitykt.data.PPtr
 import io.github.deficuet.unitykt.data.Transform
 import io.github.deficuet.unitykt.util.ObjectReader
 import io.github.deficuet.unitykt.util.compareTo

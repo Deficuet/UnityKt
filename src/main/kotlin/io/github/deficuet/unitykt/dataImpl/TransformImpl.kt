@@ -1,5 +1,6 @@
 package io.github.deficuet.unitykt.dataImpl
 
+import io.github.deficuet.unitykt.data.PPtr
 import io.github.deficuet.unitykt.data.Transform
 import io.github.deficuet.unitykt.util.ObjectReader
 

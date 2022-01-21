@@ -1,6 +1,7 @@
 package io.github.deficuet.unitykt.dataImpl
 
 import io.github.deficuet.unitykt.data.AnimationClip
+import io.github.deficuet.unitykt.data.PPtr
 import io.github.deficuet.unitykt.util.ObjectReader
 
 class AnimationImpl(reader: ObjectReader): BehaviourImpl(reader) {

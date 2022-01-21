@@ -51,10 +51,6 @@ class MeshImpl internal constructor(reader: ObjectReader): NamedObjectImpl(reade
     private val mCompressedMesh: CompressedMesh?
     private val mStreamData: StreamingInfo?
 
-    val geometricVertices by lazy {
-
-    }
-
     init {
         val indices = mutableListOf<UInt>()
         mUse16BitIndices = if (unityVersion < intArrayOf(3, 5)) reader.readInt() > 0 else true
@@ -189,14 +185,16 @@ class MeshImpl internal constructor(reader: ObjectReader): NamedObjectImpl(reade
                             mVertexCount * channel.dimension.toInt() * componentByteSize
                         )
                         for (v in 0 until mVertexCount) {
-                            val vertexOffset = (stream.offset + channel.offset + stream.stride * v.toUInt()).toInt()
+                            val vertexOffset = stream.offset.toInt() +
+                                    channel.offset.toInt() +
+                                    stream.stride.toInt() * v
                             for (d in 0 until channel.dimension.toInt()) {
                                 val componentOffset = vertexOffset + componentByteSize * d
                                 System.arraycopy(
                                     mVertexData.mDataSize,
                                     componentOffset,
                                     componentBytes,
-                                    componentByteSize * (v * channel.dimension.toInt() + d),
+                                    componentByteSize * (channel.dimension.toInt() * v + d),
                                     componentByteSize
                                 )
                             }
@@ -480,6 +478,49 @@ class MeshImpl internal constructor(reader: ObjectReader): NamedObjectImpl(reade
         mIndices = indices.toTypedArray()
     }
 
+    val exportString by lazy {
+        if (mVertexCount < 0) return@lazy ""
+        val builder = StringBuilder()
+        builder.append("g $mName\r\n")
+        if (mVertices.isEmpty()) return@lazy ""
+        var c = if (mVertices.size == mVertexCount * 4) 4 else 3
+        for (v in 0 until mVertexCount) {
+            builder.append("v ${-mVertices[v * c]} ${mVertices[v * c + 1]} ${mVertices[v * c + 2]}\r\n")
+        }
+        if (mUV0.isNotEmpty()) {
+            c = when (mUV0.size) {
+                mVertexCount * 2 -> 2
+                mVertexCount * 3 -> 3
+                else -> 4
+            }
+            for (vt in 0 until mVertexCount) {
+                builder.append("vt ${mUV0[vt * c]} ${mUV0[vt * c + 1]}\r\n")
+            }
+        }
+        if (mNormals.isNotEmpty()) {
+            when(mNormals.size) {
+                mVertexCount * 3 -> c = 3
+                mVertexCount * 4 -> c = 4
+            }
+            for (vn in 0 until mVertexCount) {
+                builder.append("vn ${-mNormals[vn * c]} ${mNormals[vn * c + 1]} ${mNormals[vn * c + 2]}\r\n")
+            }
+        }
+        var sum = 0
+        for (i in mSubMeshes.indices) {
+            builder.append("g ${mName}_$i\r\n")
+            val end = sum + mSubMeshes[i].indexCount.toInt() / 3
+            for (f in sum until end) {
+                val v0 = mIndices[f * 3 + 2] + 1u
+                val v1 = mIndices[f * 3 + 1] + 1u
+                val v2 = mIndices[f * 3] + 1u
+                builder.append("f $v0/$v0/$v0 $v1/$v1/$v1 $v2/$v2/$v2\r\n")
+            }
+            sum = end
+        }
+        return@lazy builder.toString()
+    }
+
     private fun ByteArray.toIntArray(vertexFormat: VertexFormat): IntArray {
         val len = size / vertexFormat.size.toInt()
         val result = IntArray(len)
@@ -507,21 +548,20 @@ class MeshImpl internal constructor(reader: ObjectReader): NamedObjectImpl(reade
         for (i in 0 until len) {
             when (vertexFormat) {
                 VertexFormat.kVertexFormatFloat -> {
-                    result[i] = ByteBuffer.wrap(sliceArray(i * 4..i * 4 + 3)).float
+                    result[i] = ByteBuffer.wrap(this[i * 4, 4]).float
                 }
                 VertexFormat.kVertexFormatFloat16 -> {
-                    result[i] = sliceArray(i * 2..i * 2 + 1).toHalf()
+                    result[i] = this[i * 2, 2].toHalf()
                 }
                 VertexFormat.kVertexFormatUNorm8 -> {
                     result[i] = maxOf(get(i) / 127f, -1f)
                 }
                 VertexFormat.kVertexFormatSNorm8 -> {
-                    result[i] = ByteBuffer.wrap(sliceArray(i * 2..i * 2 + 1)).short
-                        .toUShort().toInt() / 65536f
+                    result[i] = ByteBuffer.wrap(this[i * 2, 2]).short / 65536f
                 }
                 VertexFormat.kVertexFormatSNorm16 -> {
                     result[i] = maxOf(
-                        ByteBuffer.wrap(sliceArray(i * 2..i * 2 + 1)).short / 32767f,
+                        ByteBuffer.wrap(this[i * 2, 2]).short / 32767f,
                         -1f
                     )
                 }

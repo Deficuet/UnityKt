@@ -1,6 +1,7 @@
 package io.github.deficuet.unitykt.dataImpl
 
 import io.github.deficuet.unitykt.data.Object
+import io.github.deficuet.unitykt.data.PPtr
 import io.github.deficuet.unitykt.util.ObjectReader
 
 class AssetBundleImpl internal constructor(reader: ObjectReader): NamedObjectImpl(reader) {

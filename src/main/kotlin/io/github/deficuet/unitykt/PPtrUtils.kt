@@ -1,9 +1,9 @@
 package io.github.deficuet.unitykt
 
 import io.github.deficuet.unitykt.data.Object
-import io.github.deficuet.unitykt.dataImpl.PPtr
+import io.github.deficuet.unitykt.data.PPtr
 import io.github.deficuet.unitykt.file.SerializedFile
-import io.github.deficuet.unitykt.util.StringRef
+import io.github.deficuet.unitykt.util.*
 import java.io.File
 
 inline fun <reified O: Object> PPtr<O>.getObj(): O? {
