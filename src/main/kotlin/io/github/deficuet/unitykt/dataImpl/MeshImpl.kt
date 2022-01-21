@@ -190,17 +190,16 @@ class MeshImpl internal constructor(reader: ObjectReader): NamedObjectImpl(reade
                                     stream.stride.toInt() * v
                             for (d in 0 until channel.dimension.toInt()) {
                                 val componentOffset = vertexOffset + componentByteSize * d
+                                val buff = mVertexData.mDataSize[componentOffset, componentByteSize]
+                                if (reader.endian == EndianType.LittleEndian && componentByteSize > 1) {
+                                    buff.reverse()
+                                }
                                 System.arraycopy(
-                                    mVertexData.mDataSize,
-                                    componentOffset,
-                                    componentBytes,
+                                    buff, 0, componentBytes,
                                     componentByteSize * (channel.dimension.toInt() * v + d),
                                     componentByteSize
                                 )
                             }
-                        }
-                        if (reader.endian == EndianType.LittleEndian && componentByteSize > 1) {
-                            componentBytes.reverse()
                         }
                         val array = if (vertexFormat.isIntFormat) {
                             componentBytes.toIntArray(vertexFormat)
@@ -485,7 +484,9 @@ class MeshImpl internal constructor(reader: ObjectReader): NamedObjectImpl(reade
         if (mVertices.isEmpty()) return@lazy ""
         var c = if (mVertices.size == mVertexCount * 4) 4 else 3
         for (v in 0 until mVertexCount) {
-            builder.append("v ${-mVertices[v * c]} ${mVertices[v * c + 1]} ${mVertices[v * c + 2]}\r\n")
+            builder.append("v ${"%.0f"(-mVertices[v * c])} " +
+                    "${"%.0f"(mVertices[v * c + 1])} " +
+                    "${"%.0f"(mVertices[v * c + 2])}\r\n")
         }
         if (mUV0.isNotEmpty()) {
             c = when (mUV0.size) {
@@ -494,7 +495,7 @@ class MeshImpl internal constructor(reader: ObjectReader): NamedObjectImpl(reade
                 else -> 4
             }
             for (vt in 0 until mVertexCount) {
-                builder.append("vt ${mUV0[vt * c]} ${mUV0[vt * c + 1]}\r\n")
+                builder.append("vt ${"%.7g"(mUV0[vt * c])} ${"%.7g"(mUV0[vt * c + 1])}\r\n")
             }
         }
         if (mNormals.isNotEmpty()) {
@@ -518,7 +519,7 @@ class MeshImpl internal constructor(reader: ObjectReader): NamedObjectImpl(reade
             }
             sum = end
         }
-        return@lazy builder.toString()
+        return@lazy builder.toString().replace("NaN", "0")
     }
 
     private fun ByteArray.toIntArray(vertexFormat: VertexFormat): IntArray {
@@ -570,6 +571,8 @@ class MeshImpl internal constructor(reader: ObjectReader): NamedObjectImpl(reade
         }
         return result
     }
+
+    private operator fun String.invoke(v: Float) = format(v)
 
     companion object {
         private const val kInfoBitsPerUV = 4
