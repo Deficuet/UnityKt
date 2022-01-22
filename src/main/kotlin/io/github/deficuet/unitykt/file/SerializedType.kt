@@ -1,6 +1,17 @@
 package io.github.deficuet.unitykt.file
 
-import io.github.deficuet.unitykt.util.*
+import io.github.deficuet.unitykt.util.IntRef
+import io.github.deficuet.unitykt.util.ObjectReader
+import io.github.deficuet.unitykt.util.byteArrayOf
+import kotlin.collections.List
+import kotlin.collections.Map
+import kotlin.collections.MutableList
+import kotlin.collections.contentEquals
+import kotlin.collections.contentHashCode
+import kotlin.collections.mutableListOf
+import kotlin.collections.mutableMapOf
+import kotlin.collections.set
+import kotlin.collections.toSortedMap
 
 data class SerializedType(
     val classID: Int = 0,

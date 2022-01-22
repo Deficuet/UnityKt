@@ -3,7 +3,7 @@ package io.github.deficuet.unitykt.file
 import io.github.deficuet.unitykt.util.EndianBinaryReader
 
 class ResourceFile(
-    val reader: EndianBinaryReader,
+    internal val reader: EndianBinaryReader,
     override val bundleParent: AssetBundleFile,
     override val name: String
 ): RawAssetFile() {

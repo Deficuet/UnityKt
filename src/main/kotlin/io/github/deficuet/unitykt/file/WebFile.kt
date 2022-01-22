@@ -1,6 +1,9 @@
 package io.github.deficuet.unitykt.file
 
-import io.github.deficuet.unitykt.util.*
+import io.github.deficuet.unitykt.util.CompressUtils
+import io.github.deficuet.unitykt.util.EndianBinaryReader
+import io.github.deficuet.unitykt.util.EndianByteArrayReader
+import io.github.deficuet.unitykt.util.EndianType
 
 class WebFile(
     preReader: EndianBinaryReader,

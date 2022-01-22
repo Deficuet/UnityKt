@@ -8,12 +8,12 @@ import io.github.deficuet.unitykt.util.compareTo
 class GameObjectImpl internal constructor(reader: ObjectReader): EditorExtensionImpl(reader) {
     val mComponents: Array<PPtr<Component>>
     val mName: String
-    val mTransform = mutableListOf<Transform>()
-    val mMeshRenderer = mutableListOf<MeshRenderer>()
-    val mMeshFilter = mutableListOf<MeshFilter>()
-    val mSkinnedMeshRenderer = mutableListOf<SkinnedMeshRenderer>()
-    val mAnimator = mutableListOf<Animator>()
-    val mAnimation = mutableListOf<Animation>()
+    val mTransform: Array<Transform>
+    val mMeshRenderer: Array<MeshRenderer>
+    val mMeshFilter: Array<MeshFilter>
+    val mSkinnedMeshRenderer: Array<SkinnedMeshRenderer>
+    val mAnimator: Array<Animator>
+    val mAnimation: Array<Animation>
 
     init {
         val components = reader.readArrayOf {
@@ -25,18 +25,30 @@ class GameObjectImpl internal constructor(reader: ObjectReader): EditorExtension
         reader += 4     //m_Layer: Int
         mName = reader.readAlignedString()
         mComponents = components
+        val transforms = mutableListOf<Transform>()
+        val meshRenderers = mutableListOf<MeshRenderer>()
+        val meshFilters = mutableListOf<MeshFilter>()
+        val skinnedMeshRenderers = mutableListOf<SkinnedMeshRenderer>()
+        val animators = mutableListOf<Animator>()
+        val animations = mutableListOf<Animation>()
         for (pptr in mComponents) {
             val obj = pptr.getObj()
             if (obj != null) {
                 when (obj) {
-                    is Transform -> mTransform.add(obj)
-                    is MeshRenderer -> mMeshRenderer.add(obj)
-                    is MeshFilter -> mMeshFilter.add(obj)
-                    is SkinnedMeshRenderer -> mSkinnedMeshRenderer.add(obj)
-                    is Animator -> mAnimator.add(obj)
-                    is Animation -> mAnimation.add(obj)
+                    is Transform -> transforms.add(obj)
+                    is MeshRenderer -> meshRenderers.add(obj)
+                    is MeshFilter -> meshFilters.add(obj)
+                    is SkinnedMeshRenderer -> skinnedMeshRenderers.add(obj)
+                    is Animator -> animators.add(obj)
+                    is Animation -> animations.add(obj)
                 }
             }
         }
+        mTransform = transforms.toTypedArray()
+        mMeshRenderer = meshRenderers.toTypedArray()
+        mMeshFilter = meshFilters.toTypedArray()
+        mSkinnedMeshRenderer = skinnedMeshRenderers.toTypedArray()
+        mAnimator = animators.toTypedArray()
+        mAnimation = animations.toTypedArray()
     }
 }

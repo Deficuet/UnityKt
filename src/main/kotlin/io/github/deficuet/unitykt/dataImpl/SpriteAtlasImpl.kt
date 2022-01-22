@@ -1,6 +1,9 @@
 package io.github.deficuet.unitykt.dataImpl
 
-import io.github.deficuet.unitykt.data.*
+import io.github.deficuet.unitykt.data.PPtr
+import io.github.deficuet.unitykt.data.Sprite
+import io.github.deficuet.unitykt.data.Texture2D
+import io.github.deficuet.unitykt.data.setObjInfo
 import io.github.deficuet.unitykt.math.Vector2
 import io.github.deficuet.unitykt.util.ObjectReader
 import io.github.deficuet.unitykt.util.compareTo

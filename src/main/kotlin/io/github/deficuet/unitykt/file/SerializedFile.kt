@@ -1,7 +1,9 @@
 package io.github.deficuet.unitykt.file
 
 import io.github.deficuet.unitykt.data.*
-import io.github.deficuet.unitykt.util.*
+import io.github.deficuet.unitykt.util.EndianBinaryReader
+import io.github.deficuet.unitykt.util.EndianByteArrayReader
+import io.github.deficuet.unitykt.util.EndianType
 import java.io.File
 
 class FormatVersion private constructor() {
@@ -301,7 +303,7 @@ class SerializedFile(
                 ClassIDType.Mesh -> Mesh(this, info)
                 ClassIDType.MeshFilter -> MeshFilter(this, info)
                 ClassIDType.MeshRenderer -> MeshRenderer(this, info)
-                ClassIDType.MonoBehaviour -> MonoBehavior(this, info)
+                ClassIDType.MonoBehaviour -> MonoBehaviour(this, info)
                 ClassIDType.MonoScript -> MonoScript(this, info)
                 ClassIDType.MovieTexture -> MovieTexture(this, info)
                 ClassIDType.PlayerSettings -> PlayerSetting(this, info)

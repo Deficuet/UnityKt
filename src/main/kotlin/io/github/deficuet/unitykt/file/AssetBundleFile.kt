@@ -2,7 +2,15 @@ package io.github.deficuet.unitykt.file
 
 import io.github.deficuet.unitykt.AssetManager
 import io.github.deficuet.unitykt.ImportContext
-import io.github.deficuet.unitykt.util.*
+import io.github.deficuet.unitykt.util.EndianBinaryReader
+import io.github.deficuet.unitykt.util.EndianByteArrayReader
+import io.github.deficuet.unitykt.util.FileType
+import kotlin.collections.List
+import kotlin.collections.Map
+import kotlin.collections.listOf
+import kotlin.collections.mutableMapOf
+import kotlin.collections.none
+import kotlin.collections.set
 
 data class DirectoryInfoNode(
     val path: String,

@@ -1,8 +1,11 @@
 package io.github.deficuet.unitykt.dataImpl
 
-import io.github.deficuet.unitykt.data.*
+import io.github.deficuet.unitykt.data.MonoScript
+import io.github.deficuet.unitykt.data.Object
+import io.github.deficuet.unitykt.data.PPtr
 import io.github.deficuet.unitykt.file.ClassIDType
-import io.github.deficuet.unitykt.math.*
+import io.github.deficuet.unitykt.math.Quaternion
+import io.github.deficuet.unitykt.math.Vector3
 import io.github.deficuet.unitykt.util.*
 import kotlin.math.sqrt
 

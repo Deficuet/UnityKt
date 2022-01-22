@@ -2,11 +2,11 @@ package io.github.deficuet.unitykt.dataImpl
 
 import io.github.deficuet.unitykt.dataImpl.MeshHelper.Companion.toVertexFormat
 import io.github.deficuet.unitykt.math.Matrix4x4
+import io.github.deficuet.unitykt.math.Vector2
 import io.github.deficuet.unitykt.math.Vector3
 import io.github.deficuet.unitykt.util.*
 import java.nio.ByteBuffer
 import java.util.*
-import kotlin.NoSuchElementException
 import kotlin.math.sqrt
 
 class MeshImpl internal constructor(reader: ObjectReader): NamedObjectImpl(reader) {
@@ -484,9 +484,9 @@ class MeshImpl internal constructor(reader: ObjectReader): NamedObjectImpl(reade
         if (mVertices.isEmpty()) return@lazy ""
         var c = if (mVertices.size == mVertexCount * 4) 4 else 3
         for (v in 0 until mVertexCount) {
-            builder.append("v ${"%.0f"(-mVertices[v * c])} " +
-                    "${"%.0f"(mVertices[v * c + 1])} " +
-                    "${"%.0f"(mVertices[v * c + 2])}\r\n")
+            builder.append("v ${"%.7G"(-mVertices[v * c])} " +
+                    "${"%.7G"(mVertices[v * c + 1])} " +
+                    "${"%.7G"(mVertices[v * c + 2])}\r\n")
         }
         if (mUV0.isNotEmpty()) {
             c = when (mUV0.size) {
@@ -495,7 +495,8 @@ class MeshImpl internal constructor(reader: ObjectReader): NamedObjectImpl(reade
                 else -> 4
             }
             for (vt in 0 until mVertexCount) {
-                builder.append("vt ${"%.7g"(mUV0[vt * c])} ${"%.7g"(mUV0[vt * c + 1])}\r\n")
+                builder.append("vt ${"%.7G"(mUV0[vt * c]).trimEnd('0')} " +
+                        "${"%.7G"(mUV0[vt * c + 1]).trimEnd('0')}\r\n")
             }
         }
         if (mNormals.isNotEmpty()) {
@@ -504,7 +505,9 @@ class MeshImpl internal constructor(reader: ObjectReader): NamedObjectImpl(reade
                 mVertexCount * 4 -> c = 4
             }
             for (vn in 0 until mVertexCount) {
-                builder.append("vn ${-mNormals[vn * c]} ${mNormals[vn * c + 1]} ${mNormals[vn * c + 2]}\r\n")
+                builder.append("vn ${"%.7G"(-mNormals[vn * c])} " +
+                        "${"%.7G"(mNormals[vn * c + 1])} " +
+                        "${"%.7G"(mNormals[vn * c + 2])}\r\n")
             }
         }
         var sum = 0
@@ -522,6 +525,56 @@ class MeshImpl internal constructor(reader: ObjectReader): NamedObjectImpl(reade
         return@lazy builder.toString().replace("NaN", "0")
     }
 
+    val exportVertices by lazy {
+        val c = if (mVertices.size == mVertexCount * 4) 4 else 3
+        Array(mVertexCount) { Vector3(mVertices[it * c], mVertices[it * c + 1], mVertices[it * c + 2]) }
+    }
+
+    val exportUV by lazy {
+        if (mUV0.isEmpty()) arrayOf()
+        else {
+            val c = when (mUV0.size) {
+                mVertexCount * 2 -> 2
+                mVertexCount * 3 -> 3
+                else -> 4
+            }
+            Array(mVertexCount) { Vector2(mUV0[it * c], mUV0[it * c + 1]) }
+        }
+    }
+
+    val exportNormals by lazy {
+        if (mNormals.isEmpty()) arrayOf()
+        else {
+            var c = when (mUV0.size) {
+                mVertexCount * 2 -> 2
+                mVertexCount * 3 -> 3
+                else -> 4
+            }
+            when(mNormals.size) {
+                mVertexCount * 3 -> c = 3
+                mVertexCount * 4 -> c = 4
+            }
+            Array(mVertexCount) { Vector3(mNormals[it * c], mNormals[it * c + 1], mNormals[it * c + 2]) }
+        }
+    }
+
+    val exportFaces by lazy {
+        var sum = 0
+        Array(mSubMeshes.size) {
+            val end = sum + mSubMeshes[it].indexCount.toInt() / 3
+            val v = mutableListOf<Vector3>()
+            for (f in sum until end) {
+                v.add(Vector3(
+                    (mIndices[f * 3 + 2] + 1u).toDouble(),
+                    (mIndices[f * 3 + 1] + 1u).toDouble(),
+                    (mIndices[f * 3] + 1u).toDouble()
+                ))
+            }
+            sum = end
+            v.toTypedArray()
+        }
+    }
+
     private fun ByteArray.toIntArray(vertexFormat: VertexFormat): IntArray {
         val len = size / vertexFormat.size.toInt()
         val result = IntArray(len)
@@ -531,11 +584,11 @@ class MeshImpl internal constructor(reader: ObjectReader): NamedObjectImpl(reade
                 VertexFormat.kVertexFormatSInt8 -> result[i] = this[i].toIntBits()
                 VertexFormat.kVertexFormatUInt16,
                 VertexFormat.kVertexFormatSInt16 -> {
-                    result[i] = ByteBuffer.wrap(sliceArray(i * 2.. i * 2 + 1)).short.toInt()
+                    result[i] = ByteBuffer.wrap(this[i * 2, 2]).short.toInt()
                 }
                 VertexFormat.kVertexFormatUInt32,
                 VertexFormat.kVertexFormatSInt32 -> {
-                    result[i] = ByteBuffer.wrap(sliceArray(i * 4..i * 4 + 3)).int
+                    result[i] = ByteBuffer.wrap(this[i * 4, 4]).int
                 }
                 else -> {  }
             }

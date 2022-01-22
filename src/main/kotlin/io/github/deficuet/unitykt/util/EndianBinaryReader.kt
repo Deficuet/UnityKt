@@ -1,15 +1,15 @@
 package io.github.deficuet.unitykt.util
 
+import io.github.deficuet.unitykt.file.ObjectInfo
+import io.github.deficuet.unitykt.file.SerializedFile
+import io.github.deficuet.unitykt.math.*
+import java.io.Closeable
+import java.io.FileInputStream
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.charset.Charset
 import java.nio.file.Files
 import java.nio.file.Path
-import java.io.FileInputStream
-import java.io.Closeable
-import io.github.deficuet.unitykt.file.ObjectInfo
-import io.github.deficuet.unitykt.file.SerializedFile
-import io.github.deficuet.unitykt.math.*
 
 enum class EndianType(val order: ByteOrder) {
     LittleEndian(ByteOrder.LITTLE_ENDIAN),
