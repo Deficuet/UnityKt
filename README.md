@@ -39,6 +39,7 @@ For the attempt of implementing the algorithm of decoding ETC2_RGB8A texture com
   - See [utils.kt](https://github.com/Deficuet/UnityKt/blob/main/src/main/kotlin/io/github/deficuet/unitykt/utils.kt) and [PPtrUtils.kt](https://github.com/Deficuet/UnityKt/blob/main/src/main/kotlin/io/github/deficuet/unitykt/PPtrUtils.kt)
   - Should always use `PPtr<O>.getObj()` to get the object.
 ## Installation
+Used openJDK 11.0.10 and Kotlin Language 1.5.31.
 ---Work in Progress---
 
 ## Export
