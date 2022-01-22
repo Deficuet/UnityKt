@@ -60,9 +60,13 @@ import javax.imageio.ImageIO
 
 fun main() {
     val context: ImportContext = AssetManager.loadFile("C:/path/to/AssetBundle.aab")
+    
     //If there is no Texture2D object, IndexOutOfBoundsException will be thrown. 
     //You can consider the function firstOfOrNull<>()
+    //The data of this Texture2D object has not been read yet.
     val tex: Texture2D = context.objects.firstObjectOf<Texture2D>()
+    
+    //The object data will initialize as long as you access its properties.
     ImageIO.write(tex.image, "png", File("C:/whatever/you/want/tex.png"))
 }
 ```
