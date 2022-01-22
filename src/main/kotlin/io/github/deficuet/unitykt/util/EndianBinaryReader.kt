@@ -7,7 +7,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.io.FileInputStream
 import java.io.Closeable
-import io.github.deficuet.unitykt.file.ClassIDType
 import io.github.deficuet.unitykt.file.ObjectInfo
 import io.github.deficuet.unitykt.file.SerializedFile
 import io.github.deficuet.unitykt.math.*
@@ -308,11 +307,14 @@ class EndianFileStreamReader(
 /**
  * Wrapper for the parent `reader`
  */
-class ObjectReader(
+class ObjectReader internal constructor(
     private val reader: EndianBinaryReader,
     val assetFile: SerializedFile,
     private val info: ObjectInfo
 ) : EndianBinaryReader(0) {
+    internal constructor(assetFile: SerializedFile, info: ObjectInfo):
+        this(assetFile.reader, assetFile, info)
+
     val mPathID = info.mPathID
     val byteSize = info.byteSize
     val byteStart = info.byteStart
@@ -320,9 +322,7 @@ class ObjectReader(
     val unityVersion = assetFile.version
     val buildType = assetFile.buildType
     val platform = assetFile.targetPlatform
-    val type = if (ClassIDType.isDefined(info.classID)) {
-        ClassIDType.values().first { it.id == info.classID }
-    } else ClassIDType.UnknownType
+    val type = info.type
     val serializedType = info.serializedType
 
     override val ignoredOffset = byteStart

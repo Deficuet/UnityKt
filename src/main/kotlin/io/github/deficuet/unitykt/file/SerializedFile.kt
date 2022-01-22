@@ -62,10 +62,12 @@ data class ObjectInfo(
     val stripped: UByte,
     val mPathID: Long,
     val serializedType: SerializedType?
-)
+) {
+    val type = ClassIDType.of(classID)
+}
 
 class SerializedFile(
-    private val reader: EndianBinaryReader,
+    internal val reader: EndianBinaryReader,
     override val bundleParent: AssetBundleFile,
     override val name: String
 ): RawAssetFile() {
@@ -131,12 +133,12 @@ class SerializedFile(
 
     private var unityVersion = "2.5.0.f5"
 
-    private var enableTypeTree = true
+    private val enableTypeTree: Boolean
     private var bigIDEnabled = 0
     private val objectInfoList: List<ObjectInfo>
     private val scriptTypes = mutableListOf<ObjectIdentifier>()
     private val refTypes = mutableListOf<SerializedType>()
-    private var userInformation = ""
+    private val userInformation: String
     private val types: List<SerializedType>
 
     val header: Header get() = Header(hMetadataSize, hFileSize, hVersion, hDataOffset, hEndian)
@@ -182,7 +184,7 @@ class SerializedFile(
                 targetPlatform = BuildTarget.values().first { it.id == targetPlatformID }
             }
         }
-        if (hVersion >= FormatVersion.kHasTypeTreeHashes) enableTypeTree = reader.readBool()
+        enableTypeTree = if (hVersion >= FormatVersion.kHasTypeTreeHashes) reader.readBool() else true
         val typeCount = reader.readInt()
         val typesList = mutableListOf<SerializedType>()
         for (i in 0 until typeCount) {
@@ -278,82 +280,48 @@ class SerializedFile(
                 refTypes.add(readSerializedType(true))
             }
         }
-        if (hVersion >= FormatVersion.kUnknown_5) {
-            userInformation = reader.readStringUntilNull()
-        }
+        userInformation = if (hVersion >= FormatVersion.kUnknown_5) {
+            reader.readStringUntilNull()
+        } else ""
         //region readObjects
-        val initSp = mutableListOf<Object>()
         val objectList = mutableListOf<Object>()
         for (info in objectInfoList) {
-            val objReader = ObjectReader(reader, this, info)
-            val obj = when (objReader.type) {
-                ClassIDType.Animation -> Animation(objReader)
-                ClassIDType.AnimationClip -> AnimationClip(objReader)
-                ClassIDType.Animator -> Animator(objReader)
-                ClassIDType.AnimatorController -> AnimatorController(objReader)
-                ClassIDType.AnimatorOverrideController -> AnimatorOverrideController(objReader)
-                ClassIDType.AssetBundle -> AssetBundle(objReader)
-                ClassIDType.AudioClip -> AudioClip(objReader)
-                ClassIDType.Avatar -> Avatar(objReader)
-                ClassIDType.Font -> Font(objReader)
-                ClassIDType.GameObject -> GameObject(objReader).also { initSp.add(it) }
-                ClassIDType.Material -> Material(objReader)
-                ClassIDType.Mesh -> Mesh(objReader)
-                ClassIDType.MeshFilter -> MeshFilter(objReader)
-                ClassIDType.MeshRenderer -> MeshRenderer(objReader)
-                ClassIDType.MonoBehaviour -> MonoBehavior(objReader)
-                ClassIDType.MonoScript -> MonoScript(objReader)
-                ClassIDType.MovieTexture -> MovieTexture(objReader)
-                ClassIDType.PlayerSettings -> PlayerSetting(objReader)
-                ClassIDType.RectTransform -> RectTransform(objReader)
-                ClassIDType.Shader -> Shader(objReader)
-                ClassIDType.SkinnedMeshRenderer -> SkinnedMeshRenderer(objReader)
-                ClassIDType.Sprite -> Sprite(objReader)
-                ClassIDType.SpriteAtlas -> SpriteAtlas(objReader).also { initSp.add(it) }
-                ClassIDType.TextAsset -> TextAsset(objReader)
-                ClassIDType.Texture2D -> Texture2D(objReader)
-                ClassIDType.Transform -> Transform(objReader)
-                ClassIDType.VideoClip -> VideoClip(objReader)
-                ClassIDType.ResourceManager -> ResourceManager(objReader)
-                else -> Object(objReader)
+            val obj = when (info.type) {
+                ClassIDType.Animation -> Animation(this, info)
+                ClassIDType.AnimationClip -> AnimationClip(this, info)
+                ClassIDType.Animator -> Animator(this, info)
+                ClassIDType.AnimatorController -> AnimatorController(this, info)
+                ClassIDType.AnimatorOverrideController -> AnimatorOverrideController(this, info)
+                ClassIDType.AssetBundle -> AssetBundle(this, info)
+                ClassIDType.AudioClip -> AudioClip(this, info)
+                ClassIDType.Avatar -> Avatar(this, info)
+                ClassIDType.Font -> Font(this, info)
+                ClassIDType.GameObject -> GameObject(this, info)
+                ClassIDType.Material -> Material(this, info)
+                ClassIDType.Mesh -> Mesh(this, info)
+                ClassIDType.MeshFilter -> MeshFilter(this, info)
+                ClassIDType.MeshRenderer -> MeshRenderer(this, info)
+                ClassIDType.MonoBehaviour -> MonoBehavior(this, info)
+                ClassIDType.MonoScript -> MonoScript(this, info)
+                ClassIDType.MovieTexture -> MovieTexture(this, info)
+                ClassIDType.PlayerSettings -> PlayerSetting(this, info)
+                ClassIDType.RectTransform -> RectTransform(this, info)
+                ClassIDType.Shader -> Shader(this, info)
+                ClassIDType.SkinnedMeshRenderer -> SkinnedMeshRenderer(this, info)
+                ClassIDType.Sprite -> Sprite(this, info)
+                ClassIDType.SpriteAtlas -> SpriteAtlas(this, info)
+                ClassIDType.TextAsset -> TextAsset(this, info)
+                ClassIDType.Texture2D -> Texture2D(this, info)
+                ClassIDType.Transform -> Transform(this, info)
+                ClassIDType.VideoClip -> VideoClip(this, info)
+                ClassIDType.ResourceManager -> ResourceManager(this, info)
+                else -> Object(this, info)
             }
             objectList.add(obj)
         }
         objects = objectList
-        for (sp in initSp) {
-            when (sp) {
-                is GameObject -> sp.apply {
-                    for (pptr in mComponents) {
-                        val obj = pptr.obj
-                        if (obj != null) {
-                            when (obj) {
-                                is Transform -> mTransform.add(obj)
-                                is MeshRenderer -> mMeshRenderer.add(obj)
-                                is MeshFilter -> mMeshFilter.add(obj)
-                                is SkinnedMeshRenderer -> mSkinnedMeshRenderer.add(obj)
-                                is Animator -> mAnimator.add(obj)
-                                is Animation -> mAnimation.add(obj)
-                            }
-                        }
-                    }
-                }
-                is SpriteAtlas -> sp.apply {
-                    if (!mIsVariant) {
-                        for (pack in mPackedSprites) {
-                            val sprite = pack.obj
-                            if (sprite != null) {
-                                if (sprite.mSpriteAtlas != null && sprite.mSpriteAtlas.isNull) {
-                                    sprite.mSpriteAtlas.obj = this
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
         root.objects.addAll(objects)
         objectInfoList.clear()
-        initSp.clear()
         reader.close()
         //endregion
     }

@@ -1,35 +1,16 @@
 package io.github.deficuet.unitykt.data
 
+import io.github.deficuet.unitykt.dataImpl.PlayerSettingImpl
+import io.github.deficuet.unitykt.file.ObjectInfo
+import io.github.deficuet.unitykt.file.SerializedFile
 import io.github.deficuet.unitykt.util.ObjectReader
-import io.github.deficuet.unitykt.util.compareTo
 
-class PlayerSetting internal constructor(reader: ObjectReader): Object(reader) {
-    val companyName: String
-    val productName: String
+class PlayerSetting private constructor(
+    private val container: ImplementationContainer<PlayerSettingImpl>
+): Object(container) {
+    internal constructor(assetFile: SerializedFile, info: ObjectInfo):
+        this(ImplementationContainer(assetFile, info) { PlayerSettingImpl(ObjectReader(assetFile, info)) })
 
-    init {
-        if (unityVersion >= intArrayOf(5, 4)) {
-            reader += 16    //productGUID: ByteArrat(16)
-        }
-        reader += 1     //AndroidProfiler: Boolean
-        reader.alignStream()
-        reader += 8     //defaultScreenOrientation, targetDevice: Int
-        if (unityVersion < intArrayOf(5, 3)) {
-            if (unityVersion[0] < 5) {
-                reader += 4     //targetPlatform: Int
-                if (unityVersion >= intArrayOf(4, 6)) {
-                    reader += 4     //targetIOSGraphics: Int
-                }
-            }
-            reader += 4     //targetResolution: Int
-        } else {
-            reader += 1     //useOnDemandResources: Boolean
-            reader.alignStream()
-        }
-        if (unityVersion >= intArrayOf(3, 5)) {
-            reader += 4     //accelerometerFrequency: Int
-        }
-        companyName = reader.readAlignedString()
-        productName = reader.readAlignedString()
-    }
+    val companyName get() = container.impl.companyName
+    val productName get() = container.impl.productName
 }

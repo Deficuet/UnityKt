@@ -1,35 +1,22 @@
 package io.github.deficuet.unitykt.data
 
+import io.github.deficuet.unitykt.dataImpl.GameObjectImpl
+import io.github.deficuet.unitykt.file.ObjectInfo
+import io.github.deficuet.unitykt.file.SerializedFile
 import io.github.deficuet.unitykt.util.ObjectReader
-import io.github.deficuet.unitykt.util.compareTo
 
-class GameObject internal constructor(reader: ObjectReader): EditorExtension(reader) {
-    val mComponents: Array<PPtr<Component>>
-    val mName: String
-    val mTransform = mutableListOf<Transform>()
-    val mMeshRenderer = mutableListOf<MeshRenderer>()
-    val mMeshFilter = mutableListOf<MeshFilter>()
-    val mSkinnedMeshRenderer = mutableListOf<SkinnedMeshRenderer>()
-    val mAnimator = mutableListOf<Animator>()
-    val mAnimation = mutableListOf<Animation>()
+class GameObject private constructor(
+    private val container: ImplementationContainer<GameObjectImpl>
+): EditorExtension(container) {
+    internal constructor(assetFile: SerializedFile, info: ObjectInfo):
+        this(ImplementationContainer(assetFile, info) { GameObjectImpl(ObjectReader(assetFile, info)) })
 
-    init {
-//        val componentSize = reader.readInt()
-//        val components = mutableListOf<PPtr<Component>>()
-//        for (i in 0 until componentSize) {
-//            if (unityVersion < intArrayOf(5, 5)) {
-//                reader += 4     //first: Int
-//            }
-//            components.add(PPtr(reader))
-//        }
-        val components = reader.readArrayOf {
-            if (unityVersion < intArrayOf(5, 5)) {
-                reader += 4     //first: Int
-            }
-            PPtr<Component>(reader)
-        }
-        reader += 4     //m_Layer: Int
-        mName = reader.readAlignedString()
-        mComponents = components
-    }
+    val mComponents get() = container.impl.mComponents
+    val mName get() = container.impl.mName
+    val mTransform get() = container.impl.mTransform
+    val mMeshRenderer get() = container.impl.mMeshRenderer
+    val mMeshFilter get() = container.impl.mMeshFilter
+    val mSkinnedMeshRenderer get() = container.impl.mSkinnedMeshRenderer
+    val mAnimator get() = container.impl.mAnimator
+    val mAnimation get() = container.impl.mAnimation
 }

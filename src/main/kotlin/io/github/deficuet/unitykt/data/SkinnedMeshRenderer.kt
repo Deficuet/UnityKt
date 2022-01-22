@@ -1,23 +1,17 @@
 package io.github.deficuet.unitykt.data
 
+import io.github.deficuet.unitykt.dataImpl.SkinnedMeshRendererImpl
+import io.github.deficuet.unitykt.file.ObjectInfo
+import io.github.deficuet.unitykt.file.SerializedFile
 import io.github.deficuet.unitykt.util.ObjectReader
-import io.github.deficuet.unitykt.util.compareTo
 
-class SkinnedMeshRenderer internal constructor(reader: ObjectReader): Renderer(reader) {
-    val mMesh: PPtr<Mesh>
-    val mBones: Array<PPtr<Transform>>
-    val mBlendShapeWeights: FloatArray
+class SkinnedMeshRenderer private constructor(
+    private val container: ImplementationContainer<SkinnedMeshRendererImpl>
+): Renderer(container) {
+    internal constructor(assetFile: SerializedFile, info: ObjectInfo):
+        this(ImplementationContainer(assetFile, info) { SkinnedMeshRendererImpl(ObjectReader(assetFile, info)) })
 
-    init {
-        reader += 6     //m_Quality: Int, m_UpdateWhenOffscreen, m_SkinNormals: Boolean
-        reader.alignStream()
-        if (unityVersion[0] == 2 && unityVersion[1] < 6) {
-            PPtr<Animation>(reader)     //m_DisableAnimationWhenOffscreen
-        }
-        mMesh = PPtr(reader)
-        mBones = reader.readArrayOf { PPtr(reader) }
-        mBlendShapeWeights = if (unityVersion >= intArrayOf(4, 3)) {
-            reader.readNextFloatArray()
-        } else floatArrayOf()
-    }
+    val mMesh get() = container.impl.mMesh
+    val mBones get() = container.impl.mBones
+    val mBlendShapeWeights get() = container.impl.mBlendShapeWeights
 }

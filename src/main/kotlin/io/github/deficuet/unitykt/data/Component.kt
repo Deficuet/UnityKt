@@ -1,7 +1,9 @@
 package io.github.deficuet.unitykt.data
 
-import io.github.deficuet.unitykt.util.ObjectReader
+import io.github.deficuet.unitykt.dataImpl.ComponentImpl
 
-abstract class Component internal constructor(reader: ObjectReader): EditorExtension(reader) {
-    val mGameObject = PPtr<GameObject>(reader)
+abstract class Component internal constructor(
+    private val container: ImplementationContainer<ComponentImpl>
+): EditorExtension(container) {
+    val mGameObject get() = container.impl.mGameObject
 }

@@ -1,20 +1,17 @@
 package io.github.deficuet.unitykt.data
 
+import io.github.deficuet.unitykt.dataImpl.MonoScriptImpl
+import io.github.deficuet.unitykt.file.ObjectInfo
+import io.github.deficuet.unitykt.file.SerializedFile
 import io.github.deficuet.unitykt.util.ObjectReader
-import io.github.deficuet.unitykt.util.compareTo
 
-class MonoScript internal constructor(reader: ObjectReader): NamedObject(reader) {
-    val mClassName: String
-    val mNameSpace: String
-    val mAssemblyName: String
+class MonoScript private constructor(
+    private val container: ImplementationContainer<MonoScriptImpl>
+): NamedObject(container) {
+    internal constructor(assetFile: SerializedFile, info: ObjectInfo):
+        this(ImplementationContainer(assetFile, info) { MonoScriptImpl(ObjectReader(assetFile, info)) })
 
-    init {
-        if (unityVersion >= intArrayOf(3, 4)) reader += 4   //m_ExecutionOrder: Int
-        reader += if (unityVersion < intArrayOf(5)) 4 else 16      //m_PropertiesHash: UInt/Bytes(16)
-        if (unityVersion < intArrayOf(3)) reader.readAlignedString()
-        mClassName = reader.readAlignedString()
-        mNameSpace = if (unityVersion >= intArrayOf(3)) reader.readAlignedString() else ""
-        mAssemblyName = reader.readAlignedString()
-        if (unityVersion < intArrayOf(2018, 2)) reader += 1     //m_IsEditorScript: Boolean
-    }
+    val mClassName get() = container.impl.mClassName
+    val mNameSpace get() = container.impl.mNameSpace
+    val mAssemblyName get() = container.impl.mAssemblyName
 }

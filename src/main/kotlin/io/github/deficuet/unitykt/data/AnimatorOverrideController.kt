@@ -1,13 +1,16 @@
 package io.github.deficuet.unitykt.data
 
+import io.github.deficuet.unitykt.dataImpl.AnimatorOverrideControllerImpl
+import io.github.deficuet.unitykt.file.ObjectInfo
+import io.github.deficuet.unitykt.file.SerializedFile
 import io.github.deficuet.unitykt.util.ObjectReader
 
-class AnimatorOverrideController internal constructor(reader: ObjectReader): RuntimeAnimatorController(reader) {
-    val mController = PPtr<RuntimeAnimatorController>(reader)
-    val mClips = reader.readArrayOf { AnimationClipOverride(reader) }
-}
+class AnimatorOverrideController private constructor(
+    private val container: ImplementationContainer<AnimatorOverrideControllerImpl>
+): RuntimeAnimatorController(container) {
+    internal constructor(assetFile: SerializedFile, info: ObjectInfo):
+        this(ImplementationContainer(assetFile, info) { AnimatorOverrideControllerImpl(ObjectReader(assetFile, info)) })
 
-class AnimationClipOverride internal constructor(reader: ObjectReader) {
-    val mOriginalClip = PPtr<AnimationClip>(reader)
-    val mOverrideClip = PPtr<AnimationClip>(reader)
+    val mController get() = container.impl.mController
+    val mClips get() = container.impl.mClips
 }

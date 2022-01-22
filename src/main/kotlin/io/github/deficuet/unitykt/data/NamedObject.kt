@@ -1,7 +1,9 @@
 package io.github.deficuet.unitykt.data
 
-import io.github.deficuet.unitykt.util.ObjectReader
+import io.github.deficuet.unitykt.dataImpl.NamedObjectImpl
 
-open class NamedObject internal constructor(reader: ObjectReader): EditorExtension(reader) {
-    val mName = reader.readAlignedString()
+abstract class NamedObject internal constructor(
+    private val container: ImplementationContainer<NamedObjectImpl>
+): EditorExtension(container) {
+    val mName get() = container.impl.mName
 }

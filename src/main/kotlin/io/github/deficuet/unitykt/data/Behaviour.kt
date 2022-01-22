@@ -1,8 +1,9 @@
 package io.github.deficuet.unitykt.data
 
-import io.github.deficuet.unitykt.util.ObjectReader
+import io.github.deficuet.unitykt.dataImpl.BehaviourImpl
 
-abstract class Behaviour internal constructor(reader: ObjectReader): Component(reader) {
-    val mEnabled = reader.readByte()
-    init { reader.alignStream() }
+abstract class Behaviour internal constructor(
+    private val container: ImplementationContainer<BehaviourImpl>
+): Component(container) {
+    val mEnabled get() = container.impl.mEnabled
 }

@@ -32,9 +32,9 @@ inline fun <reified O: Object> List<Object>.firstOfOrNull(): O? {
     return with(allObjectsOf<O>()) { if (isEmpty()) null else this[0] }
 }
 
-fun List<Object>.allInstanceOf(vararg type: String): List<Object> {
+fun List<Object>.allObjectsOf(vararg type: String): List<Object> {
     return mutableListOf<Object>().apply {
-        for (obj in this@allInstanceOf) {
+        for (obj in this@allObjectsOf) {
             if (obj.type.name in type) {
                 add(obj)
             }
