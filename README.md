@@ -8,6 +8,7 @@ All the C++ code used to decode texture compression comes from [AssetStudio/Text
 For the attempt of implementing the algorithm of decoding ETC2_RGB8A texture compression for Java, see [ETC2_RGB8ADecoderForJava](https://github.com/Deficuet/ETC2_RGBA8DecoderForJava)
 
 **If you encounter an error and want to start an new issue, remember to submit the assets files as well.**
+**Many things are not tested yet.**
 ## Features
 - Load
   - File(s)
