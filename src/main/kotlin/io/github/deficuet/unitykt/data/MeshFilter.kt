@@ -11,5 +11,5 @@ class MeshFilter private constructor(
     internal constructor(assetFile: SerializedFile, info: ObjectInfo):
         this(ImplementationContainer(assetFile, info) { MeshFilterImpl(ObjectReader(assetFile, info)) })
 
-    val mMesh get() = container.impl.mMesh
+    val mMesh: PPtr<Mesh> get() = container.impl.mMesh
 }

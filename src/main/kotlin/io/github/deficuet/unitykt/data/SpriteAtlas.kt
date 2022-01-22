@@ -1,5 +1,6 @@
 package io.github.deficuet.unitykt.data
 
+import io.github.deficuet.unitykt.dataImpl.SpriteAtlasData
 import io.github.deficuet.unitykt.dataImpl.SpriteAtlasImpl
 import io.github.deficuet.unitykt.file.ObjectInfo
 import io.github.deficuet.unitykt.file.SerializedFile
@@ -11,7 +12,7 @@ class SpriteAtlas private constructor(
     internal constructor(assetFile: SerializedFile, info: ObjectInfo):
         this(ImplementationContainer(assetFile, info) { SpriteAtlasImpl(ObjectReader(assetFile, info)) })
 
-    val mPackedSprites get() = container.impl.mPackedSprites
-    val mRenderDataMap get() = container.impl.mRenderDataMap
-    val mIsVariant get() = container.impl.mIsVariant
+    val mPackedSprites: Array<PPtr<Sprite>>                             get() = container.impl.mPackedSprites
+    val mRenderDataMap: Map<Pair<ByteArray, Long>, SpriteAtlasData>     get() = container.impl.mRenderDataMap
+    val mIsVariant: Boolean                                             get() = container.impl.mIsVariant
 }

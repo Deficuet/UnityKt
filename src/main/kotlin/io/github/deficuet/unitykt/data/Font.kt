@@ -11,5 +11,5 @@ class Font private constructor(
     internal constructor(assetFile: SerializedFile, info: ObjectInfo):
         this(ImplementationContainer(assetFile, info) { FontImpl(ObjectReader(assetFile, info)) })
 
-    val mFontData get() = container.impl.mFontData
+    val mFontData: ByteArray get() = container.impl.mFontData
 }

@@ -11,5 +11,5 @@ class TextAsset private constructor(
     internal constructor(assetFile: SerializedFile, info: ObjectInfo):
         this(ImplementationContainer(assetFile, info) { TextAssetImpl(ObjectReader(assetFile, info)) })
 
-    val mScript get() = container.impl.mScript
+    val mScript: ByteArray get() = container.impl.mScript
 }

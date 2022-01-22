@@ -11,5 +11,5 @@ class ResourceManager private constructor(
     internal constructor(assetFile: SerializedFile, info: ObjectInfo):
         this(ImplementationContainer(assetFile, info) { ResourceManagerImpl(ObjectReader(assetFile, info)) })
 
-    val mContainer get() = container.impl.mContainer
+    val mContainer: Array<Pair<String, PPtr<Object>>> get() = container.impl.mContainer
 }

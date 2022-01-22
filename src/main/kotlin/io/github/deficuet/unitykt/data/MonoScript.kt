@@ -11,7 +11,7 @@ class MonoScript private constructor(
     internal constructor(assetFile: SerializedFile, info: ObjectInfo):
         this(ImplementationContainer(assetFile, info) { MonoScriptImpl(ObjectReader(assetFile, info)) })
 
-    val mClassName get() = container.impl.mClassName
-    val mNameSpace get() = container.impl.mNameSpace
-    val mAssemblyName get() = container.impl.mAssemblyName
+    val mClassName: String      get() = container.impl.mClassName
+    val mNameSpace: String      get() = container.impl.mNameSpace
+    val mAssemblyName: String   get() = container.impl.mAssemblyName
 }

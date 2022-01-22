@@ -5,5 +5,5 @@ import io.github.deficuet.unitykt.dataImpl.ComponentImpl
 abstract class Component internal constructor(
     private val container: ImplementationContainer<ComponentImpl>
 ): EditorExtension(container) {
-    val mGameObject get() = container.impl.mGameObject
+    val mGameObject: PPtr<GameObject> get() = container.impl.mGameObject
 }

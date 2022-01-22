@@ -16,6 +16,9 @@ class PPtr<T: Object> internal constructor(reader: ObjectReader) {
     val isNull = mPathID == 0L || mFileID < 0
     val assetFile = reader.assetFile
 
+    /**
+     * @see io.github.deficuet.unitykt.getObj
+     */
     @PublishedApi internal var obj: T? = null
 
     @PublishedApi internal fun getManager(): SerializedFile? {

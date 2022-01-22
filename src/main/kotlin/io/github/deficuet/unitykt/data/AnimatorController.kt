@@ -11,5 +11,5 @@ class AnimatorController private constructor(
     internal constructor(assetFile: SerializedFile, info: ObjectInfo):
         this(ImplementationContainer(assetFile, info) { AnimatorControllerImpl(ObjectReader(assetFile, info)) })
 
-    val mAnimationClips get() = container.impl.mAnimationClips
+    val mAnimationClips: Array<PPtr<AnimationClip>> get() = container.impl.mAnimationClips
 }

@@ -11,5 +11,5 @@ class BuildSettings private constructor(
     internal constructor(assetFile: SerializedFile, info: ObjectInfo):
         this(ImplementationContainer(assetFile, info) { BuildSettingsImpl(ObjectReader(assetFile, info)) })
 
-    val mVersion get() = container.impl.mVersion
+    val mVersion: String get() = container.impl.mVersion
 }

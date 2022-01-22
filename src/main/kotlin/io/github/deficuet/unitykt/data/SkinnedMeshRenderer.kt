@@ -11,7 +11,7 @@ class SkinnedMeshRenderer private constructor(
     internal constructor(assetFile: SerializedFile, info: ObjectInfo):
         this(ImplementationContainer(assetFile, info) { SkinnedMeshRendererImpl(ObjectReader(assetFile, info)) })
 
-    val mMesh get() = container.impl.mMesh
-    val mBones get() = container.impl.mBones
-    val mBlendShapeWeights get() = container.impl.mBlendShapeWeights
+    val mMesh: PPtr<Mesh>               get() = container.impl.mMesh
+    val mBones: Array<PPtr<Transform>>  get() = container.impl.mBones
+    val mBlendShapeWeights: FloatArray  get() = container.impl.mBlendShapeWeights
 }

@@ -11,7 +11,7 @@ class Animator private constructor(
     internal constructor(assetFile: SerializedFile, info: ObjectInfo):
         this(ImplementationContainer(assetFile, info) { AnimatorImpl(ObjectReader(assetFile, info)) })
 
-    val mAvatar get() = container.impl.mAvatar
-    val mController get() = container.impl.mController
-    val mHasTransformHierarchy get() = container.impl.mHasTransformHierarchy
+    val mAvatar: PPtr<Avatar>                           get() = container.impl.mAvatar
+    val mController: PPtr<RuntimeAnimatorController>    get() = container.impl.mController
+    val mHasTransformHierarchy: Boolean                 get() = container.impl.mHasTransformHierarchy
 }
