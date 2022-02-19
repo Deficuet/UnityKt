@@ -4,6 +4,7 @@ import io.github.deficuet.unitykt.dataImpl.MonoBehaviourImpl
 import io.github.deficuet.unitykt.file.ObjectInfo
 import io.github.deficuet.unitykt.file.SerializedFile
 import io.github.deficuet.unitykt.util.ObjectReader
+import org.json.JSONObject
 
 class MonoBehaviour private constructor(
     private val container: ImplementationContainer<MonoBehaviourImpl>
@@ -13,4 +14,7 @@ class MonoBehaviour private constructor(
 
     val mScript: PPtr<MonoScript>   get() = container.impl.mScript
     val mName: String               get() = container.impl.mName
+
+    val json: JSONObject?           get() = container.impl.json
+    val jsonString: String          get() = container.impl.jsonString
 }

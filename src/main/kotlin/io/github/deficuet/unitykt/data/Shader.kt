@@ -22,4 +22,6 @@ class Shader private constructor(
     val compressedLengths: Array<UInt>              get() = container.impl.compressedLengths
     val decompressedLengths: Array<UInt>            get() = container.impl.decompressedLengths
     val compressedBlob: ByteArray                   get() = container.impl.compressedBlob
+
+    val exportString: String                        get() = container.impl.exportString
 }

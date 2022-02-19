@@ -2,9 +2,12 @@ package io.github.deficuet.unitykt.dataImpl
 
 import io.github.deficuet.unitykt.data.PPtr
 import io.github.deficuet.unitykt.data.Shader
-import io.github.deficuet.unitykt.util.EndianBinaryReader
-import io.github.deficuet.unitykt.util.ObjectReader
-import io.github.deficuet.unitykt.util.compareTo
+import io.github.deficuet.unitykt.data.Texture
+import io.github.deficuet.unitykt.export.EndianByteArrayWriter
+import io.github.deficuet.unitykt.export.smolv.SmolvDecoder
+import io.github.deficuet.unitykt.export.spirv.Disassembler
+import io.github.deficuet.unitykt.export.spirv.Module
+import io.github.deficuet.unitykt.util.*
 
 class ShaderImpl internal constructor(reader: ObjectReader): NamedObjectImpl(reader) {
     val mScript: ByteArray
@@ -24,9 +27,15 @@ class ShaderImpl internal constructor(reader: ObjectReader): NamedObjectImpl(rea
                 Array(size) { ShaderCompilerPlatform.of(this[it].toInt()) }
             }
             if (unityVersion >= intArrayOf(2019, 3)) {
-                offsets = reader.readNestedUIntArray()[0]
-                compressedLengths = reader.readNestedUIntArray()[0]
-                decompressedLengths = reader.readNestedUIntArray()[0]
+                offsets = reader.readNestedUIntArray().let {
+                    array -> Array(array.size) { array[it][0] }
+                }
+                compressedLengths = reader.readNestedUIntArray().let {
+                    array -> Array(array.size) { array[it][0] }
+                }
+                decompressedLengths = reader.readNestedUIntArray().let {
+                    array -> Array(array.size) { array[it][0] }
+                }
             } else {
                 offsets = reader.readNextUIntArray()
                 compressedLengths = reader.readNextUIntArray()
@@ -34,7 +43,7 @@ class ShaderImpl internal constructor(reader: ObjectReader): NamedObjectImpl(rea
             }
             compressedBlob = reader.readNextByteArray()
             reader.alignStream()
-            reader.readArrayOf { PPtr<Shader>(reader) }     //m_Dependencies
+            reader.readArrayOf { PPtr<Texture>(reader) }     //m_Dependencies
             if (unityVersion[0] >= 2018) {
                 reader.readArrayOf {
                     reader.readAlignedString()
@@ -63,6 +72,218 @@ class ShaderImpl internal constructor(reader: ObjectReader): NamedObjectImpl(rea
             compressedLengths = emptyArray()
             decompressedLengths = emptyArray()
             compressedBlob = byteArrayOf()
+        }
+    }
+
+    val exportString by lazy {
+        if (mSubProgramBlob.isNotEmpty()) {
+            val decompressed = CompressUtils.lz4Decompress(mSubProgramBlob, decompressedSize.toInt())
+            EndianByteArrayReader(decompressed).use { blobReader ->
+                val program = ShaderProgram(blobReader, unityVersion)
+                return@lazy exportHeader + program.export(mScript.decodeToString())
+            }
+        }
+        if (compressedBlob.isNotEmpty()) {
+            return@lazy exportHeader + convertSerializedShader()
+        }
+        return@lazy exportHeader + mScript.decodeToString()
+    }
+
+    private fun convertSerializedShader(): String {
+        val programs = Array(platforms.size) {
+            val compressedByte = ByteArray(compressedLengths[it].toInt())
+            System.arraycopy(
+                compressedBlob, offsets[it].toInt(),
+                compressedByte, 0, compressedLengths[it].toInt()
+            )
+            val decompressedByte = CompressUtils.lz4Decompress(compressedByte, decompressedLengths[it].toInt())
+            EndianByteArrayReader(decompressedByte, endian = EndianType.LittleEndian).use { blobReader ->
+                ShaderProgram(blobReader, unityVersion)
+            }
+        }
+        return StringBuilder().apply {
+            append("Shader \"${mParsedForm!!.mName}\" {\n")
+            //region convertSerializedProperties
+            append("Properties {\n")
+            for (prop in mParsedForm.mPropInfo.mProps) {
+                prop.toString(this)
+            }
+            append("}\n")
+            //endregion
+            for (subShader in mParsedForm.mSubShaders) {
+                //region convertSerializedSubShader
+                append("SubShader {\n")
+                if (subShader.mLOD != 0) {
+                    append(" LOD ${subShader.mLOD}\n")
+                }
+                subShader.mTags.toString(this, 1)
+                for (passe in subShader.mPasses) {
+                    passe.toString(this, platforms, programs)
+                }
+                append("}\n")
+                //endregion
+            }
+            if (mParsedForm.mFallbackName.isNotBlank()) {
+                append("Fallback \"${mParsedForm.mFallbackName}\"\n")
+            }
+            if (mParsedForm.mCustomEditorName.isNotBlank()) {
+                append("CustomEditor \"${mParsedForm.mCustomEditorName}\"\n")
+            }
+            append("}")
+        }.toString()
+    }
+
+    companion object {
+        internal const val exportHeader = "" +
+                "//////////////////////////////////////////\n" +
+                "//\n" +
+                "// NOTE: This is *not* a valid shader file\n" +
+                "//\n" +
+                "//////////////////////////////////////////\n"
+    }
+}
+
+internal class ShaderProgram(reader: EndianBinaryReader, version: IntArray) {
+    private val entrySize = if (version >= intArrayOf(2019, 3)) 12 else 8
+    val mSubPrograms = reader.readArrayIndexedOf {
+        reader.position = 4L + it * entrySize
+        val offset = reader.readInt()
+        reader.position = offset.toLong()
+        ShaderSubProgram(reader)
+    }
+
+    fun export(shader: String): String {
+        return exportRegex.replace(shader) {
+            mSubPrograms[it.groups[1]!!.value.toInt()].export()
+        }
+    }
+
+    companion object {
+        private val exportRegex = Regex("GpuProgramIndex (.+)")
+    }
+}
+
+internal class ShaderSubProgram(private val reader: EndianBinaryReader) {
+    private val mVersion = reader.readInt()
+    private val mProgramType = ShaderGpuProgramType.of(reader.readInt())
+    private val mKeywords: Array<String>
+    private val mLocalKeywords: Array<String>
+    private val mProgramCode: ByteArray
+
+    init {
+        reader += if (mVersion >= 201608170) 16 else 12
+        mKeywords = reader.readNextStringArray()
+        mLocalKeywords = if (mVersion in 201806140 until 202012090) {
+            reader.readNextStringArray()
+        } else emptyArray()
+        mProgramCode = reader.readNextByteArray()
+        reader.alignStream()
+    }
+
+    fun export(): String {
+        val builder = StringBuilder()
+        if (mKeywords.isNotEmpty()) {
+            builder.append("Keywords { ")
+            mKeywords.forEach { builder.append("\"$it\" ") }
+            builder.append("}\n")
+        }
+        if (mLocalKeywords.isNotEmpty()) {
+            builder.append("Local Keywords { ")
+            mLocalKeywords.forEach { builder.append("\"$it\" ") }
+            builder.append("}\n")
+        }
+        builder.append("\"")
+        if (mProgramCode.isNotEmpty()) {
+            when (mProgramType) {
+                ShaderGpuProgramType.kShaderGpuProgramGLLegacy,
+                ShaderGpuProgramType.kShaderGpuProgramGLES31AEP,
+                ShaderGpuProgramType.kShaderGpuProgramGLES31,
+                ShaderGpuProgramType.kShaderGpuProgramGLES3,
+                ShaderGpuProgramType.kShaderGpuProgramGLES,
+                ShaderGpuProgramType.kShaderGpuProgramGLCore32,
+                ShaderGpuProgramType.kShaderGpuProgramGLCore41,
+                ShaderGpuProgramType.kShaderGpuProgramGLCore43 -> {
+                    builder.append(mProgramCode.decodeToString(Charsets.UTF_8))
+                }
+                ShaderGpuProgramType.kShaderGpuProgramDX9VertexSM20,
+                ShaderGpuProgramType.kShaderGpuProgramDX9VertexSM30,
+                ShaderGpuProgramType.kShaderGpuProgramDX9PixelSM20,
+                ShaderGpuProgramType.kShaderGpuProgramDX9PixelSM30 -> {
+                    builder.append("// shader disassembly not supported on DXBC")
+                }
+                ShaderGpuProgramType.kShaderGpuProgramDX10Level9Vertex,
+                ShaderGpuProgramType.kShaderGpuProgramDX10Level9Pixel,
+                ShaderGpuProgramType.kShaderGpuProgramDX11VertexSM40,
+                ShaderGpuProgramType.kShaderGpuProgramDX11VertexSM50,
+                ShaderGpuProgramType.kShaderGpuProgramDX11PixelSM40,
+                ShaderGpuProgramType.kShaderGpuProgramDX11PixelSM50,
+                ShaderGpuProgramType.kShaderGpuProgramDX11GeometrySM40,
+                ShaderGpuProgramType.kShaderGpuProgramDX11GeometrySM50,
+                ShaderGpuProgramType.kShaderGpuProgramDX11HullSM50,
+                ShaderGpuProgramType.kShaderGpuProgramDX11DomainSM50 -> {
+                    builder.append("// shader disassembly not supported on DXBC")
+                }
+                ShaderGpuProgramType.kShaderGpuProgramMetalVS,
+                ShaderGpuProgramType.kShaderGpuProgramMetalFS -> {
+                    val fourCC = reader.readUInt()
+                    if (fourCC == 0xF00DCAFEu) {
+                        val offset = reader.readInt()
+                        reader.position = offset.toLong()
+                    }
+                    reader.readStringUntilNull()
+                    val buff = reader.read(with(reader) { length - position }.toInt())
+                    builder.append(buff.decodeToString(Charsets.UTF_8))
+                }
+                ShaderGpuProgramType.kShaderGpuProgramSPIRV -> {
+                    builder.append(
+                        try {
+                            mProgramCode.covertToSpirV()
+                        } catch (e: Exception) {
+                            "// disassembly error ${e.message}\n"
+                        }
+                    )
+                }
+                ShaderGpuProgramType.kShaderGpuProgramConsoleVS,
+                ShaderGpuProgramType.kShaderGpuProgramConsoleFS,
+                ShaderGpuProgramType.kShaderGpuProgramConsoleHS,
+                ShaderGpuProgramType.kShaderGpuProgramConsoleDS,
+                ShaderGpuProgramType.kShaderGpuProgramConsoleGS -> {
+                    builder.append(mProgramCode.decodeToString(Charsets.UTF_8))
+                }
+                else -> { builder.append("//shader disassembly not supported on $mProgramType") }
+            }
+        }
+        builder.append("\"")
+        return builder.toString()
+    }
+
+    companion object {
+        private fun ByteArray.covertToSpirV(): String {
+            val builder = StringBuilder()
+            EndianByteArrayReader(this, endian = EndianType.LittleEndian).use { reader ->
+                reader += 4
+                var minOffset = reader.length
+                for (i in 0..4) {
+                    if (reader.position >= minOffset) break
+                    val offset = reader.readInt()
+                    val size = reader.readInt()
+                    if (size > 0) {
+                        if (offset < minOffset) minOffset = offset.toLong()
+                        reader.withMark {
+                            position = offset.toLong()
+                            val decodedSize = SmolvDecoder.getDecodedBufferSize(reader)
+                            if (decodedSize == 0) return "// disassembly error: Invalid SMOL-V shader header"
+                            EndianByteArrayWriter(decodedSize, endianType = EndianType.LittleEndian).use { writer ->
+                                if (SmolvDecoder.decode(this, size, writer)) {
+                                    val module = Module.readFrom(writer.array)
+                                    builder.append(Disassembler().disassemble(module))
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            return builder.toString()
         }
     }
 }
@@ -154,6 +375,50 @@ class SerializedProperty internal constructor(reader: EndianBinaryReader) {
     val mFlags = reader.readUInt()
     val mDefValue = reader.readNextFloatArray(4)
     val mDefTexture = SerializedTextureProperty(reader)
+
+    internal fun toString(builder: StringBuilder): StringBuilder {
+        for (attribute in mAttributes) {
+            builder.append("[$attribute] ")
+        }
+        builder.append("$mName (\"$mDescription\", ")
+        builder.append(
+            when (mType) {
+                SerializedPropertyType.kColor -> "Color"
+                SerializedPropertyType.kVector -> "Vector"
+                SerializedPropertyType.kFloat -> "Float"
+                SerializedPropertyType.kRange -> "Range(${mDefValue[1]}, ${mDefValue[2]})"
+                SerializedPropertyType.kTexture -> {
+                    when (mDefTexture.mTexDim) {
+                        TextureDimension.kTexDimAny -> "any"
+                        TextureDimension.kTexDim2D -> "2D"
+                        TextureDimension.kTexDim3D -> "3D"
+                        TextureDimension.kTexDimCUBE -> "Cube"
+                        TextureDimension.kTexDim2DArray -> "2DArray"
+                        TextureDimension.kTexDimCubeArray -> "CubeArray"
+                        else -> ""
+                    }
+                }
+            }
+        )
+        builder.append(") = ")
+        builder.append(
+            when (mType) {
+                SerializedPropertyType.kColor,
+                SerializedPropertyType.kVector -> {
+                    "(${mDefValue[0]},${mDefValue[1]},${mDefValue[2]},${mDefValue[3]})"
+                }
+                SerializedPropertyType.kFloat,
+                SerializedPropertyType.kRange -> {
+                    mDefValue[0]
+                }
+                SerializedPropertyType.kTexture -> {
+                    "\"${mDefTexture.mDefaultName}\" { }"
+                }
+            }
+        )
+        builder.append("\n")
+        return builder
+    }
 }
 
 class SerializedProperties internal constructor(reader: EndianBinaryReader) {
@@ -163,10 +428,79 @@ class SerializedProperties internal constructor(reader: EndianBinaryReader) {
 class SerializedShaderFloatValue internal constructor(reader: EndianBinaryReader) {
     val value = reader.readFloat()
     val name = reader.readAlignedString()
+
+    internal fun convertBlendFactor(): String {
+        return when (value) {
+            0f -> "Zero"
+            2f -> "DstColor"
+            3f -> "SrcColor"
+            4f -> "OneMinusDstColor"
+            5f -> "SrcAlpha"
+            6f -> "OneMinusSrcColor"
+            7f -> "DstAlpha"
+            8f -> "OneMinusDstAlpha"
+            9f -> "SrcAlphaSaturate"
+            10f -> "OneMinusSrcAlpha"
+            else -> "One"
+        }
+    }
+
+    internal fun convertBlendOp(): String {
+        return when (value) {
+            1f -> "Sub"
+            2f -> "RevSub"
+            3f -> "Min"
+            4f -> "Max"
+            5f -> "LogicalClear"
+            6f -> "LogicalSet"
+            7f -> "LogicalCopy"
+            8f -> "LogicalCopyInverted"
+            9f -> "LogicalNoop"
+            10f -> "LogicalInvert"
+            11f -> "LogicalAnd"
+            12f -> "LogicalNand"
+            13f -> "LogicalOr"
+            14f -> "LogicalNor"
+            15f -> "LogicalXor"
+            16f -> "LogicalEquiv"
+            17f -> "LogicalAndReverse"
+            18f -> "LogicalAndInverted"
+            19f -> "LogicalOrReverse"
+            20f -> "LogicalOrInverted"
+            else -> "Add"
+        }
+    }
+
+    internal fun convertStencilOp(): String {
+        return when (value) {
+            1f -> "Zero"
+            2f -> "Replace"
+            3f -> "IncrSat"
+            4f -> "DecrSat"
+            5f -> "Invert"
+            6f -> "IncrWrap"
+            7f -> "DecrWrap"
+            else -> "Keep"
+        }
+    }
+
+    internal fun convertStencilComp(): String {
+        return when (value) {
+            0f -> "Disabled"
+            1f -> "Never"
+            2f -> "Less"
+            3f -> "Equal"
+            4f -> "LEqual"
+            5f -> "Greater"
+            6f -> "NotEqual"
+            7f -> "GEqual"
+            else -> "Always"
+        }
+    }
 }
 
 class SerializedShaderRTBlendState internal constructor(reader: EndianBinaryReader) {
-    val secBlend = SerializedShaderFloatValue(reader)
+    val srcBlend = SerializedShaderFloatValue(reader)
     val destBlend = SerializedShaderFloatValue(reader)
     val srcBlendAlpha = SerializedShaderFloatValue(reader)
     val destBlendAlpha = SerializedShaderFloatValue(reader)
@@ -178,8 +512,17 @@ class SerializedShaderRTBlendState internal constructor(reader: EndianBinaryRead
 class SerializedStencilOp internal constructor(reader: EndianBinaryReader) {
     val pass = SerializedShaderFloatValue(reader)
     val fail = SerializedShaderFloatValue(reader)
-    val zDail = SerializedShaderFloatValue(reader)
+    val zFail = SerializedShaderFloatValue(reader)
     val comp = SerializedShaderFloatValue(reader)
+
+    internal fun toString(builder: StringBuilder, suffix: String): StringBuilder {
+        return builder.apply {
+            append("   Comp$suffix ${comp.convertStencilComp()}")
+            append("   Pass$suffix ${pass.convertStencilOp()}")
+            append("   Fail$suffix ${fail.convertStencilOp()}")
+            append("   ZFail$suffix ${zFail.convertStencilOp()}")
+        }
+    }
 }
 
 class SerializedShaderVectorValue internal constructor(reader: EndianBinaryReader) {
@@ -207,6 +550,18 @@ enum class FogMode(val id: Int) {
 
 class SerializedTagMap internal constructor(reader: EndianBinaryReader) {
     val tags = reader.readArrayOf { with(reader) { readAlignedString() to readAlignedString() } }
+
+    internal fun toString(builder: StringBuilder, indent: Int): StringBuilder {
+        if (tags.isNotEmpty()) {
+            builder.append(" ".repeat(indent))
+            builder.append("Tags { ")
+            for (pair in tags) {
+                builder.append("\"${pair.first}\" = \"${pair.second}\"")
+            }
+            builder.append("}\n")
+        }
+        return builder
+    }
 }
 
 class SerializedShaderState internal constructor(reader: ObjectReader) {
@@ -266,6 +621,182 @@ class SerializedShaderState internal constructor(reader: ObjectReader) {
         mLOD = reader.readInt()
         lighting = reader.readBool()
         reader.alignStream()
+    }
+
+    internal fun toString(builder: StringBuilder): StringBuilder {
+        if (mName.isNotEmpty()) builder.append("  Name \"$mName\"\n")
+        if (mLOD != 0) builder.append("  LOD ${mLOD}\n")
+        mTags.toString(builder, 2)
+        rtBlend.toString(builder)
+        if (alphaToMask.value > 0f) builder.append("  AlphaToMask On\n")
+        if (zClip?.value != 1f) builder.append("  ZClip Off\n")
+        if (zTest.value != 4f) {
+            builder.append("  ZTest  ")
+            when (zTest.value) {
+                0f -> builder.append("Off")
+                1f -> builder.append("Never")
+                2f -> builder.append("Less")
+                3f -> builder.append("Equal")
+                5f -> builder.append("Greater")
+                6f -> builder.append("NotEqual")
+                7f -> builder.append("GEqual")
+                8f -> builder.append("Always")
+            }
+            builder.append("\n")
+        }
+        if (zWrite.value != 1f) builder.append("  ZWrite Off\n")
+        if (culling.value != 2f) {
+            builder.append("  Cull ")
+            when (culling.value) {
+                0f -> builder.append("Off")
+                1f -> builder.append("Front")
+            }
+            builder.append("\n")
+        }
+        if (offsetFactor.value != 0f || offsetUnits.value != 0f) {
+            builder.append("  Offset ${offsetFactor.value}, ${offsetUnits.value}\n")
+        }
+        if (
+            stencilRef.value != 0f ||
+            stencilReadMask.value != 255f ||
+            stencilWriteMask.value != 255f ||
+            stencilOp.pass.value != 0f ||
+            stencilOp.fail.value != 0f ||
+            stencilOp.zFail.value != 0f ||
+            stencilOp.comp.value != 8f ||
+            stencilOpFront.pass.value != 0f ||
+            stencilOpFront.fail.value != 0f ||
+            stencilOpFront.zFail.value != 0f ||
+            stencilOpFront.comp.value != 8f ||
+            stencilOpBack.pass.value != 0f ||
+            stencilOpBack.fail.value != 0f ||
+            stencilOpBack.zFail.value != 0f ||
+            stencilOpBack.comp.value != 8f
+        ) {
+            builder.append("  Stencil {\n")
+            if (stencilRef.value != 0f) builder.append("   Ref ${stencilRef.value}\n")
+            if (stencilReadMask.value != 255f) builder.append("   ReadMask ${stencilReadMask.value}\n")
+            if (stencilWriteMask.value != 255f) builder.append("   WriteMask ${stencilWriteMask.value}\n")
+            if (
+                stencilOp.pass.value != 0f ||
+                stencilOp.fail.value != 0f ||
+                stencilOp.zFail.value != 0f ||
+                stencilOp.comp.value != 8f
+            ) {
+                stencilOp.toString(builder, "")
+            }
+            if (
+                stencilOpFront.pass.value != 0f ||
+                stencilOpFront.fail.value != 0f ||
+                stencilOpFront.zFail.value != 0f ||
+                stencilOpFront.comp.value != 8f)
+            {
+                stencilOpFront.toString(builder, "Front")
+            }
+            if (
+                stencilOpBack.pass.value != 0f ||
+                stencilOpBack.fail.value != 0f ||
+                stencilOpBack.zFail.value != 0f ||
+                stencilOpBack.comp.value != 8f)
+            {
+                stencilOpBack.toString(builder, "Back")
+            }
+            builder.append("  }\n")
+        }
+        if (
+            fogMode != FogMode.kFogUnknown ||
+            fogColor.x.value != 0f ||
+            fogColor.y.value != 0f ||
+            fogColor.z.value != 0f ||
+            fogColor.w.value != 0f ||
+            fogDensity.value != 0f ||
+            fogStart.value != 0f ||
+            fogEnd.value != 0f
+        ) {
+            builder.append("  Fog {\n")
+            if (fogMode != FogMode.kFogUnknown) {
+                builder.append("   Mode  ")
+                when (fogMode) {
+                    FogMode.kFogDisabled -> builder.append("Off")
+                    FogMode.kFogLinear -> builder.append("Linear")
+                    FogMode.kFogExp -> builder.append("Exp")
+                    FogMode.kFogExp2 -> builder.append("Exp2")
+                    else -> {  }
+                }
+                builder.append("\n")
+            }
+            if (
+                fogColor.x.value != 0f ||
+                fogColor.y.value != 0f ||
+                fogColor.z.value != 0f ||
+                fogColor.w.value != 0f
+            ) {
+                builder.append(
+                    "   Color (${fogColor.x.value},${fogColor.y.value},${fogColor.z.value},${fogColor.w.value})\n"
+                )
+            }
+            if (fogDensity.value != 0f) {
+                builder.append("   Density ${fogDensity.value}\n")
+            }
+            if (fogStart.value != 0f || fogEnd.value != 0f) {
+                builder.append("   Range ${fogStart.value}, ${fogEnd.value}\n")
+            }
+            builder.append("\n")
+        }
+        return builder.apply {
+            append("  Lighting ${if (lighting) "On" else "Off"}\n")
+            append("  GpuProgramID $gpuProgramID")
+        }
+    }
+
+    private fun Array<SerializedShaderRTBlendState>.toString(builder: StringBuilder): StringBuilder {
+        for (i in indices) {
+            val blend = get(i)
+            if (
+                blend.srcBlend.value != 1f ||
+                blend.destBlend.value != 0f ||
+                blend.srcBlendAlpha.value != 1f ||
+                blend.destBlendAlpha.value != 0f
+            ) {
+                builder.append("  Blend ")
+                if (i != 0 || rtSeparateBlend) {
+                    builder.append("$i ")
+                }
+                builder.append("${blend.srcBlend.convertBlendFactor()} ${blend.destBlend.convertBlendFactor()}")
+                if (blend.srcBlendAlpha.value != 1f || blend.destBlendAlpha.value != 0f) {
+                    builder.append(
+                        ", ${blend.srcBlendAlpha.convertBlendFactor()} ${blend.destBlendAlpha.convertBlendFactor()}"
+                    )
+                }
+                builder.append("\n")
+            }
+            if (blend.blendOp.value != 0f || blend.blendOpAlpha.value != 0f) {
+                builder.append("  BlendOp ")
+                if (i != 0 || rtSeparateBlend) {
+                    builder.append("$i ")
+                }
+                builder.append(blend.blendOp.convertBlendOp())
+                if (blend.blendOpAlpha.value != 0f) {
+                    builder.append(", ${blend.blendOpAlpha.convertBlendOp()}")
+                }
+                builder.append("\n")
+            }
+            val value = blend.colMask.value.toInt()
+            if (value != 0xF) {
+                builder.append("  ColorMask  ")
+                if (value == 0) builder.append(0)
+                else {
+                    when {
+                        value.and(0x2) != 0 -> builder.append("R")
+                        value.and(0x4) != 0 -> builder.append("G")
+                        value.and(0x8) != 0 -> builder.append("B")
+                        value.and(0x1) != 0 -> builder.append("A")
+                    }
+                }
+                builder.append(" $i\n")
+            }
+        }
+        return builder
     }
 }
 
@@ -328,7 +859,7 @@ class UAVParameter internal constructor(reader: EndianBinaryReader) {
 }
 
 @Suppress("EnumEntryName")
-enum class ShaderGpuProgramType(val id: Byte) {
+enum class ShaderGpuProgramType(val id: Int) {
     kShaderGpuProgramUnknown(0),
     kShaderGpuProgramGLLegacy(1),
     kShaderGpuProgramGLES31AEP(2),
@@ -363,7 +894,7 @@ enum class ShaderGpuProgramType(val id: Byte) {
     kShaderGpuProgramRayTracing(31);
 
     companion object {
-        fun of(value: Byte): ShaderGpuProgramType {
+        fun of(value: Int): ShaderGpuProgramType {
             return values().firstOrNull { it.id == value  } ?: kShaderGpuProgramUnknown
         }
     }
@@ -409,7 +940,7 @@ class SerializedSubProgram internal constructor(reader: ObjectReader) {
             if (version[0] >= 2017) reader.alignStream()
         }
         mShaderHardwareTier = reader.readSByte()
-        mGpuProgramType = ShaderGpuProgramType.of(reader.readSByte())
+        mGpuProgramType = ShaderGpuProgramType.of(reader.readSByte().toInt())
         reader.alignStream()
         if (
             (version[0] == 2020 && version >= intArrayOf(2020, 3, 2)) ||
@@ -528,6 +1059,104 @@ class SerializedPass internal constructor(reader: ObjectReader) {
             mSerializedKeywordStateMask = emptyArray()
         }
     }
+
+    internal fun toString(
+        builder: StringBuilder,
+        platforms: Array<ShaderCompilerPlatform>,
+        shaderPrograms: Array<ShaderProgram>
+    ): StringBuilder {
+        builder.append(
+            when (mType) {
+                PassType.kPassTypeNormal -> " Pass "
+                PassType.kPassTypeUse -> " UsePass "
+                PassType.kPassTypeGrab -> " GrabPass "
+            }
+        )
+        if (mType == PassType.kPassTypeUse) {
+            builder.append("\"$mUseName\"\n")
+        } else {
+            builder.append("{\n")
+            if (mType == PassType.kPassTypeGrab) {
+                if (mTextureName.isNotEmpty()) {
+                    builder.append("  \"${mTextureName}\"\n")
+                }
+            } else {
+                mState.toString(builder)
+                if (progVertex.mSubPrograms.isNotEmpty()) {
+                    builder.apply {
+                        append("Program \"vp\" {\n")
+                        progVertex.mSubPrograms.toString(this, platforms, shaderPrograms)
+                        append("}\n")
+                    }
+                }
+                if (progFragment.mSubPrograms.isNotEmpty()) {
+                    builder.apply {
+                        append("Program \"fp\" {\n")
+                        progFragment.mSubPrograms.toString(this, platforms, shaderPrograms)
+                        append("}\n")
+                    }
+                }
+                if (progGeometry.mSubPrograms.isNotEmpty()) {
+                    builder.apply {
+                        append("Program \"gp\" {\n")
+                        progGeometry.mSubPrograms.toString(this, platforms, shaderPrograms)
+                        append("}\n")
+                    }
+                }
+                if (progHull.mSubPrograms.isNotEmpty()) {
+                    builder.apply {
+                        append("Program \"hp\" {\n")
+                        progHull.mSubPrograms.toString(this, platforms, shaderPrograms)
+                        append("}\n")
+                    }
+                }
+                if (progDomain.mSubPrograms.isNotEmpty()) {
+                    builder.apply {
+                        append("Program \"dp\" {\n")
+                        progDomain.mSubPrograms.toString(this, platforms, shaderPrograms)
+                        append("}\n")
+                    }
+                }
+                if (progRayTracing?.mSubPrograms?.isNotEmpty() == true) {
+                    builder.apply {
+                        append("Program \"rtp\" {\n")
+                        progRayTracing.mSubPrograms.toString(this, platforms, shaderPrograms)
+                        append("}\n")
+                    }
+                }
+            }
+            builder.append("}\n")
+        }
+        return builder
+    }
+
+    private fun Array<SerializedSubProgram>.toString(
+        builder: StringBuilder,
+        platforms: Array<ShaderCompilerPlatform>,
+        shaderPrograms: Array<ShaderProgram>
+    ): StringBuilder {
+        for (group in groupBy { it.mBlobIndex }) {
+            for (program in group.value.groupBy { it.mGpuProgramType }) {
+                for ((i, platform) in platforms.withIndex()) {
+                    if (platform.checkProgramUsability(program.key)) {
+                        for (subProgram in program.value) {
+                            builder.append("SubProgram \"${platform.str} ")
+                            if (program.value.size > 1) {
+                                builder.append("hw_tier${"%02d"(subProgram.mShaderHardwareTier)} ")
+                            }
+                            builder.append(
+                                "\" {\n" +
+                                shaderPrograms[i].mSubPrograms[subProgram.mBlobIndex.toInt()].export() +
+                                "\n}\n"
+                            )
+                        }
+                        break
+                    }
+                }
+            }
+        }
+        return builder
+    }
 }
 
 class SerializedSubShader internal constructor(reader: ObjectReader) {
@@ -581,33 +1210,106 @@ class SerializedShader internal constructor(reader: ObjectReader) {
 }
 
 @Suppress("EnumEntryName")
-enum class ShaderCompilerPlatform(val id: Int) {
+enum class ShaderCompilerPlatform(val id: Int, val str: String = "unknown") {
     kShaderCompPlatformNone(-1),
-    kShaderCompPlatformGL(0),
-    kShaderCompPlatformD3D9(1),
-    kShaderCompPlatformXbox360(2),
-    kShaderCompPlatformPS3(3),
-    kShaderCompPlatformD3D11(4),
-    kShaderCompPlatformGLES20(5),
-    kShaderCompPlatformNaCl(6),
-    kShaderCompPlatformFlash(7),
-    kShaderCompPlatformD3D11_9x(8),
-    kShaderCompPlatformGLES3Plus(9),
-    kShaderCompPlatformPSP2(10),
-    kShaderCompPlatformPS4(11),
-    kShaderCompPlatformXboxOne(12),
-    kShaderCompPlatformPSM(13),
-    kShaderCompPlatformMetal(14),
-    kShaderCompPlatformOpenGLCore(15),
-    kShaderCompPlatformN3DS(16),
-    kShaderCompPlatformWiiU(17),
-    kShaderCompPlatformVulkan(18),
-    kShaderCompPlatformSwitch(19),
-    kShaderCompPlatformXboxOneD3D12(20),
-    kShaderCompPlatformGameCoreXboxOne(21),
-    kShaderCompPlatformGameCoreScarlett(22),
-    kShaderCompPlatformPS5(23),
-    kShaderCompPlatformPS5NGGC(24);
+    kShaderCompPlatformGL(0, "openGL"),
+    kShaderCompPlatformD3D9(1, "d3d9"),
+    kShaderCompPlatformXbox360(2, "xbox360"),
+    kShaderCompPlatformPS3(3, "ps3"),
+    kShaderCompPlatformD3D11(4, "d3d11"),
+    kShaderCompPlatformGLES20(5, "gles"),
+    kShaderCompPlatformNaCl(6, "glesdesktop"),
+    kShaderCompPlatformFlash(7, "flash"),
+    kShaderCompPlatformD3D11_9x(8, "d3d11_9x"),
+    kShaderCompPlatformGLES3Plus(9, "gles3"),
+    kShaderCompPlatformPSP2(10, "psp2"),
+    kShaderCompPlatformPS4(11, "ps4"),
+    kShaderCompPlatformXboxOne(12, "xboxone"),
+    kShaderCompPlatformPSM(13, "psm"),
+    kShaderCompPlatformMetal(14, "metal"),
+    kShaderCompPlatformOpenGLCore(15, "glcore"),
+    kShaderCompPlatformN3DS(16, "n3ds"),
+    kShaderCompPlatformWiiU(17, "wiiu"),
+    kShaderCompPlatformVulkan(18, "vulkan"),
+    kShaderCompPlatformSwitch(19, "switch"),
+    kShaderCompPlatformXboxOneD3D12(20, "xboxone_d3d12"),
+    kShaderCompPlatformGameCoreXboxOne(21, "xboxone"),
+    kShaderCompPlatformGameCoreScarlett(22, "xbox_scarlett"),
+    kShaderCompPlatformPS5(23, "ps5"),
+    kShaderCompPlatformPS5NGGC(24, "ps5_nggc");
+
+    internal fun checkProgramUsability(programType: ShaderGpuProgramType): Boolean {
+        return when (this) {
+            kShaderCompPlatformGL -> programType == ShaderGpuProgramType.kShaderGpuProgramGLLegacy
+            kShaderCompPlatformD3D9 -> {
+                programType.equalsAnyOf(
+                    ShaderGpuProgramType.kShaderGpuProgramDX9VertexSM20,
+                    ShaderGpuProgramType.kShaderGpuProgramDX9VertexSM30,
+                    ShaderGpuProgramType.kShaderGpuProgramDX9PixelSM20,
+                    ShaderGpuProgramType.kShaderGpuProgramDX9PixelSM30
+                )
+            }
+            kShaderCompPlatformXbox360, kShaderCompPlatformPS3,
+            kShaderCompPlatformPSP2, kShaderCompPlatformPS4,
+            kShaderCompPlatformXboxOne, kShaderCompPlatformN3DS,
+            kShaderCompPlatformWiiU, kShaderCompPlatformSwitch,
+            kShaderCompPlatformXboxOneD3D12, kShaderCompPlatformGameCoreXboxOne,
+            kShaderCompPlatformGameCoreScarlett, kShaderCompPlatformPS5,
+            kShaderCompPlatformPS5NGGC -> {
+                programType.equalsAnyOf(
+                    ShaderGpuProgramType.kShaderGpuProgramConsoleVS,
+                    ShaderGpuProgramType.kShaderGpuProgramConsoleFS,
+                    ShaderGpuProgramType.kShaderGpuProgramConsoleHS,
+                    ShaderGpuProgramType.kShaderGpuProgramConsoleDS,
+                    ShaderGpuProgramType.kShaderGpuProgramConsoleGS
+                )
+            }
+            kShaderCompPlatformD3D11 -> {
+                programType.equalsAnyOf(
+                    ShaderGpuProgramType.kShaderGpuProgramDX11VertexSM40,
+                    ShaderGpuProgramType.kShaderGpuProgramDX11VertexSM50,
+                    ShaderGpuProgramType.kShaderGpuProgramDX11PixelSM40,
+                    ShaderGpuProgramType.kShaderGpuProgramDX11PixelSM50,
+                    ShaderGpuProgramType.kShaderGpuProgramDX11GeometrySM40,
+                    ShaderGpuProgramType.kShaderGpuProgramDX11GeometrySM50,
+                    ShaderGpuProgramType.kShaderGpuProgramDX11HullSM50,
+                    ShaderGpuProgramType.kShaderGpuProgramDX11DomainSM50
+                )
+            }
+            kShaderCompPlatformGLES20 -> programType == ShaderGpuProgramType.kShaderGpuProgramGLES
+            kShaderCompPlatformNaCl -> throw UnsupportedFormatException("Unsupported platform")
+            kShaderCompPlatformFlash -> throw UnsupportedFormatException("Unsupported platform")
+            kShaderCompPlatformD3D11_9x -> {
+                programType.equalsAnyOf(
+                    ShaderGpuProgramType.kShaderGpuProgramDX10Level9Vertex,
+                    ShaderGpuProgramType.kShaderGpuProgramDX10Level9Pixel
+                )
+            }
+            kShaderCompPlatformGLES3Plus -> {
+                programType.equalsAnyOf(
+                    ShaderGpuProgramType.kShaderGpuProgramGLES31AEP,
+                    ShaderGpuProgramType.kShaderGpuProgramGLES31,
+                    ShaderGpuProgramType.kShaderGpuProgramGLES3
+                )
+            }
+            kShaderCompPlatformPSM -> throw UnsupportedFormatException("Unknown")
+            kShaderCompPlatformMetal -> {
+                programType.equalsAnyOf(
+                    ShaderGpuProgramType.kShaderGpuProgramMetalVS,
+                    ShaderGpuProgramType.kShaderGpuProgramMetalFS
+                )
+            }
+            kShaderCompPlatformOpenGLCore -> {
+                programType.equalsAnyOf(
+                    ShaderGpuProgramType.kShaderGpuProgramGLCore32,
+                    ShaderGpuProgramType.kShaderGpuProgramGLCore41,
+                    ShaderGpuProgramType.kShaderGpuProgramGLCore43
+                )
+            }
+            kShaderCompPlatformVulkan -> programType == ShaderGpuProgramType.kShaderGpuProgramSPIRV
+            else -> throw UnsupportedFormatException("Unsupported platform")
+        }
+    }
 
     companion object {
         fun of(value: Int): ShaderCompilerPlatform {

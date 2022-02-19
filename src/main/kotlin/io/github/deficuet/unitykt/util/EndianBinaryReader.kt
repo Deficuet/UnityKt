@@ -101,12 +101,6 @@ sealed class EndianBinaryReader(private val manualIgnoredOffset: Long): Closeabl
     }
 
     /**
-     * Mark of relative position
-     */
-    var mark: Long = 0
-        private set
-
-    /**
      * Actual position relative to its "parent" endian binary reader.
      */
     val realOffset get() = position + baseOffset
@@ -132,10 +126,8 @@ sealed class EndianBinaryReader(private val manualIgnoredOffset: Long): Closeabl
 
     abstract fun read(size: Int): ByteArray
 
-    fun mark() { mark = position }
-
     inline fun <T> withMark(block: EndianBinaryReader.() -> T): T {
-        mark()
+        val mark = position
         val result = this.block()
         position = mark
         return result

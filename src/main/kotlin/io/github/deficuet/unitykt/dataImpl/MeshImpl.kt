@@ -625,8 +625,6 @@ class MeshImpl internal constructor(reader: ObjectReader): NamedObjectImpl(reade
         return result
     }
 
-    private operator fun String.invoke(v: Float) = format(v)
-
     companion object {
         private const val kInfoBitsPerUV = 4
         private const val kUVDimensionMask = 3u

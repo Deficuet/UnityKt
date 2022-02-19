@@ -1,7 +1,9 @@
 package io.github.deficuet.unitykt
 
 import io.github.deficuet.unitykt.file.*
-import io.github.deficuet.unitykt.util.*
+import io.github.deficuet.unitykt.util.OffsetMode
+import io.github.deficuet.unitykt.util.isDirectory
+import io.github.deficuet.unitykt.util.isFile
 import java.nio.file.Files
 import java.util.stream.Collectors
 import kotlin.io.path.Path

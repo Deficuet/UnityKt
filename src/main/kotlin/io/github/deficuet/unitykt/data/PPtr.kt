@@ -58,25 +58,25 @@ class PPtr<T: Object> internal constructor(reader: ObjectReader) {
             }
         } else { null }
     }
-}
 
-internal inline fun <reified O: Object> PPtr<O>.setObjInfo(impl: ObjectImpl) {
-    val name = impl.assetFile.name
-    if (name.contentEquals(assetFile.name)) {
-        mFileID = 0
-    } else {
-        mFileID = assetFile.externals.indexOfFirst { it.name.contentEquals(name) }
-        if (mFileID == -1) {
-            (assetFile.externals as MutableList).add(
-                SerializedFile.FileIdentifier(
-                    kotlin.byteArrayOf(), 0, impl.assetFile.name
-                )
-            )
-            mFileID = assetFile.externals.size
+    internal fun setObjInfo(impl: ObjectImpl) {
+        val name = impl.assetFile.name
+        if (name.contentEquals(assetFile.name)) {
+            mFileID = 0
         } else {
-            mFileID += 1
+            mFileID = assetFile.externals.indexOfFirst { it.name.contentEquals(name) }
+            if (mFileID == -1) {
+                (assetFile.externals as MutableList).add(
+                    SerializedFile.FileIdentifier(
+                        kotlin.byteArrayOf(), 0, impl.assetFile.name
+                    )
+                )
+                mFileID = assetFile.externals.size
+            } else {
+                mFileID += 1
+            }
         }
+        mPathID = impl.mPathID
+        obj = null
     }
-    mPathID = impl.mPathID
-    obj = null
 }

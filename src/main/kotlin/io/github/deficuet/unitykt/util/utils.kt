@@ -66,6 +66,8 @@ internal fun String.isFile(): Boolean = Files.isRegularFile(Path.of(this))
 
 internal fun String.isDirectory(): Boolean = Files.isDirectory(Path.of(this))
 
+internal operator fun String.invoke(v: Any) = format(v)
+
 @PublishedApi internal fun String.listFiles(): List<String> {
     return Files.newDirectoryStream(Path.of(this)).use { stream ->
         stream.filter { it.isRegularFile() }.map { it.name }
@@ -84,4 +86,11 @@ internal fun List<ByteArray>.sum(): ByteArray {
     var bytes = kotlin.byteArrayOf()
     forEach { bytes += it }
     return bytes
+}
+
+internal fun <T> T.equalsAnyOf(vararg other: T): Boolean {
+    for (v in other) {
+        if (this == v) return true
+    }
+    return false
 }
