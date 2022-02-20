@@ -36,6 +36,7 @@ For the attempt of implementing the algorithm of decoding ETC2_RGB8A texture com
   - For each file loaded, an `ImportContext` with file name and directory will be given. An `ImportContext` contains all objects read from the file.
   - When load files/folder, a list of `ImportContext` will be returned.
   - `AssetManager` contains all objects read from all files that are loaded through it, except `AssetBundle` objects.
+  - Don't forget to run the method `closeAll()` to close and release the resources used by the manager, or run the static method `closeAll()` in `AssetManager` to release resources used by **all** manager instances.
 - Shortcuts
   - See [utils.kt](https://github.com/Deficuet/UnityKt/blob/main/src/main/kotlin/io/github/deficuet/unitykt/utils.kt) and [PPtrUtils.kt](https://github.com/Deficuet/UnityKt/blob/main/src/main/kotlin/io/github/deficuet/unitykt/PPtrUtils.kt)
   - Should always use `PPtr<O>.getObj()` to get the object.
