@@ -48,6 +48,8 @@ class AssetManager {
 
     private val configuration = Configuration()
 
+    init { managers.add(this) }
+
     /**
      * @param data Bytes of AsserBundle file
      * @param name A string as the "file name" of this bytes
@@ -128,5 +130,18 @@ class AssetManager {
         val files = Files.walk(Path(folder)).filter(Files::isRegularFile)
             .map { it.pathString }.collect(Collectors.toList()).toTypedArray()
         return loadFiles(*files)
+    }
+
+    fun closeAll() {
+        assetFiles.values.forEach { it.reader.close() }
+        resourceFiles.values.forEach { it.reader.close() }
+    }
+
+    companion object {
+        private val managers = mutableListOf<AssetManager>()
+
+        fun closeAll() {
+            managers.forEach { it.closeAll() }
+        }
     }
 }

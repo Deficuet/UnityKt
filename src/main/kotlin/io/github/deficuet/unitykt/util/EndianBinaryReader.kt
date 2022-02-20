@@ -339,5 +339,5 @@ class ObjectReader internal constructor(
 
     override fun read(size: Int) = reader.read(size)
 
-    override fun close() { reader.close() }
+    override fun close() {  }
 }

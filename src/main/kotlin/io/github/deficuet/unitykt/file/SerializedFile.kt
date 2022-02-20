@@ -151,7 +151,7 @@ class SerializedFile(
     var buildType = BuildType("")
         private set
     val externals: List<FileIdentifier>
-    val objects: List<Object>// = mutableListOf()
+    val objects: List<Object>
     val objectDict: Map<Long, Object>
         get() = objects.associateBy { it.mPathID }
 
@@ -324,7 +324,6 @@ class SerializedFile(
         objects = objectList
         root.objects.addAll(objects)
         objectInfoList.clear()
-        reader.close()
         //endregion
     }
 
@@ -332,8 +331,8 @@ class SerializedFile(
         val classID = reader.readInt()
         var isStrippedType = false
         var scriptTypeIndex: Short = -1
-        var scriptID: ByteArray = kotlin.byteArrayOf()
-        var oldTypeHash: ByteArray = kotlin.byteArrayOf()
+        var scriptID: ByteArray = byteArrayOf()
+        var oldTypeHash: ByteArray = byteArrayOf()
         var typeTree = SerializedType.Tree()
         var className = ""
         var nameSpace = ""
