@@ -18,7 +18,7 @@ For the attempt of implementing the algorithm of decoding ETC2_RGB8A texture com
     - All reachable files under the folder, recursively.
   - ByteArray, bytes of a asset bundle file. 
     - A `String` is required as the identifier "file name" of this `ByteArray`.
-- Loading Configuration
+- Loading Configurations
   - When loading file(s)/folder/ByteArray, there is a lambda parameter that can be used to configure loading behaviour.
   - The lambda will be applied **before** loading.
   - `offsetMode` - `MANUAL` or `AUTO`
@@ -33,14 +33,15 @@ For the attempt of implementing the algorithm of decoding ETC2_RGB8A texture com
     - However, an access to the properties related to the Object's info will not cause the initialization of the Object.
       - e.g. Its `assetFile` which is a `SerializedFile`, `mPathID`, `unityVersion`, etc. Those are the properties without a `getter`. See [Object class](https://github.com/Deficuet/UnityKt/blob/main/src/main/kotlin/io/github/deficuet/unitykt/data/Object.kt).
 - AssetManager & ImportContext
-  - For each file loaded, an `ImportContext` with file name will be given. An `ImportContext` contains all objects read from the file.
+  - For each file loaded, an `ImportContext` with file name and directory will be given. An `ImportContext` contains all objects read from the file.
   - When load files/folder, a list of `ImportContext` will be returned.
-  - `AssetManager` contains all objects read from all files, except `AssetBundle` objects.
+  - `AssetManager` contains all objects read from all files that are loaded through it, except `AssetBundle` objects.
 - Shortcuts
   - See [utils.kt](https://github.com/Deficuet/UnityKt/blob/main/src/main/kotlin/io/github/deficuet/unitykt/utils.kt) and [PPtrUtils.kt](https://github.com/Deficuet/UnityKt/blob/main/src/main/kotlin/io/github/deficuet/unitykt/PPtrUtils.kt)
   - Should always use `PPtr<O>.getObj()` to get the object.
 ## Installation
 Used openJDK 11.0.10 and Kotlin Language 1.5.31.
+
 ---Work in Progress---
 
 ## Export
@@ -70,7 +71,8 @@ import java.io.File
 import javax.imageio.ImageIO
 
 fun main() {
-    val context: ImportContext = AssetManager.loadFile("C:/path/to/AssetBundle.aab")
+    val manager: AssetManager = AssetManager()
+    val context: ImportContext = manager.loadFile("C:/path/to/AssetBundle.aab")
     
     //If there is no Texture2D object, IndexOutOfBoundsException will be thrown. 
     //You can consider the function firstOfOrNull<>()
@@ -79,8 +81,19 @@ fun main() {
     
     //The object data will initialize as long as you access its properties.
     ImageIO.write(tex.image, "png", File("C:/whatever/you/want/tex.png"))
+    
+    val anotherManager = AssetManager()
+    //Loading configurations
+    //It will not influence the configurations of previous manager.
+    //The files and objects loaded by this manager will not show in previous manager as well.
+    anotherManager.loadFolder("C:/foo/bar") {
+        offsetMode = OffsetMode.MANUAL
+        manualIgnoredOffset = 217
+    }
+    println(anotherManager.objects.firstObjectOf<Shader>().exportString)
 }
 ```
-## Change Log
+## Changelog
 - ### 2022.02.19
   - Add the export functions for `MonoBehaviour`, `TextAsset` and `Shader`.
+  - Change `AssetManager` from an object singleton to an instance class.
