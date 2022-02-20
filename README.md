@@ -54,6 +54,13 @@ So far the objects that can export data includes:
 - Texture2D
   - `decompressedImageData` - Image data after decoding. Can be used to create image directly.
   - `image` - A BufferedImage created from `decompressedImageData`. It is usually up-side-down.
+- MonoBehaviour
+  - `json` - Export its TypeTree as [JSONObject](https://stleary.github.io/JSON-java/index.html), could be `null`.
+  - `jsonString` - Export its TypeTree as `String`.
+- TextAsset
+  - `text()` - The function that is used to export content in this object as `String`. A `Charset` can be passed as a parameter, by default it is `Charsets.UTF_8`.
+- Shader
+  - `exportString` - Export as String. **Include** the Spir-V Shader data.
 ## Example
 Example for reading and saving an image from a Texture2D object.
 ```kotlin
@@ -74,3 +81,6 @@ fun main() {
     ImageIO.write(tex.image, "png", File("C:/whatever/you/want/tex.png"))
 }
 ```
+## Change Log
+- ### 2022.02.19
+  - Add the export functions for `MonoBehaviour`, `TextAsset` and `Shader`.
