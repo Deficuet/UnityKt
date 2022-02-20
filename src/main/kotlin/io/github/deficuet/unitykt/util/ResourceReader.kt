@@ -1,6 +1,5 @@
 package io.github.deficuet.unitykt.util
 
-import io.github.deficuet.unitykt.AssetManager
 import io.github.deficuet.unitykt.ImportContext
 import io.github.deficuet.unitykt.file.ResourceFile
 import io.github.deficuet.unitykt.file.SerializedFile
@@ -18,16 +17,15 @@ class ResourceReader internal constructor(
             if (field != null) return field
             else {
                 val file = File(path)
-                if (file.name in AssetManager.resourceFiles) {
-                    return AssetManager.resourceFiles.getValue(file.name).reader
+                val manager = assetFile!!.root.manager
+                if (file.name in manager.resourceFiles) {
+                    return manager.resourceFiles.getValue(file.name).reader
                 }
-                val dir = "${assetFile!!.root.directory}/${file.name}"
+                val dir = "${assetFile.root.directory}/${file.name}"
                 return if (!File(dir).exists()) {
                     throw FileNotFoundException("Can't find the resource file $dir")
                 } else {
-                    field = (ImportContext(
-                        dir, OffsetMode.MANUAL, 0
-                    ).files.getValue(file.name) as ResourceFile).reader
+                    field = (ImportContext(dir, manager).files.getValue(file.name) as ResourceFile).reader
                     field
                 }
             }

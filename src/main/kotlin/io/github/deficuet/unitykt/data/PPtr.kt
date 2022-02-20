@@ -1,6 +1,5 @@
 package io.github.deficuet.unitykt.data
 
-import io.github.deficuet.unitykt.AssetManager
 import io.github.deficuet.unitykt.ImportContext
 import io.github.deficuet.unitykt.dataImpl.ObjectImpl
 import io.github.deficuet.unitykt.file.FormatVersion
@@ -26,6 +25,7 @@ class PPtr<T: Object> internal constructor(reader: ObjectReader) {
             assetFile
         } else if (mFileID > 0 && mFileID - 1 < assetFile.externals.size) {
             val parent = assetFile.bundleParent
+            val manager = assetFile.root.manager
             val name = assetFile.externals[mFileID - 1].name
             if (parent !is ImportContext) {
                 (parent.files.tryGetOrUppercase(name) as? SerializedFile).let {
@@ -34,19 +34,19 @@ class PPtr<T: Object> internal constructor(reader: ObjectReader) {
                         if (path.isNotEmpty()) {
                             val actualName = StringRef()
                             if (path.listFiles().containsIgnoreCase(name, actualName)) {
-                                val new = AssetManager.loadFile("$path/${actualName.value}")
+                                val new = ImportContext("$path/${actualName.value}", manager)
                                 new.files.getValue(actualName.value) as SerializedFile
                             } else null
                         } else null
                     } else it
                 }
             } else {
-                AssetManager.assetFiles.tryGetOrUppercase(name).let {
+                manager.assetFiles.tryGetOrUppercase(name).let {
                     if (it == null) {
                         val new = if (File("${parent.directory}/$name").exists()) {
-                            AssetManager.loadFile("${parent.directory}/$name")
+                            ImportContext("${parent.directory}/$name", manager)
                         } else if (File("${parent.directory}/${name.uppercase()}").exists()) {
-                            AssetManager.loadFile("${parent.directory}/${name.uppercase()}")
+                            ImportContext("${parent.directory}/${name.uppercase()}", manager)
                         } else null
                         new?.files?.tryGetOrUppercase(name)!!.let { externalFile ->
                             if (externalFile is SerializedFile) {

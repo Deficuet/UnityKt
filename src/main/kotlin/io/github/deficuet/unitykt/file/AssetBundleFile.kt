@@ -1,6 +1,5 @@
 package io.github.deficuet.unitykt.file
 
-import io.github.deficuet.unitykt.AssetManager
 import io.github.deficuet.unitykt.ImportContext
 import io.github.deficuet.unitykt.util.EndianBinaryReader
 import io.github.deficuet.unitykt.util.EndianByteArrayReader
@@ -41,27 +40,27 @@ abstract class AssetBundleFile: RawAssetFile() {
             val nodeFile = when (nodeReader.fileType) {
                 FileType.BUNDLE -> {
                     BundleFile(nodeReader, this, node.path).also {
-                        AssetManager.assetBundles[node.path] = it
+                        root.manager.assetBundles[node.path] = it
                     }
                 }
                 FileType.WEB -> {
                     WebFile(nodeReader, this, node.path).also {
-                        AssetManager.assetBundles[node.path] = it
+                        root.manager.assetBundles[node.path] = it
                     }
                 }
                 FileType.ASSETS -> {
                     if (resourceExt.none { node.path.endsWith(it) }) {
                         SerializedFile(nodeReader, this, node.path).also {
-                            AssetManager.assetFiles[node.path] = it
+                            root.manager.assetFiles[node.path] = it
                         }
                     } else {
                         ResourceFile(nodeReader, this, node.path).also {
-                            AssetManager.resourceFiles[node.path] = it
+                            root.manager.resourceFiles[node.path] = it
                         }
                     }
                 }
                 FileType.RESOURCE -> ResourceFile(nodeReader, this, node.path).also {
-                    AssetManager.resourceFiles[node.path] = it
+                    root.manager.resourceFiles[node.path] = it
                 }
             }
             fileMap[node.path] = nodeFile

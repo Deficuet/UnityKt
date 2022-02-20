@@ -1,29 +1,20 @@
 package io.github.deficuet.unitykt.math
 
-class Quaternion(a: Double, b: Double, c: Double, d: Double) {
-    constructor(x: Float, y: Float, z: Float, w: Float):
-        this(x.toDouble(), y.toDouble(), z.toDouble(), w.toDouble())
+class Quaternion(val a: Double, val b: Double, val c: Double, val d: Double) {
+    constructor(a: Float, b: Float, c: Float, d: Float):
+        this(a.toDouble(), b.toDouble(), c.toDouble(), d.toDouble())
 
     constructor(vararg data: Float): this(data[0], data[1], data[2], data[3])
-
-    var a: Double = a
-        private set
-
-    var b: Double = b
-        private set
-
-    var c: Double = c
-        private set
-
-    var d: Double = d
-        private set
 
     infix fun dot(other: Quaternion) = a * other.a + b * other.b + c * other.c + d * other.d
 
     fun approxEquals(other: Quaternion): Boolean = dot(other) > 1.0 - kEpsilon
 
     override fun hashCode(): Int {
-        return a.hashCode() xor (b.hashCode() shl 2) xor (c.hashCode() shr 2) xor (d.hashCode() shr 1)
+        return a.hashCode()
+            .xor(b.hashCode().shl(2))
+            .xor(c.hashCode().shr(2))
+            .xor(d.hashCode().shr(1))
     }
 
     override fun equals(other: Any?): Boolean {

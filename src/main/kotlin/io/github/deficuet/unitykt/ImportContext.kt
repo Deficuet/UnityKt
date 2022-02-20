@@ -11,21 +11,32 @@ class ImportContext: AssetBundleFile {
     override val root = this
     val directory: String
     override val name: String
+    val manager: AssetManager
 
     val objects = mutableListOf<Object>()
 
-    internal constructor(filePath: String, offsetMode: OffsetMode, manualIgnoredOffset: Long) {
+    internal constructor(
+        filePath: String, manager: AssetManager,
+        offsetMode: OffsetMode = OffsetMode.MANUAL,
+        manualIgnoredOffset: Long = 0
+    ) {
         val file = File(filePath)
         directory = file.parentFile.canonicalPath
         name = file.name
+        this.manager = manager
         files = mapOf(name to init(EndianFileStreamReader(
             filePath, offsetMode = offsetMode, manualIgnoredOffset = manualIgnoredOffset
         )))
     }
 
-    internal constructor(data: ByteArray, name: String, offsetMode: OffsetMode, manualIgnoredOffset: Long) {
+    internal constructor(
+        data: ByteArray, name: String, manager: AssetManager,
+        offsetMode: OffsetMode = OffsetMode.MANUAL,
+        manualIgnoredOffset: Long = 0
+    ) {
         directory = ""
         this.name = name
+        this.manager = manager
         files = mapOf(this.name to init(EndianByteArrayReader(
             data, offsetMode = offsetMode, manualIgnoredOffset = manualIgnoredOffset
         )))
@@ -34,16 +45,16 @@ class ImportContext: AssetBundleFile {
     private fun init(reader: EndianBinaryReader): RawAssetFile {
         return when (reader.fileType) {
             FileType.BUNDLE -> BundleFile(reader, this, name).also {
-                AssetManager.assetBundles[name] = it
+                manager.assetBundles[name] = it
             }
             FileType.WEB -> WebFile(reader, this, name).also {
-                AssetManager.assetBundles[name] = it
+                manager.assetBundles[name] = it
             }
             FileType.ASSETS -> SerializedFile(reader, this, name).also {
-                AssetManager.assetFiles[name] = it
+                manager.assetFiles[name] = it
             }
             FileType.RESOURCE -> ResourceFile(reader, this, name).also {
-                AssetManager.resourceFiles[name] = it
+                manager.resourceFiles[name] = it
             }
         }
     }
