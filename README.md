@@ -54,7 +54,7 @@ allprojects {
 }
 
 dependencies {
-    implementation 'com.github.Deficuet:UnityKt:v0.0.1-alpha.0'
+    implementation 'com.github.Deficuet:UnityKt:{version}'
 }
 ```
 - ### Maven
@@ -69,20 +69,20 @@ dependencies {
 <dependency>
     <groupId>com.github.Deficuet</groupId>
     <artifactId>UnityKt</artifactId>
-    <version>v0.0.1-alpha.0</version>
+    <version>{version}</version>
 </dependency>
 ```
 - ### SBT
 ```sbt
 resolvers += "jitpack" at "https://jitpack.io"
 
-libraryDependencies += "com.github.Deficuet" % "UnityKt" % "v0.0.1-alpha.0"	
+libraryDependencies += "com.github.Deficuet" % "UnityKt" % "{version}"	
 ```
 - ### Leiningen
 ```
 :repositories [["jitpack" "https://jitpack.io"]]
 
-:dependencies [[com.github.Deficuet/UnityKt "v0.0.1-alpha.0"]]
+:dependencies [[com.github.Deficuet/UnityKt "{version}"]]
 ```
 ## Export
 So far the objects that can export data includes:
