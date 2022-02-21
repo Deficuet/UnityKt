@@ -9,7 +9,7 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.charset.Charset
 import java.nio.file.Files
-import java.nio.file.Path
+import kotlin.io.path.Path
 
 enum class EndianType(val order: ByteOrder) {
     LittleEndian(ByteOrder.LITTLE_ENDIAN),
@@ -263,7 +263,7 @@ class EndianFileStreamReader(
     manualIgnoredOffset: Long = 0
 ): EndianBinaryReader(manualIgnoredOffset) {
     init {
-        if (!Files.isRegularFile(Path.of(filePath)))
+        if (!Files.isRegularFile(Path(filePath)))
             throw IllegalStateException("Path $filePath must be a file.")
     }
     private val stream = FileInputStream(filePath)

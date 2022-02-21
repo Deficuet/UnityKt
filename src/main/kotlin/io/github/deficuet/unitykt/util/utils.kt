@@ -2,7 +2,7 @@ package io.github.deficuet.unitykt.util
 
 import java.nio.charset.Charset
 import java.nio.file.Files
-import java.nio.file.Path
+import kotlin.io.path.Path
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.name
 
@@ -62,14 +62,14 @@ internal fun Int.clampByte(): Byte {
     }
 }
 
-internal fun String.isFile(): Boolean = Files.isRegularFile(Path.of(this))
+internal fun String.isFile(): Boolean = Files.isRegularFile(Path(this))
 
-internal fun String.isDirectory(): Boolean = Files.isDirectory(Path.of(this))
+internal fun String.isDirectory(): Boolean = Files.isDirectory(Path(this))
 
 internal operator fun String.invoke(v: Any) = format(v)
 
 @PublishedApi internal fun String.listFiles(): List<String> {
-    return Files.newDirectoryStream(Path.of(this)).use { stream ->
+    return Files.newDirectoryStream(Path(this)).use { stream ->
         stream.filter { it.isRegularFile() }.map { it.name }
     }
 }
