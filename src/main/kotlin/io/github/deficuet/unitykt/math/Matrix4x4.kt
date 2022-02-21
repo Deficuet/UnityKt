@@ -61,8 +61,8 @@ data class Matrix4x4(private val data: DoubleArray) {
     }
 
     override fun hashCode(): Int {
-        return column(0).hashCode() xor (column(1).hashCode() shl 2)
-            .xor(column(2).hashCode() shr 2) xor (column(3).hashCode() shr 1)
+        return column(0).hashCode().xor(column(1).hashCode().shl(2))
+            .xor(column(2).hashCode().shr(2)).xor(column(3).hashCode().shr(1))
     }
 
     override fun equals(other: Any?): Boolean {

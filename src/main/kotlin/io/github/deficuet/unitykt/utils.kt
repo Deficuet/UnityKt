@@ -4,7 +4,17 @@ import io.github.deficuet.unitykt.data.Object
 
 operator fun List<ImportContext>.get(key: String) = find { it.name.contentEquals(key) }
 
-operator fun <K, V> List<Pair<K, V>>.get(key: K): List<V> {
+operator fun <K, V> Collection<Pair<K, V>>.get(key: K): List<V> {
+    return filter {
+        when (val f = it.first) {
+            is String -> f.contentEquals(key as String)
+            is Array<*> -> f.contentEquals(key as Array<*>)
+            else -> f == key
+        }
+    }.map { it.second }
+}
+
+operator fun <K, V> Array<Pair<K, V>>.get(key: K): List<V> {
     return filter {
         when (val f = it.first) {
             is String -> f.contentEquals(key as String)
