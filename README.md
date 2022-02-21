@@ -1,4 +1,6 @@
 # UnityKt
+[![](https://jitpack.io/v/Deficuet/UnityKt.svg)](https://jitpack.io/#Deficuet/UnityKt)
+
 A read-only Unity assets extractor for Kotlin based on [AssetStudio](https://github.com/Perfare/AssetStudio) and refer to [UnityPy](https://github.com/K0lb3/UnityPy).
 
 All the C++ code used to decode texture compression comes from [AssetStudio/Texture2DDecoderNative](https://github.com/Perfare/AssetStudio/tree/master/Texture2DDecoderNative).
@@ -42,9 +44,46 @@ For the attempt of implementing the algorithm of decoding ETC2_RGB8A texture com
   - Should always use `PPtr<O>.getObj()` to get the object.
 ## Installation
 Used openJDK 11.0.10 and Kotlin Language 1.5.31.
+- ### Gradle
+```gradle
+allprojects {
+    repositories {
+        ...
+        maven { url 'https://jitpack.io' }
+    }
+}
 
----Work in Progress---
+dependencies {
+    implementation 'com.github.Deficuet:UnityKt:v0.0.1-alpha.0'
+}
+```
+- ### Maven
+```xml
+<repositories>
+    <repository>
+        <id>jitpack.io</id>
+        <url>https://jitpack.io</url>
+    </repository>
+</repositories>
 
+<dependency>
+    <groupId>com.github.Deficuet</groupId>
+    <artifactId>UnityKt</artifactId>
+    <version>v0.0.1-alpha.0</version>
+</dependency>
+```
+- ### SBT
+```sbt
+resolvers += "jitpack" at "https://jitpack.io"
+
+libraryDependencies += "com.github.Deficuet" % "UnityKt" % "v0.0.1-alpha.0"	
+```
+- ### Leiningen
+```
+:repositories [["jitpack" "https://jitpack.io"]]
+
+:dependencies [[com.github.Deficuet/UnityKt "v0.0.1-alpha.0"]]
+```
 ## Export
 So far the objects that can export data includes:
 - Mesh
@@ -95,6 +134,8 @@ fun main() {
 }
 ```
 ## Changelog
+- ### 2022.02.20
+  - Publish on JitPack
 - ### 2022.02.19
   - Add the export functions for `MonoBehaviour`, `TextAsset` and `Shader`.
   - Change `AssetManager` from an object singleton to an instance class.
