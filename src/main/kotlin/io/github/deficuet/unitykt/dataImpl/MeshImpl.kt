@@ -201,32 +201,36 @@ class MeshImpl internal constructor(reader: ObjectReader): NamedObjectImpl(reade
                                 )
                             }
                         }
-                        val array = if (vertexFormat.isIntFormat) {
-                            componentBytes.toIntArray(vertexFormat)
+                        val fa: FloatArray?
+                        val ia: IntArray?
+                        if (vertexFormat.isIntFormat) {
+                            ia = componentBytes.toIntArray(vertexFormat)
+                            fa = null
                         } else {
-                            componentBytes.toFloatArray(vertexFormat)
+                            fa = componentBytes.toFloatArray(vertexFormat)
+                            ia = null
                         }
                         if (unityVersion[0] >= 2018) {
                             when (chn) {
-                                0 -> mVertices = array as FloatArray
-                                1 -> mNormals = array as FloatArray
-                                2 -> mTangents = array as FloatArray
-                                3 -> mColors = array as FloatArray
-                                4 -> mUV0 = array as FloatArray
-                                5 -> mUV1 = array as FloatArray
-                                6 -> mUV2 = array as FloatArray
-                                7 -> mUV3 = array as FloatArray
-                                8 -> mUV4 = array as FloatArray
-                                9 -> mUV5 = array as FloatArray
-                                10 -> mUV6 = array as FloatArray
-                                11 -> mUV7 = array as FloatArray
+                                0 -> mVertices = fa!!
+                                1 -> mNormals = fa!!
+                                2 -> mTangents = fa!!
+                                3 -> mColors = fa!!
+                                4 -> mUV0 = fa!!
+                                5 -> mUV1 = fa!!
+                                6 -> mUV2 = fa!!
+                                7 -> mUV3 = fa!!
+                                8 -> mUV4 = fa!!
+                                9 -> mUV5 = fa!!
+                                10 -> mUV6 = fa!!
+                                11 -> mUV7 = fa!!
                                 12 -> {
                                     if (mSkin.isEmpty()) {
                                         mSkin = reader.readArrayOf(mVertexCount) { BoneWeights4() }
                                     }
                                     for (i in 0 until mVertexCount) {
                                         for (j in 0 until channel.dimension.toInt()) {
-                                            mSkin[i].weight[j] = (array as FloatArray)[i * channel.dimension.toInt() + j]
+                                            mSkin[i].weight[j] = fa!![i * channel.dimension.toInt() + j]
                                         }
                                     }
                                 }
@@ -236,27 +240,27 @@ class MeshImpl internal constructor(reader: ObjectReader): NamedObjectImpl(reade
                                     }
                                     for (i in 0 until mVertexCount) {
                                         for (j in 0 until channel.dimension.toInt()) {
-                                            mSkin[i].boneIndex[j] = (array as IntArray)[i * channel.dimension.toInt() + j]
+                                            mSkin[i].boneIndex[j] = ia!![i * channel.dimension.toInt() + j]
                                         }
                                     }
                                 }
                             }
                         } else {
                             when (chn) {
-                                0 -> mVertices = array as FloatArray
-                                1 -> mNormals = array as FloatArray
-                                2 -> mColors = array as FloatArray
-                                3 -> mUV0 = array as FloatArray
-                                4 -> mUV1 = array as FloatArray
+                                0 -> mVertices = fa!!
+                                1 -> mNormals = fa!!
+                                2 -> mColors = fa!!
+                                3 -> mUV0 = fa!!
+                                4 -> mUV1 = fa!!
                                 5 -> {
                                     if (unityVersion[0] >= 5) {
-                                        mUV2 = array as FloatArray
+                                        mUV2 = fa!!
                                     } else {
-                                        mTangents = array as FloatArray
+                                        mTangents = fa!!
                                     }
                                 }
-                                6 -> mUV3 = array as FloatArray
-                                7 -> mTangents = array as FloatArray
+                                6 -> mUV3 = fa!!
+                                7 -> mTangents = fa!!
                             }
                         }
                     }
