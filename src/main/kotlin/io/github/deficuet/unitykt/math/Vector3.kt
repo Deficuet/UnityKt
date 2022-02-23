@@ -52,6 +52,10 @@ class Vector3(private var _x: Double, private var _y: Double, private var _z: Do
 
     operator fun <N> div(d: N) where N: Number, N: Comparable<N> = Vector3(_x / d, _y / d, _z / d)
 
+    operator fun component1() = _x
+    operator fun component2() = _y
+    operator fun component3() = _z
+
     infix fun approxEquals(other: Vector3): Boolean = minus(other).length2 < kEpsilon2
 
     override fun hashCode(): Int {

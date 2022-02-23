@@ -1,6 +1,6 @@
 package io.github.deficuet.unitykt.math
 
-class Quaternion(val a: Double, val b: Double, val c: Double, val d: Double) {
+data class Quaternion(val a: Double, val b: Double, val c: Double, val d: Double) {
     constructor(a: Float, b: Float, c: Float, d: Float):
         this(a.toDouble(), b.toDouble(), c.toDouble(), d.toDouble())
 

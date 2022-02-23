@@ -65,6 +65,11 @@ class Vector4(
     operator fun <N> div(d: N) where N: Number, N: Comparable<N> =
         Vector4(_x / d, _y / d, _z / d, _w / d)
 
+    operator fun component1() = _x
+    operator fun component2() = _y
+    operator fun component3() = _z
+    operator fun component4() = _w
+
     infix fun approxEquals(other: Vector4): Boolean = minus(other).length2 < kEpsilon2
 
     override fun hashCode(): Int {

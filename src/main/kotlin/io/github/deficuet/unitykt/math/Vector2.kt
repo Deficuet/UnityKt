@@ -47,6 +47,9 @@ class Vector2(private var _x: Double, private var _y: Double): Vector() {
 
     operator fun <N> div(d: N): Vector2 where N: Number, N: Comparable<N> = Vector2(_x / d, _y / d)
 
+    operator fun component1() = _x
+    operator fun component2() = _y
+
     infix fun approxEquals(other: Vector2): Boolean = minus(other).length2 < kEpsilon2
 
     override fun hashCode(): Int {
