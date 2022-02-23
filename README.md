@@ -44,6 +44,8 @@ For the attempt of implementing the algorithm of decoding ETC2_RGB8A texture com
   - Should always use `PPtr<O>.getObj()` to get the object.
 ## Installation
 Used openJDK 11.0.10 and Kotlin Language 1.5.31.
+
+<ins>**Note:**</ins> The decoding for texture compression of `Texture2D` that needs to call native library is available on <ins>Windows 64-bit JVM</ins> **only**.
 - ### Gradle
 ```gradle
 allprojects {
