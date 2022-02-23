@@ -29,6 +29,15 @@ class Vector3(private var _x: Double, private var _y: Double, private var _z: Do
         }
     }
 
+    operator fun get(index: Int): Double {
+        return when (index) {
+            0 -> _x
+            1 -> _y
+            2 -> _z
+            else -> throw IndexOutOfBoundsException("Vector3 has 3 components only.")
+        }
+    }
+
     operator fun plus(other: Vector3) = Vector3(_x + other.x, _y + other.y, _z + other.z)
 
     operator fun minus(other: Vector3) = Vector3(_x - other.x, _y - other.y, _z - other.z)
@@ -49,6 +58,9 @@ class Vector3(private var _x: Double, private var _y: Double, private var _z: Do
         return _x.hashCode().xor(_y.hashCode().shl(2)).xor(_z.hashCode().shr(2))
     }
 
+    /**
+     * @see approxEquals
+     */
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false

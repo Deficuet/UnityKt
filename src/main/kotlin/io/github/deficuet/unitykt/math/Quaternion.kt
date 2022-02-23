@@ -6,6 +6,16 @@ class Quaternion(val a: Double, val b: Double, val c: Double, val d: Double) {
 
     constructor(vararg data: Float): this(data[0], data[1], data[2], data[3])
 
+    operator fun get(index: Int): Double {
+        return when (index) {
+            0 -> a
+            1 -> b
+            2 -> c
+            3 -> d
+            else -> throw IndexOutOfBoundsException("Quaternion has 4 components only.")
+        }
+    }
+
     infix fun dot(other: Quaternion) = a * other.a + b * other.b + c * other.c + d * other.d
 
     fun approxEquals(other: Quaternion): Boolean = dot(other) > 1.0 - kEpsilon
@@ -17,6 +27,9 @@ class Quaternion(val a: Double, val b: Double, val c: Double, val d: Double) {
             .xor(d.hashCode().shr(1))
     }
 
+    /**
+     * @see approxEquals
+     */
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false

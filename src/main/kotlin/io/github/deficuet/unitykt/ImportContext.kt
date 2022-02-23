@@ -9,10 +9,25 @@ class ImportContext: AssetBundleFile {
     override val files: Map<String, RawAssetFile>
     override val bundleParent = this
     override val root = this
+
+    /**
+     * The directory where the file is.
+     */
     val directory: String
+
+    /**
+     * The name of the file.
+     */
     override val name: String
+
+    /**
+     * The [AssetManager] which loads this file.
+     */
     val manager: AssetManager
 
+    /**
+     * All [Object] loaded from this file.
+     */
     val objects = mutableListOf<Object>()
 
     internal constructor(

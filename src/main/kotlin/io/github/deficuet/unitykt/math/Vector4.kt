@@ -39,6 +39,16 @@ class Vector4(
         }
     }
 
+    operator fun get(index: Int): Double {
+        return when (index) {
+            0 -> _x
+            1 -> _y
+            2 -> _z
+            3 -> _w
+            else -> throw IndexOutOfBoundsException("Vector4 has 4 components only.")
+        }
+    }
+
     operator fun plus(other: Vector4) = Vector4(_x + other.x, _y + other.y, _z + other.z, _w + other.w)
 
     operator fun minus(other: Vector4) = Vector4(_x - other.x, _y - other.y, _z - other.z, _w - other.w)
@@ -64,6 +74,9 @@ class Vector4(
             .xor(_w.hashCode().shr(1))
     }
 
+    /**
+     * @see approxEquals
+     */
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false

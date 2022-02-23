@@ -25,6 +25,14 @@ class Vector2(private var _x: Double, private var _y: Double): Vector() {
         }
     }
 
+    operator fun get(index: Int): Double {
+        return when (index) {
+            0 -> _x
+            1 -> _y
+            else -> throw IndexOutOfBoundsException("Vector2 has 2 components only.")
+        }
+    }
+
     operator fun plus(other: Vector2) = Vector2(_x + other.x, _y + other.y)
 
     operator fun minus(other: Vector2) = Vector2(_x - other.x, _y - other.y)
@@ -45,6 +53,9 @@ class Vector2(private var _x: Double, private var _y: Double): Vector() {
         return _x.hashCode().xor(_y.hashCode().shl(2))
     }
 
+    /**
+     * @see approxEquals
+     */
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
