@@ -1,5 +1,7 @@
 package io.github.deficuet.unitykt.util
 
+import org.json.JSONArray
+import org.json.JSONObject
 import java.nio.charset.Charset
 import java.nio.file.Files
 import kotlin.io.path.Path
@@ -93,4 +95,22 @@ internal fun <T> T.equalsAnyOf(vararg other: T): Boolean {
         if (this == v) return true
     }
     return false
+}
+
+internal fun Map<*, *>.toJSONObject(): JSONObject {
+    return JSONObject().apply {
+        for (entry in this@toJSONObject) {
+            val key = java.lang.String.valueOf(entry.key)
+            val value = entry.value!!
+            if (value::class.java.isArray) {
+                put(key, JSONArray(value))
+                continue
+            }
+            when (value) {
+                is Collection<*> -> put(key, JSONArray(value))
+                is Map<*, *> -> put(key, value.toJSONObject())
+                else -> put(key, value)
+            }
+        }
+    }
 }

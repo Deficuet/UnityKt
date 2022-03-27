@@ -42,7 +42,7 @@ data class SerializedType(
                 dict[node.name] = nodes.readNode(reader, iRef)
                 iRef += 1
             }
-            return dict.toSortedMap()
+            return dict
         }
 
         private fun readNodeString(
@@ -136,12 +136,13 @@ data class SerializedType(
             if (align) reader.alignStream()
         }
 
-        private fun List<TreeNode>.readNode(reader: ObjectReader, intRef: IntRef): Any {
-            val node = this[intRef]
-            var align = (node.metaFlag and 0x4000) != 0
+        private fun List<TreeNode>.readNode(reader: ObjectReader, iRef: IntRef): Any {
+            val node = this[iRef]
+            var align = node.metaFlag.and(0x4000) != 0
             val value: Any = when (node.type) {
                 "SInt8" -> reader.readSByte()
-                "UInt8", "char" -> reader.readByte()
+                "UInt8" -> reader.readByte()
+                "char" -> String(reader.read(2))
                 "SInt16", "short" -> reader.readShort()
                 "UInt16", "unsigned short" -> reader.readUShort()
                 "SInt32", "int" -> reader.readInt()
@@ -152,13 +153,13 @@ data class SerializedType(
                 "double" -> reader.readDouble()
                 "bool" -> reader.readBool()
                 "string" -> {
-                    intRef += 3
+                    iRef += 3
                     reader.readAlignedString()
                 }
                 "map" -> {
-                    if ((nodes[intRef + 1].metaFlag and 0x4000) != 0) align = true
-                    val map = nodes.getNode(intRef.value)
-                    intRef += map.size - 1
+                    if (this[iRef + 1].metaFlag.and(0x4000) != 0) align = true
+                    val map = getNode(iRef.value)
+                    iRef += map.size - 1
                     val first = map.getNode(4)
                     val second = map.getNode(first.size + 4)
                     val size = reader.readInt()
@@ -172,14 +173,14 @@ data class SerializedType(
                     dict
                 }
                 "TypelessData" -> {
-                    intRef += 2
+                    iRef += 2
                     with(reader) { read(readInt()) }
                 }
                 else -> {
-                    if (intRef < nodes.size - 1 && nodes[intRef + 1].type == "Array") {
-                        if ((nodes[intRef + 1].metaFlag and 0x4000) != 0) align = true
-                        val vector = nodes.getNode(intRef.value)
-                        intRef += vector.size - 1
+                    if (iRef < size - 1 && this[iRef + 1].type == "Array") {
+                        if ((this[iRef + 1].metaFlag and 0x4000) != 0) align = true
+                        val vector = getNode(iRef.value)
+                        iRef += vector.size - 1
                         val size = reader.readInt()
                         val list = mutableListOf<Any>()
                         for (j in 0 until size) {
@@ -187,8 +188,8 @@ data class SerializedType(
                         }
                         list
                     } else {
-                        val clazz = nodes.getNode(intRef.value)
-                        intRef += clazz.size - 1
+                        val clazz = getNode(iRef.value)
+                        iRef += clazz.size - 1
                         val dict = mutableMapOf<String, Any>()
                         val kRef = IntRef(1)
                         while (kRef < clazz.size) {
@@ -196,7 +197,7 @@ data class SerializedType(
                             dict[theClass.name] = clazz.readNode(reader, kRef)
                             kRef += 1
                         }
-                        dict.toSortedMap()
+                        dict
                     }
                 }
             }

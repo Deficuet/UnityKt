@@ -1,14 +1,22 @@
 package io.github.deficuet.unitykt
 
-import io.github.deficuet.unitykt.data.Object
+import io.github.deficuet.unitykt.data.*
 
 operator fun List<ImportContext>.get(key: String) = find { it.name.contentEquals(key) }
 
 operator fun <K, V> Collection<Pair<K, V>>.get(key: K): List<V> {
     return filter {
         when (val f = it.first) {
-            is String -> f.contentEquals(key as String)
+            is CharSequence -> f.contentEquals(key as CharSequence)
             is Array<*> -> f.contentEquals(key as Array<*>)
+            is ByteArray -> f.contentEquals(key as ByteArray)
+            is CharArray -> f.contentEquals(key as CharArray)
+            is ShortArray -> f.contentEquals(key as ShortArray)
+            is IntArray -> f.contentEquals(key as IntArray)
+            is LongArray -> f.contentEquals(key as LongArray)
+            is DoubleArray -> f.contentEquals(key as DoubleArray)
+            is FloatArray -> f.contentEquals(key as FloatArray)
+            is BooleanArray -> f.contentEquals(key as BooleanArray)
             else -> f == key
         }
     }.map { it.second }
@@ -17,8 +25,16 @@ operator fun <K, V> Collection<Pair<K, V>>.get(key: K): List<V> {
 operator fun <K, V> Array<Pair<K, V>>.get(key: K): List<V> {
     return filter {
         when (val f = it.first) {
-            is String -> f.contentEquals(key as String)
+            is CharSequence -> f.contentEquals(key as CharSequence)
             is Array<*> -> f.contentEquals(key as Array<*>)
+            is ByteArray -> f.contentEquals(key as ByteArray)
+            is CharArray -> f.contentEquals(key as CharArray)
+            is ShortArray -> f.contentEquals(key as ShortArray)
+            is IntArray -> f.contentEquals(key as IntArray)
+            is LongArray -> f.contentEquals(key as LongArray)
+            is DoubleArray -> f.contentEquals(key as DoubleArray)
+            is FloatArray -> f.contentEquals(key as FloatArray)
+            is BooleanArray -> f.contentEquals(key as BooleanArray)
             else -> f == key
         }
     }.map { it.second }
