@@ -7,7 +7,7 @@ import io.github.deficuet.unitykt.file.SerializedFile
 import io.github.deficuet.unitykt.util.*
 import java.io.File
 
-class PPtr<T: Object> internal constructor(reader: ObjectReader) {
+class PPtr<out T: Object> internal constructor(reader: ObjectReader) {
     var mFileID = reader.readInt()
         internal set
     var mPathID = with(reader) { if (formatVersion < FormatVersion.kUnknown_14) readInt().toLong() else readLong() }
@@ -18,7 +18,7 @@ class PPtr<T: Object> internal constructor(reader: ObjectReader) {
     /**
      * @see io.github.deficuet.unitykt.getObj
      */
-    @PublishedApi internal var obj: T? = null
+    @PublishedApi internal var obj: @UnsafeVariance T? = null
 
     @PublishedApi internal fun getManager(): SerializedFile? {
         return if (mFileID == 0) {

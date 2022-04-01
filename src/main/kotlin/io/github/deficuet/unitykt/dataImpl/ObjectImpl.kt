@@ -13,7 +13,7 @@ open class ObjectImpl internal constructor(private val reader: ObjectReader) {
     val bytes by lazy { reader.bytes }
 
     init {
-        println("Object with mPathID $mPathID and type ${reader.type} initialized")
+        println("Object(${reader.type}) path id $mPathID initialized")
         reader.position = 0
         if (platform == BuildTarget.NoTarget) reader += 4   //m_ObjectHideFlags: UInt
     }
