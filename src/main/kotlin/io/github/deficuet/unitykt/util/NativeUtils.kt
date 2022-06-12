@@ -40,11 +40,13 @@ class NativeUtils private constructor() {
             try {
                 System.load(tempFile.absolutePath)
             } finally {
-                if (isPosix) {
-                    tempFile.delete()
-                } else {
-                    tempFile.deleteOnExit()
-                }
+                try {
+                    if (isPosix) {
+                        tempFile.delete()
+                    } else {
+                        tempFile.deleteOnExit()
+                    }
+                } catch (_: Throwable) {  }
             }
         }
     }
