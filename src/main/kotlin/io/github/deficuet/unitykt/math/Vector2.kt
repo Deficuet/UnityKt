@@ -1,78 +1,65 @@
 package io.github.deficuet.unitykt.math
 
+import io.github.deficuet.unitykt.cast
 import kotlin.math.sqrt
 
-class Vector2(private var _x: Double, private var _y: Double): Vector() {
+class Vector2(val x: Double, val y: Double): Vector() {
     constructor(x: Float, y: Float): this(x.toDouble(), y.toDouble())
-
-    val x by ::_x
-    val y by ::_y
 
     val vector3: Vector3 get() = Vector3(this, 0.0)
 
     val vector4: Vector4 get() = Vector4(this, 0.0, 0.0)
 
-    val length2 get() = _x * _x + _y * _y
+    val length2 get() = x * x + y * y
 
-    override fun normalize() {
-        if (length2 > kEpsilonSqrt) {
-            with(1 / sqrt(length2)) {
-                _x *= this
-                _y *= this
+    override val unit: Vector2
+        get() {
+            return if (length2 > kEpsilonSqrt) {
+                with(1 / sqrt(length2)) {
+                    Vector2(x * this, y * this)
+                }
+            } else {
+                Zero
             }
-        } else {
-            _x = 0.0; _y = 0.0
         }
-    }
 
     operator fun get(index: Int): Double {
         return when (index) {
-            0 -> _x
-            1 -> _y
+            0 -> x
+            1 -> y
             else -> throw IndexOutOfBoundsException("Vector2 has 2 components only.")
         }
     }
 
-    operator fun plus(other: Vector2) = Vector2(_x + other.x, _y + other.y)
+    operator fun plus(other: Vector2) = Vector2(x + other.x, y + other.y)
 
-    operator fun minus(other: Vector2) = Vector2(_x - other.x, _y - other.y)
+    operator fun minus(other: Vector2) = Vector2(x - other.x, y - other.y)
 
-    operator fun times(other: Vector2) = Vector2(_x * other.x, _y * other.y)
+    operator fun times(other: Vector2) = Vector2(x * other.x, y * other.y)
 
-    operator fun div(other: Vector2) = Vector2(_x / other.x, _y / other.y)
+    operator fun div(other: Vector2) = Vector2(x / other.x, y / other.y)
 
-    operator fun unaryMinus() = Vector2(-_x, -_y)
+    operator fun unaryMinus() = Vector2(-x, -y)
 
-    operator fun <N> times(m: N): Vector2 where N: Number, N: Comparable<N> = Vector2(_x * m, _y * m)
+    operator fun <N> times(m: N): Vector2 where N: Number, N: Comparable<N> = Vector2(x * m, y * m)
 
-    operator fun <N> div(d: N): Vector2 where N: Number, N: Comparable<N> = Vector2(_x / d, _y / d)
+    operator fun <N> div(d: N): Vector2 where N: Number, N: Comparable<N> = Vector2(x / d, y / d)
 
-    operator fun component1() = _x
-    operator fun component2() = _y
-
-    infix fun approxEquals(other: Vector2): Boolean = minus(other).length2 < kEpsilon2
+    operator fun component1() = x
+    operator fun component2() = y
 
     override fun hashCode(): Int {
-        return _x.hashCode().xor(_y.hashCode().shl(2))
+        return x.hashCode().xor(y.hashCode().shl(2))
     }
 
-    /**
-     * @see approxEquals
-     */
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
-
-        other as Vector2
-
-        if (_x != other.x) return false
-        if (_y != other.y) return false
-
-        return true
+        return minus(other.cast()).length2 < kEpsilon2
     }
 
     override fun toString(): String {
-        return "Vector(x, y) = ($_x, $_y)"
+        return "Vector(x, y) = ($x, $y)"
     }
 
     companion object {

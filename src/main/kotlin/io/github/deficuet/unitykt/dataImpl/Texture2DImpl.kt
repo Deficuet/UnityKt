@@ -73,12 +73,12 @@ class Texture2DImpl internal constructor(reader: ObjectReader): TextureImpl(read
             ResourceReader(mStreamData.path, assetFile, mStreamData.offset, mStreamData.size.toLong())
         } else {
             ResourceReader(reader, reader.absolutePosition, imageDataSize.toLong())
-        }
+        }.registerToManager(assetFile.root.manager)
     }
 
-    val decompressedImageData by lazy { imageData.bytes.decompressTexture() }
-    val image by lazy {
-        BufferedImage(mWidth, mHeight, BufferedImage.TYPE_4BYTE_ABGR).apply {
+    val decompressedImageData get() = imageData.read().decompressTexture()
+    val image: BufferedImage
+        get() = BufferedImage(mWidth, mHeight, BufferedImage.TYPE_4BYTE_ABGR).apply {
             data = Raster.createRaster(
                 ComponentSampleModel(
                     DataBuffer.TYPE_BYTE, mWidth, mHeight, 4,
@@ -88,7 +88,6 @@ class Texture2DImpl internal constructor(reader: ObjectReader): TextureImpl(read
                 null
             )
         }
-    }
 
     private val areaIndices by lazy { 0 until mWidth * mHeight }
     private val dataSizeIndices by lazy { 0 until mWidth * mHeight * 4 step 4 }
@@ -385,9 +384,9 @@ class Texture2DImpl internal constructor(reader: ObjectReader): TextureImpl(read
             mTextureFormat == TextureFormat.ETC_RGB4Crunched ||
             mTextureFormat == TextureFormat.ETC2_RGBA8Crunched
         ) {
-            TextureDecoder.unpackUnityCrunch(imageData.bytes)
+            TextureDecoder.unpackUnityCrunch(imageData.read())
         } else {
-            TextureDecoder.unpackCrunch(imageData.bytes)
+            TextureDecoder.unpackCrunch(imageData.read())
         }
     }
 }
@@ -401,8 +400,10 @@ enum class TextureFormat(val id: Int) {
     RGBA32(4),
     ARGB32(5),
     RGB565(7),
+    BGR24(8),
     R16(9),
     DXT1(10),
+    DXT3(11),
     DXT5(12),
     RGBA4444(13),
     BGRA32(14),
@@ -414,10 +415,11 @@ enum class TextureFormat(val id: Int) {
     RGBAFloat(20),
     YUY2(21),
     RGB9e5Float(22),
-    BC4(26),
-    BC5(27),
+    RGBFloat(23),
     BC6H(24),
     BC7(25),
+    BC4(26),
+    BC5(27),
     DXT1Crunched(28),
     DXT5Crunched(29),
     PVRTC_RGB2(30),

@@ -8,16 +8,16 @@ import kotlin.io.path.Path
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.name
 
-internal operator fun ByteArray.get(i: UInt) = get(i.toInt()).toIntBits()
-
-internal operator fun ByteArray.get(i: Int, l: Int) = sliceArray(i until i + l)
-
 internal fun Byte.toIntBits() = toUByte().toInt()
 
 internal fun Short.toIntBits() = toUShort().toInt()
 
+internal operator fun ByteArray.get(i: UInt) = get(i.toInt()).toIntBits()
+
+internal operator fun ByteArray.get(i: Int, l: Int) = sliceArray(i until i + l)
+
 internal fun ByteArray.decodeToString(charset: Charset = Charsets.UTF_8) =
-    java.lang.String(this, charset) as String
+    java.lang.String(this, charset).toString()
 
 internal fun ByteArray.toHalf(): Float {
     if (size != 2) throw IllegalStateException("There should be 2 bytes only")
@@ -76,12 +76,12 @@ internal operator fun String.invoke(v: Any) = format(v)
     }
 }
 
-@PublishedApi internal fun <V> Map<String, V>.tryGetOrUppercase(key: String): V? {
+@PublishedApi internal fun <V> Map<String, V>.tryGet(key: String): V? {
     return this[key] ?: this[key.uppercase()]
 }
 
-@PublishedApi internal fun List<String>.containsIgnoreCase(element: String, sRef: StringRef): Boolean {
-    return find { it.contentEquals(element) }?.also { sRef.value = it } != null
+@PublishedApi internal fun List<String>.containsIgnoreCase(element: String): String? {
+    return find { it.contentEquals(element) }
 }
 
 internal fun List<ByteArray>.sum(): ByteArray {

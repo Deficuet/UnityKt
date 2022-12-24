@@ -3,6 +3,8 @@ package io.github.deficuet.unitykt.file
 import io.github.deficuet.unitykt.util.IntRef
 import io.github.deficuet.unitykt.util.ObjectReader
 import io.github.deficuet.unitykt.util.byteArrayOf
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 import kotlin.collections.set
 
 data class SerializedType(
@@ -55,7 +57,13 @@ data class SerializedType(
             var value: Any? = null
             when (node.type) {
                 "SInt8" -> value = reader.readSByte()
-                "UInt8", "char" -> value = reader.readByte()
+                "UInt8" -> value = reader.readByte()
+                "char" -> {
+                    value = Char(
+                        ByteBuffer.wrap(reader.read(2))
+                            .order(ByteOrder.LITTLE_ENDIAN).short.toUShort()
+                    )
+                }
                 "SInt16", "short" -> value = reader.readShort()
                 "UInt16", "unsigned short" -> value = reader.readUShort()
                 "SInt32", "int" -> value = reader.readInt()
@@ -69,7 +77,7 @@ data class SerializedType(
                     append = false
                     val str = reader.readAlignedString()
                     builder.append("${"\t".repeat(node.level)}${node.type} ${node.name} = \"$str\"\r\n")
-                    intRef += 3
+                    intRef += nodes.getNode(intRef.value).size - 1
                 }
                 "map" -> {
                     if ((nodes[intRef + 1].metaFlag and 0x4000) != 0) align = true
@@ -153,7 +161,7 @@ data class SerializedType(
                 "double" -> reader.readDouble()
                 "bool" -> reader.readBool()
                 "string" -> {
-                    iRef += 3
+                    iRef += nodes.getNode(iRef.value).size - 1
                     reader.readAlignedString()
                 }
                 "map" -> {

@@ -10,7 +10,7 @@ open class ObjectImpl internal constructor(private val reader: ObjectReader) {
     protected val buildType = reader.buildType
     val platform = reader.platform
     private val serializedType = reader.serializedType
-    val bytes by lazy { reader.bytes }
+    val bytes: ByteArray get() { return reader.bytes }
 
     init {
         println("Object(${reader.type}) path id $mPathID initialized")

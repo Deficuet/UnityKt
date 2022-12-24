@@ -1,5 +1,7 @@
 package io.github.deficuet.unitykt.math
 
+import io.github.deficuet.unitykt.cast
+
 data class Matrix4x4(private val data: DoubleArray) {
     private constructor(dataBlock: () -> DoubleArray): this(dataBlock())
 
@@ -48,8 +50,8 @@ data class Matrix4x4(private val data: DoubleArray) {
     }
 
     operator fun times(m: Matrix4x4) = Matrix4x4 {
-        mutableList<Double> {
-            val t = this@Matrix4x4
+        val t = this
+        mutableList {
             for (tc in 0..3) {
                 for (mr in 0..3) {
                     var sum = 0.0
@@ -68,17 +70,16 @@ data class Matrix4x4(private val data: DoubleArray) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
-
-        other as Matrix4x4
-
-        if (!data.contentEquals(other.data)) return false
-
-        return true
+        return data.contentEquals(other.cast<Matrix4x4>().data)
     }
 
     override fun toString(): String {
-        return intArrayOf(0, 1, 2, 3).map { column(it) }.map { doubleArrayOf(it.x, it.y, it.z, it.w) }
-            .map { it.maxOf { d -> "%.4f".format(d).length } }.joinToString("  ") { "%-${it}.4f" }
+        return intArrayOf(0, 1, 2, 3).map {
+            val c = column(it)
+            doubleArrayOf(c.x, c.y, c.z, c.w).maxOf {
+                d -> "%.4f".format(d).length
+            }
+        }.joinToString("  ") { "%-${it}.4f" }
             .let { "| $it |\n" }.repeat(4).format(*data.toTypedArray()).trim()
     }
 

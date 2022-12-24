@@ -1,6 +1,7 @@
 package io.github.deficuet.unitykt
 
-import io.github.deficuet.unitykt.data.*
+import io.github.deficuet.unitykt.data.Object
+import io.github.deficuet.unitykt.data.PPtr
 
 inline fun <reified O: Object> PPtr<O>.getObj(): O? {
     if (obj != null) return obj
@@ -18,11 +19,15 @@ inline fun <reified O: Object> PPtr<O>.getObj(): O? {
     return null
 }
 
-inline fun <reified T: Object> Array<out PPtr<*>>.getAllInstanceOf(): List<T> {
+inline fun <reified T: Object> PPtr<*>.getObjAs(): T? {
+    return getObj() as? T
+}
+
+inline fun <reified T: Object> Array<out PPtr<*>>.allObjectsOf(): List<T> {
     return map { it.getObj() }.filterIsInstance<T>()
 }
 
-inline fun <reified T: Object> List<PPtr<*>>.getAllInstanceOf(): List<T> {
+inline fun <reified T: Object> List<PPtr<*>>.allObjectsOf(): List<T> {
     return map { it.getObj() }.filterIsInstance<T>()
 }
 

@@ -6,7 +6,7 @@ import io.github.deficuet.unitykt.util.compareTo
 
 class AudioClipImpl internal constructor(reader: ObjectReader): NamedObjectImpl(reader) {
     val mFormat: Int
-    val mType: AudioType
+    val mType: FMODSoundType
     val m3D: Boolean
     val mUseHardware: Boolean
 
@@ -30,7 +30,7 @@ class AudioClipImpl internal constructor(reader: ObjectReader): NamedObjectImpl(
     init {
         if (unityVersion[0] < 5) {
             mFormat = reader.readInt()
-            mType = AudioType.of(reader.readInt())
+            mType = FMODSoundType.of(reader.readInt())
             m3D = reader.readBool()
             mUseHardware = reader.readBool()
             reader.alignStream()
@@ -79,7 +79,7 @@ class AudioClipImpl internal constructor(reader: ObjectReader): NamedObjectImpl(
             mSize = reader.readLong()
             mCompressionFormat = AudioCompressionFormat.of(reader.readInt())
             mFormat = 0
-            mType = AudioType.UNKNOWN
+            mType = FMODSoundType.UNKNOWN
             m3D = false
             mUseHardware = false
         }
@@ -87,38 +87,55 @@ class AudioClipImpl internal constructor(reader: ObjectReader): NamedObjectImpl(
             ResourceReader(mSource, assetFile, mOffset, mSize)
         } else {
             ResourceReader(reader, reader.absolutePosition, mSize)
-        }
+        }.registerToManager(assetFile.root.manager)
     }
 }
-
-enum class AudioType(val id: Int, val ext: String) {
-    UNKNOWN(1, "."),
+enum class FMODSoundType(val id: Int, val ext: String) {
+    UNKNOWN(1, ""),
     ACC(2, ".m4a"),
     AIFF(3, ".aif"),
+    ASF(3, ""),
+    AT3(4, ""),
+    CDDA(5, ""),
+    DLS(6, ""),
+    FLAC(7, ""),
+    FSB(8, ""),
+    GCADPCM(9, ""),
     IT(10, ".it"),
+    MIDI(11, ""),
     MOD(12, ".mod"),
     MPEG(13, ".mp3"),
     OGGVORBIS(14, ".ogg"),
+    PLAYLIST(15, ""),
+    RAW(16, ""),
     S3M(17, ".s3m"),
+    SF2(18, ""),
+    USER(19, ""),
     WAV(20, ".wav"),
     XM(21, ".xm"),
     XMA(22, ".wav"),
     VAG(23, ".vag"),
-    AUDIOQUEUE(24, ".fsb");
+    AUDIOQUEUE(24, ".fsb"),
+    XWMA(25, ""),
+    BCWAV(26, ""),
+    AT9(27, ""),
+    VORBIS(28, ""),
+    MEDIA_FOUNDATION(29, "");
 
     companion object {
-        fun of(value: Int): AudioType {
+        fun of(value: Int): FMODSoundType {
             return values().firstOrNull { it.id == value } ?: UNKNOWN
         }
     }
 }
+
 
 enum class AudioCompressionFormat(val id: Int, val ext: String) {
     PCM(0, ".fsb"),
     Vorbis(1, ".fsb"),
     ADPCM(2, ".fsb"),
     MP3(3, ".fsb"),
-    VAG(4, ".vag"),
+    PSVAG(4, ".vag"),
     HEVAG(5, ".vag"),
     XMA(6, ".wav"),
     AAC(7, ".m4a"),

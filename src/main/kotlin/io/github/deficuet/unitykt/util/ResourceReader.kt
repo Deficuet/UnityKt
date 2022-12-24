@@ -1,8 +1,10 @@
 package io.github.deficuet.unitykt.util
 
 import io.github.deficuet.unitykt.ImportContext
+import io.github.deficuet.unitykt.UnityAssetManager
 import io.github.deficuet.unitykt.file.ResourceFile
 import io.github.deficuet.unitykt.file.SerializedFile
+import java.io.Closeable
 import java.io.File
 import java.io.FileNotFoundException
 
@@ -11,7 +13,8 @@ class ResourceReader internal constructor(
     private val assetFile: SerializedFile?,
     private val offset: Long,
     private val size: Long
-) {
+): Closeable {
+    private var shouldClose: Boolean = false
     private var reader: EndianBinaryReader? = null
         get() {
             if (field != null) return field
@@ -25,6 +28,7 @@ class ResourceReader internal constructor(
                 return if (!File(dir).exists()) {
                     throw FileNotFoundException("Can't find the resource file $dir")
                 } else {
+                    shouldClose = true
                     field = (ImportContext(dir, manager).files.getValue(file.name) as ResourceFile).reader
                     field
                 }
@@ -36,12 +40,19 @@ class ResourceReader internal constructor(
         this.reader = reader
     }
 
-    val bytes: ByteArray by lazy {
-        reader!!.absolutePosition = offset
-        reader!!.read(size.toInt())
+    fun read(): ByteArray {
+        return with(reader!!) {
+            absolutePosition = offset
+            read(size.toInt())
+        }
     }
 
-    fun read(buffer: ByteArray) {
-        bytes.let { System.arraycopy(it, 0, buffer, 0, buffer.size) }
+    override fun close() {
+        if (shouldClose) reader?.close()
+    }
+
+    fun registerToManager(m: UnityAssetManager): ResourceReader {
+        m.otherReaderList.add(this)
+        return this
     }
 }

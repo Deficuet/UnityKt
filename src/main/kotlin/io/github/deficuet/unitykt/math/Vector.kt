@@ -1,7 +1,7 @@
 package io.github.deficuet.unitykt.math
 
 abstract class Vector {
-    abstract fun normalize()
+    abstract val unit: Vector
 
     companion object {
         internal const val kEpsilonSqrt = 0.0031622776601683794     //sqrt(0.00001)

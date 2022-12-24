@@ -4,13 +4,16 @@ import io.github.deficuet.unitykt.ImportContext
 import io.github.deficuet.unitykt.dataImpl.ObjectImpl
 import io.github.deficuet.unitykt.file.FormatVersion
 import io.github.deficuet.unitykt.file.SerializedFile
-import io.github.deficuet.unitykt.util.*
+import io.github.deficuet.unitykt.util.ObjectReader
+import io.github.deficuet.unitykt.util.containsIgnoreCase
+import io.github.deficuet.unitykt.util.listFiles
+import io.github.deficuet.unitykt.util.tryGet
 import java.io.File
 
 class PPtr<out T: Object> internal constructor(reader: ObjectReader) {
     var mFileID = reader.readInt()
         internal set
-    var mPathID = with(reader) { if (formatVersion < FormatVersion.kUnknown_14) readInt().toLong() else readLong() }
+    var mPathID = with(reader) { if (formatVersion < FormatVersion.Unknown_14) readInt().toLong() else readLong() }
         internal set
     val isNull = mPathID == 0L || mFileID < 0
     val assetFile = reader.assetFile
@@ -28,27 +31,27 @@ class PPtr<out T: Object> internal constructor(reader: ObjectReader) {
             val manager = assetFile.root.manager
             val name = assetFile.externals[mFileID - 1].name
             if (parent !is ImportContext) {
-                (parent.files.tryGetOrUppercase(name) as? SerializedFile).let {
+                (parent.files.tryGet(name) as? SerializedFile).let {
                     if (it == null) {
                         val path = parent.bundleParent.root.directory
                         if (path.isNotEmpty()) {
-                            val actualName = StringRef()
-                            if (path.listFiles().containsIgnoreCase(name, actualName)) {
-                                val new = ImportContext("$path/${actualName.value}", manager)
-                                new.files.getValue(actualName.value) as SerializedFile
+                            val actualName = path.listFiles().containsIgnoreCase(name)
+                            if (actualName != null) {
+                                val new = ImportContext("$path/${actualName}", manager)
+                                new.files.getValue(actualName) as SerializedFile
                             } else null
                         } else null
                     } else it
                 }
             } else {
-                manager.assetFiles.tryGetOrUppercase(name).let {
+                manager.assetFiles.tryGet(name).let {
                     if (it == null) {
                         val new = if (File("${parent.directory}/$name").exists()) {
                             ImportContext("${parent.directory}/$name", manager)
                         } else if (File("${parent.directory}/${name.uppercase()}").exists()) {
                             ImportContext("${parent.directory}/${name.uppercase()}", manager)
                         } else null
-                        new?.files?.tryGetOrUppercase(name)!!.let { externalFile ->
+                        new?.files?.tryGet(name)!!.let { externalFile ->
                             if (externalFile is SerializedFile) {
                                 externalFile
                             } else null

@@ -33,7 +33,7 @@ class VideoClipImpl internal constructor(reader: ObjectReader): NamedObjectImpl(
             }
         } else {
             ResourceReader(reader, reader.absolutePosition, mExternamResource.mSize)
-        }
+        }.registerToManager(assetFile.root.manager)
     }
 }
 

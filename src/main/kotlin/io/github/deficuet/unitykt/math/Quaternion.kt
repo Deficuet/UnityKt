@@ -1,5 +1,7 @@
 package io.github.deficuet.unitykt.math
 
+import io.github.deficuet.unitykt.cast
+
 data class Quaternion(val a: Double, val b: Double, val c: Double, val d: Double) {
     constructor(a: Float, b: Float, c: Float, d: Float):
         this(a.toDouble(), b.toDouble(), c.toDouble(), d.toDouble())
@@ -18,8 +20,6 @@ data class Quaternion(val a: Double, val b: Double, val c: Double, val d: Double
 
     infix fun dot(other: Quaternion) = a * other.a + b * other.b + c * other.c + d * other.d
 
-    fun approxEquals(other: Quaternion): Boolean = dot(other) > 1.0 - kEpsilon
-
     override fun hashCode(): Int {
         return a.hashCode()
             .xor(b.hashCode().shl(2))
@@ -27,21 +27,10 @@ data class Quaternion(val a: Double, val b: Double, val c: Double, val d: Double
             .xor(d.hashCode().shr(1))
     }
 
-    /**
-     * @see approxEquals
-     */
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
-
-        other as Quaternion
-
-        if (a != other.a) return false
-        if (b != other.b) return false
-        if (c != other.c) return false
-        if (d != other.d) return false
-
-        return true
+        return dot(other.cast()) > 1.0 - kEpsilon
     }
 
     override fun toString(): String {

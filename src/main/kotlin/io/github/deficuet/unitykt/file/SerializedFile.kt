@@ -3,32 +3,32 @@ package io.github.deficuet.unitykt.file
 import io.github.deficuet.unitykt.data.*
 import io.github.deficuet.unitykt.util.EndianBinaryReader
 import io.github.deficuet.unitykt.util.EndianByteArrayReader
-import io.github.deficuet.unitykt.util.EndianType
 import java.io.File
+import java.nio.ByteOrder
 
 class FormatVersion private constructor() {
     companion object {
-//        const val kUnsupported = 1u
-        const val kUnknown_2 = 2u
-        const val kUnknown_3 = 3u
-        const val kUnknown_5 = 5u
-        const val kUnknown_6 = 6u
-        const val kUnknown_7 = 7u
-        const val kUnknown_8 = 8u
-        const val kUnknown_9 = 9u
-        const val kUnknown_10 = 10u
-        const val kHasScriptTypeIndex = 11u
-        const val kUnknown_12 = 12u
-        const val kHasTypeTreeHashes = 13u
-        const val kUnknown_14 = 14u
-        const val kSupportsStrippedObject = 15u
-        const val kRefactoredClassId = 16u
-        const val kRefactorTypeData = 17u
-//        const val kRefactorShareableTypeTreeData = 18u
-        const val kTypeTreeNodeWithTypeFlags = 19u
-        const val kSupportsRefObject = 20u
-        const val kStoresTypeDependencies = 21u
-        const val kLargeFilesSupport = 22u
+//        const val Unsupported = 1u
+        const val Unknown_2 = 2u
+        const val Unknown_3 = 3u
+        const val Unknown_5 = 5u
+        const val Unknown_6 = 6u
+        const val Unknown_7 = 7u
+        const val Unknown_8 = 8u
+        const val Unknown_9 = 9u
+        const val Unknown_10 = 10u
+        const val HasScriptTypeIndex = 11u
+        const val Unknown_12 = 12u
+        const val HasTypeTreeHashes = 13u
+        const val Unknown_14 = 14u
+        const val SupportsStrippedObject = 15u
+        const val RefactoredClassId = 16u
+        const val RefactorTypeData = 17u
+//        const val RefactorShareableTypeTreeData = 18u
+        const val TypeTreeNodeWithTypeFlags = 19u
+        const val SupportsRefObject = 20u
+        const val StoresTypeDependencies = 21u
+        const val LargeFilesSupport = 22u
     }
 }
 
@@ -39,16 +39,54 @@ class BuildType(private val type: String) {
 
 @Suppress("EnumEntryName")
 enum class BuildTarget(val id: Int) {
-    DashboardWidget(1), StandaloneOSX(2), StandaloneOSXPPC(3), StandaloneOSXIntel(4),
-    StandaloneWindows(5), WebPlayer(6), WebPlayerStreamed(7), Wii(8), iOS(9),
-    PS3(10), XBOX360(11), Android(13), StandaloneGLESEmu(14), NaCl(16),
-    StandaloneLinux(17), FlashPlayer(18), StandaloneWindows64(19), WebGL(20),
-    WSAPlayer(21), StandaloneLinux64(24), StandaloneLinuxUniversal(25), WP8Player(26),
-    StandaloneOSXIntel64(27), BlackBerry(28), Tizen(29), PSP2(30), PS4(31), PSM(32),
-    XboxOne(33), SamsungTV(34), N3DS(35), WiiU(36), tvOS(37), Switch(38), Lumin(39),
-    Stadia(40), CloudRendering(41), GameCoreXboxSeries(42), GameCoreXboxOne(43), PS5(44),
+    NoTarget(-2),
+    AnyPlayer(-1),
+    ValidPlayer(1),
+    StandaloneOSX(2),
+    StandaloneOSXPPC(3),
+    StandaloneOSXIntel(4),
+    StandaloneWindows(5),
+    WebPlayer(6),
+    WebPlayerStreamed(7),
+    Wii(8),
+    iOS(9),
+    PS3(10),
+    XBOX360(11),
+    Broadcom(12),
+    Android(13),
+    StandaloneGLESEmu(14),
+    StandaloneGLES20Emu(15),
+    NaCl(16),
+    StandaloneLinux(17),
+    FlashPlayer(18),
+    StandaloneWindows64(19),
+    WebGL(20),
+    WSAPlayer(21),
+    StandaloneLinux64(24),
+    StandaloneLinuxUniversal(25),
+    WP8Player(26),
+    StandaloneOSXIntel64(27),
+    BlackBerry(28),
+    Tizen(29),
+    PSP2(30),
+    PS4(31),
+    PSM(32),
+    XboxOne(33),
+    SamsungTV(34),
+    N3DS(35),
+    WiiU(36),
+    tvOS(37),
+    Switch(38),
+    Lumin(39),
+    Stadia(40),
+    CloudRendering(41),
+    GameCoreXboxSeries(42),
+    GameCoreXboxOne(43),
+    PS5(44),
+    EmbeddedLinux(45),
+    QNX(46),
 
-    UnknownPlatform(9999), NoTarget(-2);
+    UnknownPlatform(9999);
 
     companion object {
         fun isDefined(v: Int) = values().any { it.id == v }
@@ -156,21 +194,21 @@ class SerializedFile(
         get() = objects.associateBy { it.mPathID }
 
     init {
-        if (hVersion >= FormatVersion.kUnknown_9) {
+        if (hVersion >= FormatVersion.Unknown_9) {
             hEndian = reader.readByte()
             reader += 3     //hReserved = reader.read(3)
         } else {
             reader.position = hFileSize - hMetadataSize.toLong()
             hEndian = reader.readByte()
         }
-        if (hVersion >= FormatVersion.kLargeFilesSupport) {
+        if (hVersion >= FormatVersion.LargeFilesSupport) {
             hMetadataSize = reader.readUInt()
             hFileSize = reader.readLong()
             hDataOffset = reader.readLong()
             reader += 8     //unknown
         }
-        if (hEndian == 0u.toUByte()) reader.resetEndian(EndianType.LittleEndian)
-        if (hVersion >= FormatVersion.kUnknown_7) {
+        if (hEndian == 0u.toUByte()) reader.resetEndian(ByteOrder.LITTLE_ENDIAN)
+        if (hVersion >= FormatVersion.Unknown_7) {
             unityVersion = reader.readStringUntilNull()
             buildType = buildTypeRegex.findAll(unityVersion).iterator().let {
                 BuildType(
@@ -180,20 +218,20 @@ class SerializedFile(
             }
             version = versionSplitRegex.split(unityVersion).map { it.toInt() }.toIntArray()
         }
-        if (hVersion >= FormatVersion.kUnknown_8) {
+        if (hVersion >= FormatVersion.Unknown_8) {
             val targetPlatformID = reader.readInt()
             if (BuildTarget.isDefined(targetPlatformID)) {
                 targetPlatform = BuildTarget.values().first { it.id == targetPlatformID }
             }
         }
-        enableTypeTree = if (hVersion >= FormatVersion.kHasTypeTreeHashes) reader.readBool() else true
+        enableTypeTree = if (hVersion >= FormatVersion.HasTypeTreeHashes) reader.readBool() else true
         val typeCount = reader.readInt()
         val typesList = mutableListOf<SerializedType>()
         for (i in 0 until typeCount) {
             typesList.add(readSerializedType(false))
         }
         types = typesList
-        if (hVersion in with(FormatVersion) { kUnknown_7 until kUnknown_14 }) {
+        if (hVersion in with(FormatVersion) { Unknown_7 until Unknown_14 }) {
             bigIDEnabled = reader.readInt()
         }
         val objectCount = reader.readInt()
@@ -201,20 +239,20 @@ class SerializedFile(
         for (j in 0 until objectCount) {
             val mPathID = if (bigIDEnabled != 0) {
                 reader.readLong()
-            } else if (hVersion < FormatVersion.kUnknown_14) {
+            } else if (hVersion < FormatVersion.Unknown_14) {
                 reader.readInt().toLong()
             } else {
                 reader.alignStream()
                 reader.readLong()
             }
-            var byteStart = if (hVersion >= FormatVersion.kLargeFilesSupport) {
+            var byteStart = if (hVersion >= FormatVersion.LargeFilesSupport) {
                 reader.readLong()
             } else reader.readUInt().toLong()
             byteStart += hDataOffset
             val byteSize = reader.readUInt()
             val typeID = reader.readInt()
             val classID: Int; val serialisedType: SerializedType?
-            if (hVersion < FormatVersion.kRefactoredClassId) {
+            if (hVersion < FormatVersion.RefactoredClassId) {
                 classID = reader.readUShort().toInt()
                 serialisedType = types.find { it.classID == typeID }
             } else {
@@ -224,15 +262,15 @@ class SerializedFile(
                 }
             }
             var isDestoryed: UShort = 0u
-            if (hVersion < FormatVersion.kHasScriptTypeIndex) {
+            if (hVersion < FormatVersion.HasScriptTypeIndex) {
                 isDestoryed = reader.readUShort()
             }
-            if (hVersion in with(FormatVersion) { kHasScriptTypeIndex until kRefactorTypeData } ) {
+            if (hVersion in with(FormatVersion) { HasScriptTypeIndex until RefactorTypeData } ) {
                 serialisedType?.scriptTypeIndex = reader.readShort()
             }
             var stripped: UByte = 0u
-            if (hVersion == FormatVersion.kSupportsStrippedObject ||
-                hVersion == FormatVersion.kRefactoredClassId) {
+            if (hVersion == FormatVersion.SupportsStrippedObject ||
+                hVersion == FormatVersion.RefactoredClassId) {
                 stripped = reader.readByte()
             }
             objectInfoList.add(
@@ -243,13 +281,13 @@ class SerializedFile(
             )
         }
         this.objectInfoList = objectInfoList
-        if (hVersion >= FormatVersion.kHasScriptTypeIndex) {
+        if (hVersion >= FormatVersion.HasScriptTypeIndex) {
             val scriptCount = reader.readInt()
             for (k in 0 until scriptCount) {
                 scriptTypes.add(
                     ObjectIdentifier(
                         serializedFileIndex = reader.readInt(),
-                        identifierInFile = if (hVersion < FormatVersion.kUnknown_14) {
+                        identifierInFile = if (hVersion < FormatVersion.Unknown_14) {
                             reader.readInt().toLong()
                         } else {
                             reader.alignStream()
@@ -262,9 +300,9 @@ class SerializedFile(
         val externalsCount = reader.readInt()
         val externals = mutableListOf<FileIdentifier>()
         for (l in 0 until externalsCount) {
-            if (hVersion >= FormatVersion.kUnknown_6) reader.readStringUntilNull()
+            if (hVersion >= FormatVersion.Unknown_6) reader.readStringUntilNull()
             var guid = ByteArray(16); var type = 0
-            if (hVersion >= FormatVersion.kUnknown_5) {
+            if (hVersion >= FormatVersion.Unknown_5) {
                 guid = reader.read(16)
                 type = reader.readInt()
             }
@@ -276,13 +314,13 @@ class SerializedFile(
             )
         }
         this.externals = externals
-        if (hVersion >= FormatVersion.kSupportsRefObject) {
+        if (hVersion >= FormatVersion.SupportsRefObject) {
             val refTypesCount = reader.readInt()
             for (m in 0 until refTypesCount) {
                 refTypes.add(readSerializedType(true))
             }
         }
-        userInformation = if (hVersion >= FormatVersion.kUnknown_5) {
+        userInformation = if (hVersion >= FormatVersion.Unknown_5) {
             reader.readStringUntilNull()
         } else ""
         //region readObjects
@@ -338,24 +376,24 @@ class SerializedFile(
         var nameSpace = ""
         var asmName = ""
         var typeDependencies: IntArray = intArrayOf()
-        if (hVersion >= FormatVersion.kRefactoredClassId) isStrippedType = reader.readBool()
-        if (hVersion >= FormatVersion.kRefactorTypeData) scriptTypeIndex = reader.readShort()
-        if (hVersion >= FormatVersion.kHasTypeTreeHashes) {
+        if (hVersion >= FormatVersion.RefactoredClassId) isStrippedType = reader.readBool()
+        if (hVersion >= FormatVersion.RefactorTypeData) scriptTypeIndex = reader.readShort()
+        if (hVersion >= FormatVersion.HasTypeTreeHashes) {
             if (isRefType && scriptTypeIndex >= 0) scriptID = reader.read(16)
-            else if ((hVersion < FormatVersion.kRefactoredClassId && classID < 0) ||
-                (hVersion >= FormatVersion.kRefactoredClassId && classID == 114)) {
+            else if ((hVersion < FormatVersion.RefactoredClassId && classID < 0) ||
+                (hVersion >= FormatVersion.RefactoredClassId && classID == 114)) {
                 scriptID = reader.read(16)
             }
             oldTypeHash = reader.read(16)
         }
         if (enableTypeTree) {
-            typeTree = if (hVersion >= FormatVersion.kUnknown_12 || hVersion == FormatVersion.kUnknown_10) {
+            typeTree = if (hVersion >= FormatVersion.Unknown_12 || hVersion == FormatVersion.Unknown_10) {
                 typeTreeBlobRead()
             } else {
                 readTypeTree()
             }
         }
-        if (hVersion >= FormatVersion.kStoresTypeDependencies) {
+        if (hVersion >= FormatVersion.StoresTypeDependencies) {
             if (isRefType) {
                 className = reader.readStringUntilNull()
                 nameSpace = reader.readStringUntilNull()
@@ -396,7 +434,7 @@ class SerializedFile(
                     metaFlag = reader.readInt()
                 )
             )
-            if (hVersion >= FormatVersion.kTypeTreeNodeWithTypeFlags) {
+            if (hVersion >= FormatVersion.TypeTreeNodeWithTypeFlags) {
                 reader += 8     //refTypeHash: ULong
             }
         }
@@ -433,11 +471,11 @@ class SerializedFile(
             val type = reader.readStringUntilNull()
             val name = reader.readStringUntilNull()
             val byteSize = reader.readInt()
-            if (hVersion == FormatVersion.kUnknown_2) reader += 4   //variableCount
-            val index = if (hVersion != FormatVersion.kUnknown_3) reader.readInt() else 0
+            if (hVersion == FormatVersion.Unknown_2) reader += 4   //variableCount
+            val index = if (hVersion != FormatVersion.Unknown_3) reader.readInt() else 0
             val typeFlags = reader.readInt()
             val version = reader.readInt()
-            val metaFlag = if (hVersion != FormatVersion.kUnknown_3) reader.readInt() else 0
+            val metaFlag = if (hVersion != FormatVersion.Unknown_3) reader.readInt() else 0
             newTree.nodes.add(SerializedType.TreeNode(
                 type, name, byteSize, index, typeFlags, version, metaFlag, level
             ))

@@ -55,41 +55,38 @@ class SecondarySpriteTexture internal constructor(reader: ObjectReader) {
     val name = reader.readStringUntilNull()
 }
 
-@Suppress("EnumEntryName")
 enum class SpritePackingRotation(val id: UInt) {
-    kSPRNone(0u),
-    kSPRFlipHorizontal(1u),
-    kSPRFlipVertical(2u),
-    kSPRRotate180(3u),
-    kSPRRotate90(4u);
+    None(0u),
+    FlipHorizontal(1u),
+    FlipVertical(2u),
+    Rotate180(3u),
+    Rotate90(4u);
 
     companion object {
         fun of(value: UInt): SpritePackingRotation {
-            return values().firstOrNull { it.id == value } ?: kSPRNone
+            return values().firstOrNull { it.id == value } ?: None
         }
     }
 }
 
-@Suppress("EnumEntryName")
 enum class SpritePackingMode(val id: UInt) {
-    kSPMTight(0u),
-    kSPMRectangle(1u);
+    Tight(0u),
+    Rectangle(1u);
 
     companion object {
         fun of(value: UInt): SpritePackingMode {
-            return values().firstOrNull { it.id == value } ?: kSPMTight
+            return values().firstOrNull { it.id == value } ?: Tight
         }
     }
 }
 
-@Suppress("EnumEntryName")
 enum class SpriteMeshType(val id: UInt) {
-    kSpriteMeshTypeFullRect(0u),
-    kSpriteMeshTypeTight(1u);
+    FullRect(0u),
+    Tight(1u);
 
     companion object {
         fun of(value: UInt): SpriteMeshType {
-            return values().firstOrNull { it.id == value } ?: kSpriteMeshTypeFullRect
+            return values().firstOrNull { it.id == value } ?: FullRect
         }
     }
 }

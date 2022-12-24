@@ -1,6 +1,7 @@
 package io.github.deficuet.unitykt.data
 
-import io.github.deficuet.unitykt.dataImpl.*
+import io.github.deficuet.unitykt.dataImpl.AssetBundleImpl
+import io.github.deficuet.unitykt.dataImpl.AssetInfo
 import io.github.deficuet.unitykt.file.ObjectInfo
 import io.github.deficuet.unitykt.file.SerializedFile
 import io.github.deficuet.unitykt.util.ObjectReader

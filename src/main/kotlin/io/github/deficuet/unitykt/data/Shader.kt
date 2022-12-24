@@ -18,9 +18,9 @@ class Shader private constructor(
     val mSubProgramBlob: ByteArray                  get() = container.impl.mSubProgramBlob
     val mParsedForm: SerializedShader?              get() = container.impl.mParsedForm
     val platforms: Array<ShaderCompilerPlatform>    get() = container.impl.platforms
-    val offsets: Array<UInt>                        get() = container.impl.offsets
-    val compressedLengths: Array<UInt>              get() = container.impl.compressedLengths
-    val decompressedLengths: Array<UInt>            get() = container.impl.decompressedLengths
+    val offsets: Array<Array<UInt>>                 get() = container.impl.offsets
+    val compressedLengths: Array<Array<UInt>>       get() = container.impl.compressedLengths
+    val decompressedLengths: Array<Array<UInt>>     get() = container.impl.decompressedLengths
     val compressedBlob: ByteArray                   get() = container.impl.compressedBlob
 
     val exportString: String                        get() = container.impl.exportString

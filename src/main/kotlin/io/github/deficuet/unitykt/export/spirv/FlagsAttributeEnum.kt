@@ -14,7 +14,6 @@ internal interface FlagsAttributeEnum<E: Enum<E>> {
 
 internal abstract class FlagsAttributeEnumCompanion<E: Enum<E>>
 
-@Suppress("unused")
 internal inline fun <reified E: Enum<E>> FlagsAttributeEnumCompanion<E>.of(value: Long): EnumSet<E> {
     val enums = enumValues<E>()
     val enumClass = E::class.java

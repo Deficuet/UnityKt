@@ -36,7 +36,7 @@ class AnimationClipImpl internal constructor(reader: ObjectReader): NamedObjectI
             reader.readBool()
         } else if (unityVersion[0] >= 4) {
             mAnimationType = AnimationType.of(reader.readInt())
-            mAnimationType == AnimationType.kLegacy
+            mAnimationType == AnimationType.Legacy
         } else {
             mAnimationType = AnimationType.default
             true
@@ -440,6 +440,7 @@ class GenericBinding internal constructor(reader: ObjectReader) {
     val typeID: ClassIDType
     val customType: UByte
     val isPPtrCurve: UByte
+    val isIntCurve: UByte
 
     init {
         val version = reader.unityVersion
@@ -448,6 +449,7 @@ class GenericBinding internal constructor(reader: ObjectReader) {
         )
         customType = reader.readByte()
         isPPtrCurve = reader.readByte()
+        isIntCurve = if (version >= intArrayOf(2022, 1)) reader.readByte() else 0u
         reader.alignStream()
     }
 }
@@ -577,9 +579,8 @@ class AnimationEvent internal constructor(reader: ObjectReader) {
     val messageOptions = reader.readInt()
 }
 
-@Suppress("EnumEntryName")
 enum class AnimationType(val id: Int) {
-    default(0), kLegacy(1), kGeneric(2), kHumanoid(3);
+    default(0), Legacy(1), Generic(2), Humanoid(3);
 
     companion object {
         fun of(value: Int): AnimationType {

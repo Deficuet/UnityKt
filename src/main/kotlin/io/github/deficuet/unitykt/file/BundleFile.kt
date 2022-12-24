@@ -2,6 +2,16 @@ package io.github.deficuet.unitykt.file
 
 import io.github.deficuet.unitykt.util.*
 
+internal class ArchiveFlags {
+    companion object {
+        const val CompressionTypeMask = 0x3Fu
+        const val BlocksAndDirectoryInfoCombined = 0x40u
+        const val BlocksInfoAtTheEnd = 0x80u
+        const val OldWebPluginCompatibility = 0x100u
+        const val BlockInfoNeedPaddingAtStart = 0x200u
+    }
+}
+
 class BundleFile(
     private val reader: EndianBinaryReader,
     override val bundleParent: AssetBundleFile,
@@ -29,7 +39,7 @@ class BundleFile(
             "UnityArchive" -> throw UnsupportedFormatException("Unsupported file type UnityArchive")
             "UnityWeb", "UnityRaw" -> {
                 if (hVersion == 6u) readFS()
-                readWebRaw()
+                else readWebRaw()
             }
             "UnityFS" -> readFS()
             else -> throw UnsupportedFormatException("Unknown Bundle Signature")
@@ -51,8 +61,7 @@ class BundleFile(
         reader += 4 * 2 * (levelCount - 1)
         blocksInfo.add(
             Block(
-                reader.readUInt(), reader.readUInt(),
-                (if (isCompressed) 1 else 0).toUShort()
+                reader.readUInt(), reader.readUInt(), 0u
             )
         )
         if (hVersion >= 2u) {
@@ -63,7 +72,7 @@ class BundleFile(
         }
         reader.position = hSize
         val uncompressedBytes = with(reader.read(blocksInfo[0].compressedSize.toInt())) {
-            if (blocksInfo[0].flags == 1.toUShort()) {
+            if (isCompressed) {
                 CompressUtils.lzmaDecompress(this)
             } else this
         }
@@ -95,7 +104,7 @@ class BundleFile(
         if (hVersion >= 7u) reader.alignStream(16)
         val blockOffset = reader.position
         var blocksInfoBytes: ByteArray
-        if ((hFlags and 0x80u) != 0u) {
+        if (hFlags.and(ArchiveFlags.BlocksInfoAtTheEnd) != 0u) {
             blocksInfoBytes = reader.withMark {
                 position = length - hCompressedBlockSize.toLong()
                 read(hCompressedBlockSize.toInt())
@@ -103,7 +112,7 @@ class BundleFile(
         } else {
             blocksInfoBytes = reader.read(hCompressedBlockSize.toInt())
         }
-        when (hFlags and 0x3Fu) {
+        when (hFlags.and(ArchiveFlags.CompressionTypeMask)) {
             1u -> blocksInfoBytes = CompressUtils.lzmaDecompress(blocksInfoBytes)
             2u, 3u -> blocksInfoBytes = CompressUtils.lz4Decompress(blocksInfoBytes, uncompressedBlockSize.toInt())
         }
@@ -132,11 +141,14 @@ class BundleFile(
                 )
             }
         }
+        if (hFlags.and(ArchiveFlags.BlockInfoNeedPaddingAtStart) != 0u) {
+            reader.alignStream(16)
+        }
         return EndianByteArrayReader(
             manualOffset = blocksInfoReader.realOffset
         ) {
             blocksInfo.map { block ->
-                when (block.flags and 0x3Fu) {
+                when (block.flags.and(ArchiveFlags.CompressionTypeMask.toUShort())) {
                     1.toUShort() -> CompressUtils.lzmaDecompress(
                         reader.read(block.compressedSize.toInt())
                     )

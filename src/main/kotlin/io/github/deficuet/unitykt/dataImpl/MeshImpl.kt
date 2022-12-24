@@ -6,6 +6,7 @@ import io.github.deficuet.unitykt.math.Vector2
 import io.github.deficuet.unitykt.math.Vector3
 import io.github.deficuet.unitykt.util.*
 import java.nio.ByteBuffer
+import java.nio.ByteOrder
 import java.util.*
 import kotlin.math.sqrt
 
@@ -144,6 +145,9 @@ class MeshImpl internal constructor(reader: ObjectReader): NamedObjectImpl(reade
             reader += reader.readInt() * 4 + 4    //m_CollisionVertexCount
         }
         reader += 4     //m_MeshUsageFlags: Int
+        if (unityVersion >= intArrayOf(2022, 1)) {
+            reader += 4     //m_CookingOptions
+        }
         if (unityVersion[0] >= 5) {
             reader.readNextByteArray()      //m_BakedConvexCollisionMesh
             reader.alignStream()
@@ -160,11 +164,11 @@ class MeshImpl internal constructor(reader: ObjectReader): NamedObjectImpl(reade
         //region processData
         if (mStreamData?.path?.isNotEmpty() == true) {
             if (mVertexData.mVertexCount > 0u) {
-                println(mStreamData.path)
-                val resourceReader = ResourceReader(
+                ResourceReader(
                     mStreamData.path, assetFile, mStreamData.offset, mStreamData.size.toLong()
-                )
-                mVertexData.mDataSize = resourceReader.bytes
+                ).use {
+                    mVertexData.mDataSize = it.read()
+                }
             }
         }
         if (unityVersion >= intArrayOf(3, 5)) {
@@ -191,7 +195,7 @@ class MeshImpl internal constructor(reader: ObjectReader): NamedObjectImpl(reade
                             for (d in 0 until channel.dimension.toInt()) {
                                 val componentOffset = vertexOffset + componentByteSize * d
                                 val buff = mVertexData.mDataSize[componentOffset, componentByteSize]
-                                if (reader.endian == EndianType.LittleEndian && componentByteSize > 1) {
+                                if (reader.endian == ByteOrder.LITTLE_ENDIAN && componentByteSize > 1) {
                                     buff.reverse()
                                 }
                                 System.arraycopy(
@@ -339,8 +343,7 @@ class MeshImpl internal constructor(reader: ObjectReader): NamedObjectImpl(reade
                         z = sqrt(zsqr)
                     } else {
                         z = 0f
-                        with(Vector3(x, y, z)) {
-                            normalize()
+                        with(Vector3(x, y, z).unit) {
                             x = this.x.toFloat()
                             y = this.y.toFloat()
                             z = this.z.toFloat()
@@ -366,8 +369,7 @@ class MeshImpl internal constructor(reader: ObjectReader): NamedObjectImpl(reade
                         z = sqrt(zsqr)
                     } else {
                         z = 0f
-                        with(Vector3(x, y, z)) {
-                            normalize()
+                        with(Vector3(x, y, z).unit) {
                             x = this.x.toFloat()
                             y = this.y.toFloat()
                             z = this.z.toFloat()
@@ -440,7 +442,7 @@ class MeshImpl internal constructor(reader: ObjectReader): NamedObjectImpl(reade
                 firstIdx /= 2
             }
             val indexCount = subMesh.indexCount.toInt()
-            if (subMesh.topology == GfxPrimitiveType.kPrimitiveTriangles) {
+            if (subMesh.topology == GfxPrimitiveType.Triangles) {
                 for (i in 0 until indexCount step 3) {
                     with(indices) {
                         add(mIndexBuffer[firstIdx + i])
@@ -448,7 +450,7 @@ class MeshImpl internal constructor(reader: ObjectReader): NamedObjectImpl(reade
                         add(mIndexBuffer[firstIdx + i + 2])
                     }
                 }
-            } else if (unityVersion[0] < 4 && subMesh.topology == GfxPrimitiveType.kPrimitiveTriangleStrip) {
+            } else if (unityVersion[0] < 4 && subMesh.topology == GfxPrimitiveType.TriangleStrip) {
                 var triIndex = 0u
                 for (i in 0 until indexCount - 2) {
                     val a = mIndexBuffer[firstIdx + i]
@@ -466,7 +468,7 @@ class MeshImpl internal constructor(reader: ObjectReader): NamedObjectImpl(reade
                     triIndex += 3u
                 }
                 subMesh.indexCount = triIndex
-            } else if (subMesh.topology == GfxPrimitiveType.kPrimitiveQuads) {
+            } else if (subMesh.topology == GfxPrimitiveType.Quads) {
                 for (q in 0 until indexCount step 4) {
                     for (x in intArrayOf(0, 1, 2, 0, 2, 3)) {
                         indices.add(mIndexBuffer[firstIdx + q + x])
@@ -481,117 +483,122 @@ class MeshImpl internal constructor(reader: ObjectReader): NamedObjectImpl(reade
         mIndices = indices.toTypedArray()
     }
 
-    val exportString by lazy {
-        if (mVertexCount < 0) return@lazy ""
-        val builder = StringBuilder()
-        builder.append("g $mName\r\n")
-        if (mVertices.isEmpty()) return@lazy ""
-        var c = if (mVertices.size == mVertexCount * 4) 4 else 3
-        for (v in 0 until mVertexCount) {
-            builder.append("v ${"%.7G"(-mVertices[v * c])} " +
-                    "${"%.7G"(mVertices[v * c + 1])} " +
-                    "${"%.7G"(mVertices[v * c + 2])}\r\n")
+    val exportString: String
+        get() {
+            if (mVertexCount < 0) return ""
+            val builder = StringBuilder()
+            builder.append("g $mName\r\n")
+            if (mVertices.isEmpty()) return ""
+            var c = if (mVertices.size == mVertexCount * 4) 4 else 3
+            for (v in 0 until mVertexCount) {
+                builder.append("v ${"%.7G"(-mVertices[v * c])} " +
+                        "${"%.7G"(mVertices[v * c + 1])} " +
+                        "${"%.7G"(mVertices[v * c + 2])}\r\n")
+            }
+            if (mUV0.isNotEmpty()) {
+                c = when (mUV0.size) {
+                    mVertexCount * 2 -> 2
+                    mVertexCount * 3 -> 3
+                    else -> 4
+                }
+                for (vt in 0 until mVertexCount) {
+                    builder.append("vt ${"%.7G"(mUV0[vt * c]).trimEnd('0')} " +
+                            "${"%.7G"(mUV0[vt * c + 1]).trimEnd('0')}\r\n")
+                }
+            }
+            if (mNormals.isNotEmpty()) {
+                when(mNormals.size) {
+                    mVertexCount * 3 -> c = 3
+                    mVertexCount * 4 -> c = 4
+                }
+                for (vn in 0 until mVertexCount) {
+                    builder.append("vn ${"%.7G"(-mNormals[vn * c])} " +
+                            "${"%.7G"(mNormals[vn * c + 1])} " +
+                            "${"%.7G"(mNormals[vn * c + 2])}\r\n")
+                }
+            }
+            var sum = 0
+            for (i in mSubMeshes.indices) {
+                builder.append("g ${mName}_$i\r\n")
+                val end = sum + mSubMeshes[i].indexCount.toInt() / 3
+                for (f in sum until end) {
+                    val v0 = mIndices[f * 3 + 2] + 1u
+                    val v1 = mIndices[f * 3 + 1] + 1u
+                    val v2 = mIndices[f * 3] + 1u
+                    builder.append("f $v0/$v0/$v0 $v1/$v1/$v1 $v2/$v2/$v2\r\n")
+                }
+                sum = end
+            }
+            return builder.toString().replace("NaN", "0")
         }
-        if (mUV0.isNotEmpty()) {
-            c = when (mUV0.size) {
-                mVertexCount * 2 -> 2
-                mVertexCount * 3 -> 3
-                else -> 4
-            }
-            for (vt in 0 until mVertexCount) {
-                builder.append("vt ${"%.7G"(mUV0[vt * c]).trimEnd('0')} " +
-                        "${"%.7G"(mUV0[vt * c + 1]).trimEnd('0')}\r\n")
-            }
-        }
-        if (mNormals.isNotEmpty()) {
-            when(mNormals.size) {
-                mVertexCount * 3 -> c = 3
-                mVertexCount * 4 -> c = 4
-            }
-            for (vn in 0 until mVertexCount) {
-                builder.append("vn ${"%.7G"(-mNormals[vn * c])} " +
-                        "${"%.7G"(mNormals[vn * c + 1])} " +
-                        "${"%.7G"(mNormals[vn * c + 2])}\r\n")
-            }
-        }
-        var sum = 0
-        for (i in mSubMeshes.indices) {
-            builder.append("g ${mName}_$i\r\n")
-            val end = sum + mSubMeshes[i].indexCount.toInt() / 3
-            for (f in sum until end) {
-                val v0 = mIndices[f * 3 + 2] + 1u
-                val v1 = mIndices[f * 3 + 1] + 1u
-                val v2 = mIndices[f * 3] + 1u
-                builder.append("f $v0/$v0/$v0 $v1/$v1/$v1 $v2/$v2/$v2\r\n")
-            }
-            sum = end
-        }
-        return@lazy builder.toString().replace("NaN", "0")
-    }
 
-    val exportVertices by lazy {
-        val c = if (mVertices.size == mVertexCount * 4) 4 else 3
-        Array(mVertexCount) { Vector3(mVertices[it * c], mVertices[it * c + 1], mVertices[it * c + 2]) }
-    }
-
-    val exportUV by lazy {
-        if (mUV0.isEmpty()) arrayOf()
-        else {
-            val c = when (mUV0.size) {
-                mVertexCount * 2 -> 2
-                mVertexCount * 3 -> 3
-                else -> 4
-            }
-            Array(mVertexCount) { Vector2(mUV0[it * c], mUV0[it * c + 1]) }
+    val exportVertices: Array<Vector3>
+        get() {
+            val c = if (mVertices.size == mVertexCount * 4) 4 else 3
+            return Array(mVertexCount) { Vector3(mVertices[it * c], mVertices[it * c + 1], mVertices[it * c + 2]) }
         }
-    }
 
-    val exportNormals by lazy {
-        if (mNormals.isEmpty()) arrayOf()
-        else {
-            var c = when (mUV0.size) {
-                mVertexCount * 2 -> 2
-                mVertexCount * 3 -> 3
-                else -> 4
+    val exportUV: Array<Vector2>
+        get() {
+            return if (mUV0.isEmpty()) arrayOf()
+            else {
+                val c = when (mUV0.size) {
+                    mVertexCount * 2 -> 2
+                    mVertexCount * 3 -> 3
+                    else -> 4
+                }
+                Array(mVertexCount) { Vector2(mUV0[it * c], mUV0[it * c + 1]) }
             }
-            when(mNormals.size) {
-                mVertexCount * 3 -> c = 3
-                mVertexCount * 4 -> c = 4
-            }
-            Array(mVertexCount) { Vector3(mNormals[it * c], mNormals[it * c + 1], mNormals[it * c + 2]) }
         }
-    }
 
-    val exportFaces by lazy {
-        var sum = 0
-        Array(mSubMeshes.size) {
-            val end = sum + mSubMeshes[it].indexCount.toInt() / 3
-            val v = mutableListOf<Vector3>()
-            for (f in sum until end) {
-                v.add(Vector3(
-                    (mIndices[f * 3 + 2] + 1u).toDouble(),
-                    (mIndices[f * 3 + 1] + 1u).toDouble(),
-                    (mIndices[f * 3] + 1u).toDouble()
-                ))
+    val exportNormals: Array<Vector3>
+        get() {
+            return if (mNormals.isEmpty()) arrayOf()
+            else {
+                var c = when (mUV0.size) {
+                    mVertexCount * 2 -> 2
+                    mVertexCount * 3 -> 3
+                    else -> 4
+                }
+                when(mNormals.size) {
+                    mVertexCount * 3 -> c = 3
+                    mVertexCount * 4 -> c = 4
+                }
+                Array(mVertexCount) { Vector3(mNormals[it * c], mNormals[it * c + 1], mNormals[it * c + 2]) }
             }
-            sum = end
-            v.toTypedArray()
         }
-    }
+
+    val exportFaces: Array<Array<Vector3>>
+        get() {
+            var sum = 0
+            return Array(mSubMeshes.size) {
+                val end = sum + mSubMeshes[it].indexCount.toInt() / 3
+                val v = mutableListOf<Vector3>()
+                for (f in sum until end) {
+                    v.add(Vector3(
+                        (mIndices[f * 3 + 2] + 1u).toDouble(),
+                        (mIndices[f * 3 + 1] + 1u).toDouble(),
+                        (mIndices[f * 3] + 1u).toDouble()
+                    ))
+                }
+                sum = end
+                v.toTypedArray()
+            }
+        }
 
     private fun ByteArray.toIntArray(vertexFormat: VertexFormat): IntArray {
         val len = size / vertexFormat.size.toInt()
         val result = IntArray(len)
         for (i in 0 until len) {
             when (vertexFormat) {
-                VertexFormat.kVertexFormatUInt8,
-                VertexFormat.kVertexFormatSInt8 -> result[i] = this[i].toIntBits()
-                VertexFormat.kVertexFormatUInt16,
-                VertexFormat.kVertexFormatSInt16 -> {
+                VertexFormat.UInt8,
+                VertexFormat.SInt8 -> result[i] = this[i].toIntBits()
+                VertexFormat.UInt16,
+                VertexFormat.SInt16 -> {
                     result[i] = ByteBuffer.wrap(this[i * 2, 2]).short.toInt()
                 }
-                VertexFormat.kVertexFormatUInt32,
-                VertexFormat.kVertexFormatSInt32 -> {
+                VertexFormat.UInt32,
+                VertexFormat.SInt32 -> {
                     result[i] = ByteBuffer.wrap(this[i * 4, 4]).int
                 }
                 else -> {  }
@@ -605,19 +612,19 @@ class MeshImpl internal constructor(reader: ObjectReader): NamedObjectImpl(reade
         val result = FloatArray(len)
         for (i in 0 until len) {
             when (vertexFormat) {
-                VertexFormat.kVertexFormatFloat -> {
+                VertexFormat.Float -> {
                     result[i] = ByteBuffer.wrap(this[i * 4, 4]).float
                 }
-                VertexFormat.kVertexFormatFloat16 -> {
+                VertexFormat.Float16 -> {
                     result[i] = this[i * 2, 2].toHalf()
                 }
-                VertexFormat.kVertexFormatUNorm8 -> {
+                VertexFormat.UNorm8 -> {
                     result[i] = maxOf(get(i) / 127f, -1f)
                 }
-                VertexFormat.kVertexFormatSNorm8 -> {
+                VertexFormat.SNorm8 -> {
                     result[i] = ByteBuffer.wrap(this[i * 2, 2]).short / 65536f
                 }
-                VertexFormat.kVertexFormatSNorm16 -> {
+                VertexFormat.SNorm16 -> {
                     result[i] = maxOf(
                         ByteBuffer.wrap(this[i * 2, 2]).short / 32767f,
                         -1f
@@ -640,16 +647,16 @@ class MeshImpl internal constructor(reader: ObjectReader): NamedObjectImpl(reade
 internal class MeshHelper private constructor() {
     companion object {
         private val vertexFormatMap = mapOf(
-            VertexChannelFormat.kChannelFormatFloat to VertexFormat.kVertexFormatFloat,
-            VertexChannelFormat.kChannelFormatFloat16 to VertexFormat.kVertexFormatFloat16,
-            VertexChannelFormat.kChannelFormatColor to VertexFormat.kVertexFormatUNorm8,
-            VertexChannelFormat.kChannelFormatByte to VertexFormat.kVertexFormatUInt8,
-            VertexChannelFormat.kChannelFormatUInt32 to VertexFormat.kVertexFormatUInt32
+            VertexChannelFormat.Float to VertexFormat.Float,
+            VertexChannelFormat.Float16 to VertexFormat.Float16,
+            VertexChannelFormat.Color to VertexFormat.UNorm8,
+            VertexChannelFormat.Byte to VertexFormat.UInt8,
+            VertexChannelFormat.UInt32 to VertexFormat.UInt32
         )
         private val vertexFormat2017Map = mapOf(
             *(VertexFormat.values().map { vf ->
                 VertexFormat2017.valueOf(vf.name) to vf
-            } + listOf(VertexFormat2017.kVertexFormatColor to VertexFormat.kVertexFormatUNorm8))
+            } + listOf(VertexFormat2017.Color to VertexFormat.UNorm8))
                 .toTypedArray()
         )
         internal fun UByte.toVertexFormat(version: IntArray): VertexFormat {
@@ -666,13 +673,12 @@ internal class MeshHelper private constructor() {
     }
 }
 
-@Suppress("EnumEntryName")
 internal enum class VertexChannelFormat {
-    kChannelFormatFloat,
-    kChannelFormatFloat16,
-    kChannelFormatColor,
-    kChannelFormatByte,
-    kChannelFormatUInt32;
+    Float,
+    Float16,
+    Color,
+    Byte,
+    UInt32;
 
     companion object {
         fun of(value: Int): VertexChannelFormat {
@@ -681,21 +687,20 @@ internal enum class VertexChannelFormat {
     }
 }
 
-@Suppress("EnumEntryName")
 internal enum class VertexFormat2017 {
-    kVertexFormatFloat,
-    kVertexFormatFloat16,
-    kVertexFormatColor,
-    kVertexFormatUNorm8,
-    kVertexFormatSNorm8,
-    kVertexFormatUNorm16,
-    kVertexFormatSNorm16,
-    kVertexFormatUInt8,
-    kVertexFormatSInt8,
-    kVertexFormatUInt16,
-    kVertexFormatSInt16,
-    kVertexFormatUInt32,
-    kVertexFormatSInt32;
+    Float,
+    Float16,
+    Color,
+    UNorm8,
+    SNorm8,
+    UNorm16,
+    SNorm16,
+    UInt8,
+    SInt8,
+    UInt16,
+    SInt16,
+    UInt32,
+    SInt32;
 
     companion object {
         fun of(value: Int): VertexFormat2017 {
@@ -704,22 +709,21 @@ internal enum class VertexFormat2017 {
     }
 }
 
-@Suppress("EnumEntryName")
 internal enum class VertexFormat(val size: UInt) {
-    kVertexFormatFloat(4u),
-    kVertexFormatFloat16(2u),
-    kVertexFormatUNorm8(1u),
-    kVertexFormatSNorm8(1u),
-    kVertexFormatUNorm16(2u),
-    kVertexFormatSNorm16(2u),
-    kVertexFormatUInt8(1u),
-    kVertexFormatSInt8(1u),
-    kVertexFormatUInt16(2u),
-    kVertexFormatSInt16(2u),
-    kVertexFormatUInt32(4u),
-    kVertexFormatSInt32(4u);
+    Float(4u),
+    Float16(2u),
+    UNorm8(1u),
+    SNorm8(1u),
+    UNorm16(2u),
+    SNorm16(2u),
+    UInt8(1u),
+    SInt8(1u),
+    UInt16(2u),
+    SInt16(2u),
+    UInt32(4u),
+    SInt32(4u);
 
-    val isIntFormat get() = this >= kVertexFormatUInt8
+    val isIntFormat get() = this >= UInt8
 
     companion object {
         fun of(value: Int): VertexFormat {
@@ -990,9 +994,9 @@ class BlendShapeData internal constructor(reader: ObjectReader) {
 
 class GfxPrimitiveType private constructor() {
     companion object {
-        const val kPrimitiveTriangles = 0
-        const val kPrimitiveTriangleStrip = 1
-        const val kPrimitiveQuads = 2
+        const val Triangles = 0
+        const val TriangleStrip = 1
+        const val Quads = 2
     }
 }
 

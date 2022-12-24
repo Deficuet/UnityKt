@@ -21,9 +21,9 @@ class ImportContext: AssetBundleFile {
     override val name: String
 
     /**
-     * The [AssetManager] which loads this file.
+     * The [UnityAssetManager] which loads this file.
      */
-    val manager: AssetManager
+    val manager: UnityAssetManager
 
     /**
      * All [Object] loaded from this file.
@@ -31,29 +31,29 @@ class ImportContext: AssetBundleFile {
     val objects = mutableListOf<Object>()
 
     internal constructor(
-        filePath: String, manager: AssetManager,
+        filePath: String, manager: UnityAssetManager,
         offsetMode: OffsetMode = OffsetMode.MANUAL,
-        manualIgnoredOffset: Long = 0
+        manualOffset: Long = 0
     ) {
         val file = File(filePath)
         directory = file.parentFile.canonicalPath
         name = file.name
         this.manager = manager
         files = mapOf(name to init(EndianFileStreamReader(
-            filePath, offsetMode = offsetMode, manualIgnoredOffset = manualIgnoredOffset
+            filePath, offsetMode = offsetMode, manualOffset = manualOffset
         )))
     }
 
     internal constructor(
-        data: ByteArray, name: String, manager: AssetManager,
+        data: ByteArray, name: String, manager: UnityAssetManager,
         offsetMode: OffsetMode = OffsetMode.MANUAL,
-        manualIgnoredOffset: Long = 0
+        manualOffset: Long = 0
     ) {
         directory = ""
         this.name = name
         this.manager = manager
         files = mapOf(this.name to init(EndianByteArrayReader(
-            data, offsetMode = offsetMode, manualIgnoredOffset = manualIgnoredOffset
+            data, offsetMode = offsetMode, manualOffset = manualOffset
         )))
     }
 

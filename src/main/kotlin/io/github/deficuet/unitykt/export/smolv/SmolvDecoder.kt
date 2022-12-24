@@ -3,8 +3,8 @@ package io.github.deficuet.unitykt.export.smolv
 import io.github.deficuet.unitykt.export.EndianByteArrayWriter
 import io.github.deficuet.unitykt.export.spirv.of
 import io.github.deficuet.unitykt.util.EndianBinaryReader
-import io.github.deficuet.unitykt.util.EndianType
 import io.github.deficuet.unitykt.util.Reference
+import java.nio.ByteOrder
 
 internal class SmolvDecoder private constructor() {
     companion object {
@@ -23,7 +23,7 @@ internal class SmolvDecoder private constructor() {
             return reader.withMark {
                 position += headerSize - 4
                 val endian = reader.endian
-                resetEndian(EndianType.LittleEndian)
+                resetEndian(ByteOrder.LITTLE_ENDIAN)
                 val size = readInt()
                 resetEndian(endian)
                 size

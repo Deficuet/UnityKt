@@ -3,7 +3,7 @@ package io.github.deficuet.unitykt.file
 import io.github.deficuet.unitykt.util.CompressUtils
 import io.github.deficuet.unitykt.util.EndianBinaryReader
 import io.github.deficuet.unitykt.util.EndianByteArrayReader
-import io.github.deficuet.unitykt.util.EndianType
+import java.nio.ByteOrder
 
 class WebFile(
     preReader: EndianBinaryReader,
@@ -20,7 +20,7 @@ class WebFile(
         reader = if (magic.contentEquals(CompressUtils.GZIP_MAGIC)) {
             EndianByteArrayReader(
                 CompressUtils.gzipDecompress(preReader.bytes),
-                endian = EndianType.LittleEndian
+                endian = ByteOrder.LITTLE_ENDIAN
             )
         } else {
             preReader.position = 0x20
@@ -28,10 +28,10 @@ class WebFile(
             if (magic.contentEquals(CompressUtils.BROTLI_MAGIC)) {
                 EndianByteArrayReader(
                     CompressUtils.brotliDecompress(preReader.bytes),
-                    endian = EndianType.LittleEndian
+                    endian = ByteOrder.LITTLE_ENDIAN
                 )
             } else {
-                preReader.resetEndian(EndianType.LittleEndian)
+                preReader.resetEndian(ByteOrder.LITTLE_ENDIAN)
             }
         }
         if (reader.readStringUntilNull() == "UnityWebData1.0") {

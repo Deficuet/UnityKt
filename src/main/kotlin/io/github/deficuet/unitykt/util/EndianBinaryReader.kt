@@ -11,11 +11,6 @@ import java.nio.charset.Charset
 import java.nio.file.Files
 import kotlin.io.path.Path
 
-enum class EndianType(val order: ByteOrder) {
-    LittleEndian(ByteOrder.LITTLE_ENDIAN),
-    BigEndian(ByteOrder.BIG_ENDIAN)
-}
-
 enum class FileType {
     ASSETS, BUNDLE, WEB, RESOURCE   //, GZIP, BROTLI
 }
@@ -28,7 +23,7 @@ enum class OffsetMode {
     AUTO
 }
 
-sealed class EndianBinaryReader(private val manualIgnoredOffset: Long): Closeable {
+sealed class EndianBinaryReader(private val manualOffset: Long): Closeable {
     abstract val bytes: ByteArray
     /**
      * Relative Position
@@ -44,7 +39,7 @@ sealed class EndianBinaryReader(private val manualIgnoredOffset: Long): Closeabl
      * Relative offset to its "parent" endian binary reader.
      */
     abstract val baseOffset: Long
-    abstract var endian: EndianType
+    abstract var endian: ByteOrder
         protected set
 
     /**
@@ -107,7 +102,7 @@ sealed class EndianBinaryReader(private val manualIgnoredOffset: Long): Closeabl
 
     protected fun initOffset(): Long {
         return if (offsetMode == OffsetMode.MANUAL) {
-            manualIgnoredOffset.also { position = it }
+            manualOffset.also { position = it }
         } else {
             var first: Byte
             do {
@@ -141,22 +136,22 @@ sealed class EndianBinaryReader(private val manualIgnoredOffset: Long): Closeabl
 
     fun readSByte(): Byte = read(1)[0]      //-128~127
     fun readByte(): UByte = readSByte().toUByte()       //0~255
-    fun readShort(): Short = ByteBuffer.wrap(read(2)).order(endian.order).short
+    fun readShort(): Short = ByteBuffer.wrap(read(2)).order(endian).short
     fun readUShort(): UShort = readShort().toUShort()
-    fun readInt(): Int = ByteBuffer.wrap(read(4)).order(endian.order).int
+    fun readInt(): Int = ByteBuffer.wrap(read(4)).order(endian).int
     fun readUInt(): UInt = readInt().toUInt()
-    fun readLong(): Long = ByteBuffer.wrap(read(8)).order(endian.order).long
+    fun readLong(): Long = ByteBuffer.wrap(read(8)).order(endian).long
     fun readULong(): ULong = readLong().toULong()
-    fun readFloat(): Float = ByteBuffer.wrap(read(4)).order(endian.order).float
-    fun readDouble(): Double = ByteBuffer.wrap(read(8)).order(endian.order).double
+    fun readFloat(): Float = ByteBuffer.wrap(read(4)).order(endian).float
+    fun readDouble(): Double = ByteBuffer.wrap(read(8)).order(endian).double
     fun readBool(): Boolean = readSByte() != 0.toByte()
-    fun readString(size: Int = -1, encode: Charset = Charsets.UTF_8): String {
-        return if (size == -1) readStringUntilNull(charset = encode) else read(size).decodeToString(encode)
+    fun readString(size: Int = -1, encoding: Charset = Charsets.UTF_8): String {
+        return if (size == -1) readStringUntilNull(charset = encoding) else read(size).decodeToString(encoding)
     }
     fun readStringUntilNull(maxLength: Int = 32767, charset: Charset = Charsets.UTF_8): String {
         val ret = mutableListOf<Byte>()
         var c: Byte? = null
-        while (c != 0.toByte() && ret.size < maxLength && position != length) {
+        while (c != 0.toByte() && ret.size < maxLength && position <= length) {
             if (c != null) ret.add(c)
             val nextByte = read(1)
             if (nextByte.isEmpty()) throw IllegalStateException("Unterminated String: $ret")
@@ -196,7 +191,7 @@ sealed class EndianBinaryReader(private val manualIgnoredOffset: Long): Closeabl
     fun readNextStringArray(): Array<String> = readArray(readInt(), this::readAlignedString)
     fun readRectangle(): Rectangle = Rectangle(readFloat(), readFloat(), readFloat(), readFloat())
     fun readQuaternion(): Quaternion = Quaternion(readFloat(), readFloat(), readFloat(), readFloat())
-    private fun readMatrix4x4(): Matrix4x4 = Matrix4x4(*readNextFloatArray(16))
+    fun readMatrix4x4(): Matrix4x4 = Matrix4x4(*readNextFloatArray(16))
     fun readVector2(): Vector2 = Vector2(readFloat(), readFloat())
     fun readVector3(): Vector3 = Vector3(readFloat(), readFloat(), readFloat())
     fun readVector4(): Vector4 = Vector4(readFloat(), readFloat(), readFloat(), readFloat())
@@ -213,18 +208,18 @@ sealed class EndianBinaryReader(private val manualIgnoredOffset: Long): Closeabl
         return readArrayIndexed(num, constructor)
     }
 
-    fun resetEndian(e: EndianType): EndianBinaryReader { endian = e; return this }
+    fun resetEndian(e: ByteOrder): EndianBinaryReader { endian = e; return this }
 }
 
 class EndianByteArrayReader(
     private val array: ByteArray,
-    override var endian: EndianType = EndianType.BigEndian,
+    override var endian: ByteOrder = ByteOrder.BIG_ENDIAN,
     override val baseOffset: Long = 0,
     override val offsetMode: OffsetMode = OffsetMode.MANUAL,
-    manualIgnoredOffset: Long = 0
-): EndianBinaryReader(manualIgnoredOffset) {
+    manualOffset: Long = 0
+): EndianBinaryReader(manualOffset) {
     constructor(
-        endian: EndianType = EndianType.BigEndian,
+        endian: ByteOrder = ByteOrder.BIG_ENDIAN,
         manualOffset: Long = 0,
         offsetMode: OffsetMode = OffsetMode.MANUAL,
         manualIgnoredOffset: Long = 0,
@@ -239,7 +234,8 @@ class EndianByteArrayReader(
     override val length
         get() = array.size.toLong() - ignoredOffset
 
-    override val bytes by lazy { with(array) { sliceArray(ignoredOffset.toInt() until size) } }
+    override val bytes: ByteArray
+        get() { return with(array) { sliceArray(ignoredOffset.toInt() until size) } }
 
     override fun read(size: Int): ByteArray {
         if (size <= 0 || position >= length) {
@@ -257,11 +253,11 @@ class EndianByteArrayReader(
 
 class EndianFileStreamReader(
     filePath: String,
-    override var endian: EndianType = EndianType.BigEndian,
+    override var endian: ByteOrder = ByteOrder.BIG_ENDIAN,
     override val baseOffset: Long = 0,
     override val offsetMode: OffsetMode = OffsetMode.MANUAL,
-    manualIgnoredOffset: Long = 0
-): EndianBinaryReader(manualIgnoredOffset) {
+    manualOffset: Long = 0
+): EndianBinaryReader(manualOffset) {
     init {
         if (!Files.isRegularFile(Path(filePath)))
             throw IllegalStateException("Path $filePath must be a file.")
@@ -275,20 +271,21 @@ class EndianFileStreamReader(
 
     override val ignoredOffset = initOffset()
     override val length get() = channel.size() - ignoredOffset
-    override val bytes: ByteArray by lazy {
-        withMark {
-            position = 0
-            read((length - position).toInt())
+    override val bytes: ByteArray
+        get() {
+            return withMark {
+                position = 0
+                read((length - position).toInt())
+            }
         }
-    }
 
     override fun read(size: Int): ByteArray {
         if (size <= 0 || position >= length) {
             return byteArrayOf()
         }
-        val b = ByteArray(size)
-        stream.read(b)
-        return b
+        return ByteArray(size).apply {
+            stream.read(this)
+        }
     }
 
     override fun close() {
@@ -327,14 +324,15 @@ class ObjectReader internal constructor(
     override fun alignStream(alignment: Int) {
         plusAssign((alignment - absolutePosition % alignment) % alignment)
     }
-    override val bytes: ByteArray by lazy {
-        withMark {
-            position = 0
-            read(info.byteSize.toInt())
+    override val bytes: ByteArray
+        get() {
+            return withMark {
+                position = 0
+                read(info.byteSize.toInt())
+            }
         }
-    }
     override val baseOffset = reader.baseOffset
-    override var endian = reader.endian
+    override var endian: ByteOrder = reader.endian
     override val offsetMode = OffsetMode.MANUAL
 
     override fun read(size: Int) = reader.read(size)

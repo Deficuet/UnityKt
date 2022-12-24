@@ -14,8 +14,13 @@ class MaterialImpl internal constructor(reader: ObjectReader): NamedObjectImpl(r
         if (unityVersion[0] == 4 && unityVersion[1] >= 1) {
             reader.readNextStringArray()    //m_ShaderKeywords
         }
-        if (unityVersion[0] >= 5) {
+        if (unityVersion >= intArrayOf(2021, 3)) {
+            reader.readNextStringArray()
+            reader.readNextStringArray()
+        } else if (unityVersion[0] >= 5) {
             reader.readAlignedString()      //m_ShaderKeywords
+        }
+        if (unityVersion[0] >= 5) {
             reader += 4     //m_LightmapFlags: UInt
         }
         if (unityVersion >= intArrayOf(5, 6)) {

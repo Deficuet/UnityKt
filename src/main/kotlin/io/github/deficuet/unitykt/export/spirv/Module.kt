@@ -1,7 +1,7 @@
 package io.github.deficuet.unitykt.export.spirv
 
 import io.github.deficuet.unitykt.util.EndianByteArrayReader
-import io.github.deficuet.unitykt.util.EndianType
+import java.nio.ByteOrder
 
 internal class Module private constructor(
     val header: Header,
@@ -176,7 +176,7 @@ internal class Module private constructor(
 
     companion object {
         fun readFrom(data: ByteArray): Module {
-            val reader = EndianByteArrayReader(data, endian = EndianType.LittleEndian)
+            val reader = EndianByteArrayReader(data, endian = ByteOrder.LITTLE_ENDIAN)
             reader += 4     //magic
             val versionNum = reader.readUInt()
             val majorVersion = versionNum.shr(16).toInt()

@@ -1,6 +1,6 @@
 package io.github.deficuet.unitykt
 
-import io.github.deficuet.unitykt.data.*
+import io.github.deficuet.unitykt.data.Object
 
 operator fun List<ImportContext>.get(key: String) = find { it.name.contentEquals(key) }
 
@@ -68,6 +68,8 @@ fun List<Object>.allObjectsOf(vararg type: String): List<Object> {
     }
 }
 
-fun List<Object>.objectFromPathID(pathId: Long): Object? {
-    return firstOrNull { it.mPathID == pathId }
+inline fun <reified T: Object> List<Object>.objectFromPathID(pathId: Long): T {
+    return first { it.mPathID == pathId } as T
 }
+
+inline fun <reified T> Any?.cast(): T = this as T

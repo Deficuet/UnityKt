@@ -20,7 +20,7 @@ abstract class RawAssetFile {
         get() = if (bundleParent is ImportContext) bundleParent as ImportContext else bundleParent.root
 
     companion object {
-        val resourceExt = listOf(".resS", ".resource", ".config", ".xml", ".dat")
+        val resourceExt = arrayOf(".resS", ".resource", ".config", ".xml", ".dat")
     }
 }
 

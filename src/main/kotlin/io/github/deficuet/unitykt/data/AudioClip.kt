@@ -2,7 +2,7 @@ package io.github.deficuet.unitykt.data
 
 import io.github.deficuet.unitykt.dataImpl.AudioClipImpl
 import io.github.deficuet.unitykt.dataImpl.AudioCompressionFormat
-import io.github.deficuet.unitykt.dataImpl.AudioType
+import io.github.deficuet.unitykt.dataImpl.FMODSoundType
 import io.github.deficuet.unitykt.file.ObjectInfo
 import io.github.deficuet.unitykt.file.SerializedFile
 import io.github.deficuet.unitykt.util.ObjectReader
@@ -15,7 +15,7 @@ class AudioClip private constructor(
         this(ImplementationContainer(assetFile, info) { AudioClipImpl(ObjectReader(assetFile, info)) })
 
     val mFormat: Int                                    get() = container.impl.mFormat
-    val mType: AudioType                                get() = container.impl.mType
+    val mType: FMODSoundType                                get() = container.impl.mType
     val m3D: Boolean                                    get() = container.impl.m3D
     val mUseHardware: Boolean                           get() = container.impl.mUseHardware
 
