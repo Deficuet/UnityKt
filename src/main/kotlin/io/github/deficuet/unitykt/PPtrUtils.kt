@@ -19,8 +19,8 @@ inline fun <reified O: Object> PPtr<O>.getObj(): O? {
     return null
 }
 
-inline fun <reified T: Object> PPtr<*>.getObjAs(): T? {
-    return getObj() as? T
+inline fun <reified T: Object> PPtr<*>.getObjAs(): T {
+    return getObj() as T
 }
 
 inline fun <reified T: Object> Array<out PPtr<*>>.allObjectsOf(): List<T> {
