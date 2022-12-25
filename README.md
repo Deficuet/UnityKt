@@ -95,13 +95,12 @@ So far the objects that can export data includes:
 - Texture2D
   - `decompressedImageData` - Image data after decoding. Can be used to create image directly.
   - `image` - A BufferedImage created from `decompressedImageData`. **It is usually up-side-down**.
-- MonoBehaviour
-  - `json` - Export its TypeTree as [JSONObject](https://stleary.github.io/JSON-java/index.html), could be `null`.
-  - `jsonString` - Export its TypeTree as `String`.
 - TextAsset
   - `text()` - The function used to export content in this object as `String`. A `Charset` can be passed as a parameter, by default it is `Charsets.UTF_8`.
 - Shader
   - `exportString` - Export as String. **Include** the Spir-V Shader data.
+- All objects
+  - `typeTreeJson` - A [JSONObject](https://stleary.github.io/JSON-java/org/json/JSONObject.html) contains all the properties they have, including those properties that is not implemented yet. The json could be `null`.
 ## Example
 Example for reading and saving an image from a Texture2D object.
 ```kotlin
@@ -140,6 +139,8 @@ fun main() {
 }
 ```
 ## Changelog
+- ### 2022.12.25
+  - Create Canvas object, tested on version 2018.4.34f1, not guaranteed to be stable on other versions. 
 - ### 2022.12.23
   - Catch up on the newest version of AssetStudio. Try to optimize memory use, re-design some structures. 
 - ### 2022.02.20
