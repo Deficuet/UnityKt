@@ -3,6 +3,7 @@ package io.github.deficuet.unitykt.data
 import io.github.deficuet.unitykt.dataImpl.ObjectImpl
 import io.github.deficuet.unitykt.file.*
 import io.github.deficuet.unitykt.util.ObjectReader
+import org.json.JSONObject
 
 open class Object internal constructor(private val container: ImplementationContainer<ObjectImpl>) {
     internal constructor(assetFile: SerializedFile, info: ObjectInfo):
@@ -15,7 +16,8 @@ open class Object internal constructor(private val container: ImplementationCont
     val byteSize: UInt = container.info.byteSize
     val platform: BuildTarget = assetFile.targetPlatform
     val serializedType: SerializedType? = container.info.serializedType
-    val bytes: ByteArray get() = container.impl.bytes
+
+    val bytes: ByteArray                get() = container.impl.bytes
 
     /**
      * @see [SerializedType.Tree.readTypeString]
@@ -26,4 +28,7 @@ open class Object internal constructor(private val container: ImplementationCont
      * @see [SerializedType.Tree.readType]
      */
     fun toType() = container.impl.toType()
+
+    val typeTreeJson: JSONObject?       get() = container.impl.typeTreeJson
+    val typeTreeJsonString: String      get() = container.impl.typeTreeJsonString
 }

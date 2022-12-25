@@ -14,7 +14,4 @@ class MonoBehaviour private constructor(
 
     val mScript: PPtr<MonoScript>   get() = container.impl.mScript
     val mName: String               get() = container.impl.mName
-
-    val json: JSONObject?           get() = container.impl.json
-    val jsonString: String          get() = container.impl.jsonString
 }

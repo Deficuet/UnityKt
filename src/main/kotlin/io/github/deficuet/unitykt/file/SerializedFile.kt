@@ -335,6 +335,7 @@ class SerializedFile(
                 ClassIDType.AssetBundle -> AssetBundle(this, info)
                 ClassIDType.AudioClip -> AudioClip(this, info)
                 ClassIDType.Avatar -> Avatar(this, info)
+                ClassIDType.Canvas -> Canvas(this, info)
                 ClassIDType.Font -> Font(this, info)
                 ClassIDType.GameObject -> GameObject(this, info)
                 ClassIDType.Material -> Material(this, info)

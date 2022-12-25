@@ -2,6 +2,8 @@ package io.github.deficuet.unitykt.dataImpl
 
 import io.github.deficuet.unitykt.file.BuildTarget
 import io.github.deficuet.unitykt.util.ObjectReader
+import io.github.deficuet.unitykt.util.toJSONObject
+import org.json.JSONObject
 
 open class ObjectImpl internal constructor(private val reader: ObjectReader) {
     val assetFile = reader.assetFile
@@ -20,4 +22,7 @@ open class ObjectImpl internal constructor(private val reader: ObjectReader) {
 
     fun dump() = serializedType?.typeTree?.readTypeString(reader)
     fun toType() = serializedType?.typeTree?.readType(reader)
+
+    val typeTreeJson: JSONObject? get() = toType()?.toJSONObject()
+    val typeTreeJsonString: String get() = typeTreeJson?.toString(4) ?: "null"
 }
