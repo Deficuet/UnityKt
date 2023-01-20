@@ -16,7 +16,7 @@ class NativeUtils private constructor() {
                 if (!temp.mkdir())
                     throw IllegalStateException("Can't create temp directory ${temp.canonicalPath}")
             }
-            temp.apply { deleteOnExit() }
+            temp
         }
 
         private val isPosix: Boolean get() {
@@ -43,8 +43,6 @@ class NativeUtils private constructor() {
                 try {
                     if (isPosix) {
                         tempFile.delete()
-                    } else {
-                        tempFile.deleteOnExit()
                     }
                 } catch (_: Throwable) {  }
             }

@@ -33,7 +33,7 @@ class UnityAssetManager: Closeable {
     /**
      * Multi-dictionary of objects associated with their mPathID
      */
-    val objectDict get() = objects.map { it.mPathID to it }
+    val objectDict get() = objects.groupBy { it.mPathID }
 
     data class Configuration internal constructor(
         /**
