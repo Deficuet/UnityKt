@@ -190,6 +190,7 @@ class SerializedFile(
         private set
     val externals: List<FileIdentifier>
     val objects: Map<Long, Object>
+    val objectList: Collection<Object> get() = objects.values
 
     init {
         if (hVersion >= FormatVersion.Unknown_9) {

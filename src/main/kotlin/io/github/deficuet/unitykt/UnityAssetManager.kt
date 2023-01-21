@@ -23,12 +23,12 @@ class UnityAssetManager: Closeable {
     /**
      * All file context loaded from disk.
      */
-    val contexts = mutableListOf<ImportContext>()
+    val contexts = mutableMapOf<String, ImportContext>()
 
     /**
      * All Objects loaded except [io.github.deficuet.unitykt.data.AssetBundle]
      */
-    val objects get() = contexts.flatMap { context ->
+    val objects get() = contexts.values.flatMap { context ->
         sequence {
             for (obj in context.objects) {
                 if (obj.key != 1L) {
@@ -73,7 +73,7 @@ class UnityAssetManager: Closeable {
             configuration.offsetMode,
             configuration.manualOffset
         ).also {
-            contexts.add(it)
+            contexts[it.name] = it
         }
     }
 
@@ -91,7 +91,7 @@ class UnityAssetManager: Closeable {
             configuration.offsetMode,
             configuration.manualOffset
         ).also {
-            contexts.add(it)
+            contexts[it.name] = it
         }
     }
 

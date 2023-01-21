@@ -27,14 +27,14 @@ inline fun <reified T: Object> Array<out PPtr<*>>.allObjectsOf(): List<T> {
     return map { it.getObj() }.filterIsInstance<T>()
 }
 
-inline fun <reified T: Object> List<PPtr<*>>.allObjectsOf(): List<T> {
+inline fun <reified T: Object> Collection<PPtr<*>>.allObjectsOf(): List<T> {
     return map { it.getObj() }.filterIsInstance<T>()
 }
 
 inline fun <reified T: Object> Array<out PPtr<*>>.firstObjectOf(): T {
-    return mapNotNull { it.getObj() }.firstObjectOf()
+    return mapNotNull { it.getObj() }.firstObjectOf<T>()
 }
 
-inline fun <reified T: Object> List<PPtr<*>>.firstObjectOf(): T {
-    return mapNotNull { it.getObj() }.firstObjectOf()
+inline fun <reified T: Object> Collection<PPtr<*>>.firstObjectOf(): T {
+    return mapNotNull { it.getObj() }.firstObjectOf<T>()
 }

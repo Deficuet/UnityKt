@@ -29,6 +29,7 @@ class ImportContext: AssetBundleFile {
      * All [Object] loaded from this file.
      */
     val objects = mutableMapOf<Long, Object>()
+    val objectList: Collection<Object> get() = objects.values
 
     internal constructor(
         filePath: String, manager: UnityAssetManager,

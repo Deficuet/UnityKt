@@ -2,8 +2,6 @@ package io.github.deficuet.unitykt
 
 import io.github.deficuet.unitykt.data.Object
 
-operator fun List<ImportContext>.get(key: String) = find { it.name.contentEquals(key) }
-
 operator fun <K, V> Collection<Pair<K, V>>.get(key: K): List<V> {
     return filter {
         when (val f = it.first) {
@@ -40,35 +38,21 @@ operator fun <K, V> Array<Pair<K, V>>.get(key: K): List<V> {
     }.map { it.second }
 }
 
-fun <K, V> List<Pair<K, V>>.first(key: K) = get(key)[0]
+fun <K, V> Collection<Pair<K, V>>.first(key: K) = get(key)[0]
 
-fun <K, V> List<Pair<K, V>>.firstOrNull(key: K) = with(get(key)) { if (isEmpty()) null else this[0] }
+fun <K, V> Collection<Pair<K, V>>.firstOrNull(key: K) = with(get(key)) { if (isEmpty()) null else this[0] }
 
-inline fun <reified O: Object> List<Object>.allObjectsOf(): List<O> {
-    return mutableListOf<O>().apply {
-        for (obj in this@allObjectsOf) {
-            if (obj is O) add(obj)
-        }
-    }
+inline fun <reified O: Object> Collection<Object>.firstObjectOf() = filterIsInstance<O>()[0]
+
+inline fun <reified O: Object> Collection<Object>.firstOfOrNull(): O? {
+    return with(filterIsInstance<O>()) { if (isEmpty()) null else this[0] }
 }
 
-inline fun <reified O: Object> List<Object>.firstObjectOf() = allObjectsOf<O>()[0]
-
-inline fun <reified O: Object> List<Object>.firstOfOrNull(): O? {
-    return with(allObjectsOf<O>()) { if (isEmpty()) null else this[0] }
+fun Collection<Object>.allObjectsOf(vararg type: String): List<Object> {
+    return filter { it.type.name in type }
 }
 
-fun List<Object>.allObjectsOf(vararg type: String): List<Object> {
-    return mutableListOf<Object>().apply {
-        for (obj in this@allObjectsOf) {
-            if (obj.type.name in type) {
-                add(obj)
-            }
-        }
-    }
-}
-
-inline fun <reified T: Object> List<Object>.objectFromPathID(pathId: Long): T {
+inline fun <reified T: Object> Collection<Object>.objectFromPathID(pathId: Long): T {
     return first { it.mPathID == pathId } as T
 }
 
