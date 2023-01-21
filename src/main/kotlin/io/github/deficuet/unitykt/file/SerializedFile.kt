@@ -189,9 +189,7 @@ class SerializedFile(
     var buildType = BuildType("")
         private set
     val externals: List<FileIdentifier>
-    val objects: List<Object>
-    val objectDict: Map<Long, Object>
-        get() = objects.associateBy { it.mPathID }
+    val objects: Map<Long, Object>
 
     init {
         if (hVersion >= FormatVersion.Unknown_9) {
@@ -324,7 +322,7 @@ class SerializedFile(
             reader.readStringUntilNull()
         } else ""
         //region readObjects
-        val objectList = mutableListOf<Object>()
+        val objectMap = mutableMapOf<Long, Object>()
         for (info in objectInfoList) {
             val obj = when (info.type) {
                 ClassIDType.Animation -> Animation(this, info)
@@ -358,10 +356,10 @@ class SerializedFile(
                 ClassIDType.ResourceManager -> ResourceManager(this, info)
                 else -> Object(this, info)
             }
-            objectList.add(obj)
+            objectMap[obj.mPathID] = obj
         }
-        objects = objectList
-        root.objects.addAll(objects)
+        objects = objectMap
+        root.objects.putAll(objects)
         objectInfoList.clear()
         //endregion
     }

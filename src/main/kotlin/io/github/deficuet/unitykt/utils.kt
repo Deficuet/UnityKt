@@ -72,4 +72,8 @@ inline fun <reified T: Object> List<Object>.objectFromPathID(pathId: Long): T {
     return first { it.mPathID == pathId } as T
 }
 
+inline fun <reified T: Object> Map<Long, Object>.getAs(pathId: Long): T {
+    return this[pathId].cast()
+}
+
 inline fun <reified T> Any?.cast(): T = this as T

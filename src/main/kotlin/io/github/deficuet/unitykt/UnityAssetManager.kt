@@ -28,7 +28,15 @@ class UnityAssetManager: Closeable {
     /**
      * All Objects loaded except [io.github.deficuet.unitykt.data.AssetBundle]
      */
-    val objects get() = contexts.flatMap { context -> context.objects.filter { it.mPathID != 1L } }
+    val objects get() = contexts.flatMap { context ->
+        sequence {
+            for (obj in context.objects) {
+                if (obj.key != 1L) {
+                    yield(obj.value)
+                }
+            }
+        }
+    }
 
     /**
      * Multi-dictionary of objects associated with their mPathID

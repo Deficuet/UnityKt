@@ -22,8 +22,8 @@ internal fun ByteArray.decodeToString(charset: Charset = Charsets.UTF_8) =
 internal fun ByteArray.toHalf(): Float {
     if (size != 2) throw IllegalStateException("There should be 2 bytes only")
     val intValue = this[0].toIntBits().shl(8).or(this[1].toIntBits())
-    var mantissa = intValue and 0x03FF
-    var exp = intValue and 0x7C00
+    var mantissa = intValue.and(0x03FF)
+    var exp = intValue.and(0x7C00)
     if (exp == 0x7C00) exp = 0x3FC00
     else if (exp != 0) {
         exp += 0x1C000
@@ -35,10 +35,10 @@ internal fun ByteArray.toHalf(): Float {
     } else if (mantissa != 0) {
         exp = 0x1C400
         do {
-            mantissa = mantissa shl 1
+            mantissa = mantissa.shl(1)
             exp -= 0x400
-        } while (mantissa and 0x400 == 0)
-        mantissa = mantissa and 0x3FF
+        } while (mantissa.and(0x400) == 0)
+        mantissa = mantissa.and(0x3FF)
     }
     return Float.fromBits(
         intValue.and(0x8000).shl(16).or(exp.or(mantissa).shl(13))
