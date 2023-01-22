@@ -159,6 +159,7 @@ class UnityAssetManager: Closeable {
 
         fun closeAll() {
             managers.forEach { it.close() }
+            managers.clear()
         }
     }
 }
