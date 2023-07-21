@@ -1,7 +1,7 @@
 package io.github.deficuet.unitykt.dataImpl
 
 import io.github.deficuet.unitykt.data.*
-import io.github.deficuet.unitykt.getObj
+import io.github.deficuet.unitykt.safeGetObj
 import io.github.deficuet.unitykt.util.ObjectReader
 import io.github.deficuet.unitykt.util.compareTo
 
@@ -32,7 +32,7 @@ class GameObjectImpl internal constructor(reader: ObjectReader): EditorExtension
         val animators = mutableListOf<Animator>()
         val animations = mutableListOf<Animation>()
         for (pptr in mComponents) {
-            val obj = pptr.getObj()
+            val obj = pptr.safeGetObj()
             if (obj != null) {
                 when (obj) {
                     is Transform -> transforms.add(obj)

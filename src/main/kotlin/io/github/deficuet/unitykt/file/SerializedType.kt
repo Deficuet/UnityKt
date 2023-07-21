@@ -1,10 +1,8 @@
 package io.github.deficuet.unitykt.file
 
-import io.github.deficuet.unitykt.util.IntRef
 import io.github.deficuet.unitykt.util.ObjectReader
 import io.github.deficuet.unitykt.util.byteArrayOf
-import java.nio.ByteBuffer
-import java.nio.ByteOrder
+import io.github.deficuet.unitykt.util.toChar
 import kotlin.collections.set
 
 data class SerializedType(
@@ -22,15 +20,18 @@ data class SerializedType(
     data class Tree(
         val nodes: MutableList<TreeNode> = mutableListOf()
     ) {
-        private operator fun <E> List<E>.get(i: IntRef) = this[i.value]
+        private data class NodeResult(
+            val seq: Int,
+            val value: Any
+        )
 
         fun readTypeString(reader: ObjectReader): String {
             reader.position = 0
             val builder = StringBuilder()
-            val iRef = IntRef(0)
-            while (iRef < nodes.size) {   //for (int i = 0; i < nodes.size; i++)
-                readNodeString(builder, nodes, reader, iRef)   // readNodeString(..., ref i)
-                iRef += 1
+            var i = 0
+            while (i < nodes.size) {
+                i = readNodeString(builder, nodes, reader, i)
+                i++
             }
             return builder.toString()
         }
@@ -38,32 +39,30 @@ data class SerializedType(
         fun readType(reader: ObjectReader): Map<String, Any> {
             reader.position = 0
             val dict = mutableMapOf<String, Any>()
-            val iRef = IntRef(1)
-            while (iRef < nodes.size) {
-                val node = nodes[iRef]
-                dict[node.name] = nodes.readNode(reader, iRef)
-                iRef += 1
+            var i = 1
+            while (i < nodes.size) {
+                val node = nodes[i]
+                val result = readNode(reader, nodes, i)
+                i = result.seq
+                dict[node.name] = result.value
+                i++
             }
             return dict
         }
 
         private fun readNodeString(
             builder: StringBuilder, nodes: List<TreeNode>,
-            reader: ObjectReader, intRef: IntRef
-        ) {
-            val node = nodes[intRef]
+            reader: ObjectReader, i: Int
+        ): Int {
+            var seq = i
+            val node = nodes[seq]
             var append = true
-            var align = (node.metaFlag and 0x4000) != 0
+            var align = node.metaFlag.and(0x4000) != 0
             var value: Any? = null
             when (node.type) {
                 "SInt8" -> value = reader.readSByte()
                 "UInt8" -> value = reader.readByte()
-                "char" -> {
-                    value = Char(
-                        ByteBuffer.wrap(reader.read(2))
-                            .order(ByteOrder.LITTLE_ENDIAN).short.toUShort()
-                    )
-                }
+                "char" -> value = reader.read(2).toChar()
                 "SInt16", "short" -> value = reader.readShort()
                 "UInt16", "unsigned short" -> value = reader.readUShort()
                 "SInt32", "int" -> value = reader.readInt()
@@ -77,10 +76,10 @@ data class SerializedType(
                     append = false
                     val str = reader.readAlignedString()
                     builder.append("${"\t".repeat(node.level)}${node.type} ${node.name} = \"$str\"\r\n")
-                    intRef += nodes.getNode(intRef.value).size - 1
+                    seq += nodes.getNodes(seq).size - 1
                 }
                 "map" -> {
-                    if ((nodes[intRef + 1].metaFlag and 0x4000) != 0) align = true
+                    if (nodes[seq + 1].metaFlag.and(0x4000) != 0) align = true
                     append = false
                     val size = reader.readInt()
                     with(builder) {
@@ -88,16 +87,16 @@ data class SerializedType(
                         append("${"\t".repeat(node.level + 1)}Array Array\r\n")
                         append("${"\t".repeat(node.level + 1)}int size = $size\r\n")
                     }
-                    val map = nodes.getNode(intRef.value)
-                    intRef += map.size - 1
-                    val first = map.getNode(4)
-                    val second = map.getNode(first.size + 4)
+                    val map = nodes.getNodes(seq)
+                    seq += map.size - 1
+                    val first = map.getNodes(4)
+                    val second = map.getNodes(first.size + 4)
                     with(builder) {
-                        for (i in 0 until size) {
-                            append("${"\t".repeat(node.level + 2)}[${i}]\r\n")
+                        for (j in 0 until size) {
+                            append("${"\t".repeat(node.level + 2)}[${j}]\r\n")
                             append("${"\t".repeat(node.level + 2)}pair data\r\n")
-                            readNodeString(builder, first, reader, IntRef(0))
-                            readNodeString(builder, second, reader, IntRef(0))
+                            readNodeString(this, first, reader, 0)
+                            readNodeString(this, second, reader, 0)
                         }
                     }
                 }
@@ -105,15 +104,15 @@ data class SerializedType(
                     append = false
                     val size = reader.readInt()
                     reader += size
-                    intRef += 2
+                    seq += 2
                     with(builder) {
                         append("${"\t".repeat(node.level)}${node.type} ${node.name}\r\n")
                         append("${"\t".repeat(node.level)}int size = $size\r\n")
                     }
                 }
                 else -> {
-                    if (intRef < nodes.size - 1 && nodes[intRef + 1].type == "Array") {
-                        if ((nodes[intRef + 1].metaFlag and 0x4000) != 0) align = true
+                    if (seq < nodes.size - 1 && nodes[seq + 1].type == "Array") {
+                        if (nodes[seq + 1].metaFlag.and(0x4000) != 0) align = true
                         append = false
                         val size = reader.readInt()
                         with(builder) {
@@ -121,99 +120,106 @@ data class SerializedType(
                             append("${"\t".repeat(node.level + 1)}Array Array\r\n")
                             append("${"\t".repeat(node.level + 1)}int size = $size\r\n")
                         }
-                        val vector = nodes.getNode(intRef.value)
-                        intRef += vector.size - 1
+                        val vector = nodes.getNodes(seq)
+                        seq += vector.size - 1
                         for (j in 0 until size) {
                             builder.append("${"\t".repeat(node.level + 2)}[${j}]\r\n")
-                            readNodeString(builder, vector, reader, IntRef(3))
+                            readNodeString(builder, vector, reader, 3)
                         }
                     } else {
                         append = false
                         builder.append("${"\t".repeat(node.level)}${node.type} ${node.name}\r\n")
-                        val clazz = nodes.getNode(intRef.value)
-                        intRef += clazz.size - 1
-                        val kRef = IntRef(1)
-                        while (kRef < clazz.size) {
-                            readNodeString(builder, clazz, reader, kRef)
-                            kRef += 1
+                        val clazz = nodes.getNodes(seq)
+                        seq += clazz.size - 1
+                        var j = 1
+                        while (j < clazz.size) {
+                            j = readNodeString(builder, clazz, reader, j)
+                            j++
                         }
                     }
                 }
             }
             if (append) builder.append("${"\t".repeat(node.level)}${node.type} ${node.name} = $value\n")
             if (align) reader.alignStream()
+            return seq
         }
 
-        private fun List<TreeNode>.readNode(reader: ObjectReader, iRef: IntRef): Any {
-            val node = this[iRef]
+        private fun readNode(reader: ObjectReader, nodes: List<TreeNode>, i: Int): NodeResult {
+            var seq = i
+            val node = nodes[seq]
             var align = node.metaFlag.and(0x4000) != 0
-            val value: Any = when (node.type) {
-                "SInt8" -> reader.readSByte()
-                "UInt8" -> reader.readByte()
-                "char" -> String(reader.read(2))
-                "SInt16", "short" -> reader.readShort()
-                "UInt16", "unsigned short" -> reader.readUShort()
-                "SInt32", "int" -> reader.readInt()
-                "UInt32", "unsigned int", "Type*" -> reader.readUInt()
-                "SInt64", "long long" -> reader.readLong()
-                "UInt64", "unsigned long long", "FileSize" -> reader.readULong()
-                "float" -> reader.readFloat()
-                "double" -> reader.readDouble()
-                "bool" -> reader.readBool()
+            val value: Any
+            when (node.type) {
+                "SInt8" -> value = reader.readSByte()
+                "UInt8" -> value = reader.readByte()
+                "char" -> value = reader.read(2).toChar()
+                "SInt16", "short" -> value = reader.readShort()
+                "UInt16", "unsigned short" -> value = reader.readUShort()
+                "SInt32", "int" -> value = reader.readInt()
+                "UInt32", "unsigned int", "Type*" -> value = reader.readUInt()
+                "SInt64", "long long" -> value = reader.readLong()
+                "UInt64", "unsigned long long", "FileSize" -> value = reader.readULong()
+                "float" -> value = reader.readFloat()
+                "double" -> value = reader.readDouble()
+                "bool" -> value = reader.readBool()
                 "string" -> {
-                    iRef += nodes.getNode(iRef.value).size - 1
-                    reader.readAlignedString()
+                    value = reader.readAlignedString()
+                    seq += nodes.getNodes(seq).size - 1
                 }
                 "map" -> {
-                    if (this[iRef + 1].metaFlag.and(0x4000) != 0) align = true
-                    val map = getNode(iRef.value)
-                    iRef += map.size - 1
-                    val first = map.getNode(4)
-                    val second = map.getNode(first.size + 4)
+                    if (nodes[seq + 1].metaFlag.and(0x4000) != 0) align = true
+                    val map = nodes.getNodes(seq)
+                    seq += map.size - 1
+                    val first = map.getNodes(4)
+                    val second = map.getNodes(first.size + 4)
                     val size = reader.readInt()
                     val dict = mutableListOf<Pair<Any, Any>>()
-                    for (i in 0 until size) {
-                        dict.add(Pair(
-                            first.readNode(reader, IntRef(0)),
-                            second.readNode(reader, IntRef(0))
-                        ))
+                    for (j in 0 until size) {
+                        dict.add(
+                            Pair(
+                                readNode(reader, first, 0).value,
+                                readNode(reader, second, 0).value
+                            )
+                        )
                     }
-                    dict
+                    value = dict
                 }
                 "TypelessData" -> {
-                    iRef += 2
-                    with(reader) { read(readInt()) }
+                    value = reader.readNextByteArray()
+                    seq += 2
                 }
                 else -> {
-                    if (iRef < size - 1 && this[iRef + 1].type == "Array") {
-                        if ((this[iRef + 1].metaFlag and 0x4000) != 0) align = true
-                        val vector = getNode(iRef.value)
-                        iRef += vector.size - 1
+                    if (seq < nodes.size - 1 && nodes[seq + 1].type == "Array") {
+                        if (nodes[seq + 1].metaFlag.and(0x4000) != 0) align = true
+                        val vector = nodes.getNodes(seq)
+                        seq += vector.size - 1
                         val size = reader.readInt()
                         val list = mutableListOf<Any>()
                         for (j in 0 until size) {
-                            list.add(vector.readNode(reader, IntRef(3)))
+                            list.add(readNode(reader, vector, 3).value)
                         }
-                        list
+                        value = list
                     } else {
-                        val clazz = getNode(iRef.value)
-                        iRef += clazz.size - 1
+                        val clazz = nodes.getNodes(seq)
+                        seq += clazz.size - 1
                         val dict = mutableMapOf<String, Any>()
-                        val kRef = IntRef(1)
-                        while (kRef < clazz.size) {
-                            val theClass = clazz[kRef]
-                            dict[theClass.name] = clazz.readNode(reader, kRef)
-                            kRef += 1
+                        var j = 1
+                        while (j < clazz.size) {
+                            val theClass = clazz[j]
+                            val result = readNode(reader, clazz, j)
+                            j = result.seq
+                            dict[theClass.name] = result.value
+                            j++
                         }
-                        dict
+                        value = dict
                     }
                 }
             }
             if (align) reader.alignStream()
-            return value
+            return NodeResult(seq, value)
         }
 
-        private fun List<TreeNode>.getNode(index: Int): List<TreeNode> {
+        private fun List<TreeNode>.getNodes(index: Int): List<TreeNode> {
             val nodes = mutableListOf(this[index])
             val level = this[index].level
             for (i in index + 1 until size) {

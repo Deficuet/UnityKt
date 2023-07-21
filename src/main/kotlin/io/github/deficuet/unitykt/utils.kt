@@ -52,12 +52,22 @@ fun Collection<Object>.allObjectsOf(vararg type: String): List<Object> {
     return filter { it.type.name in type }
 }
 
-inline fun <reified T: Object> Collection<Object>.objectFromPathID(pathId: Long): T {
+inline fun <reified T: Object> Collection<Object>.safeFindWithPathID(pathId: Long): T? {
+    return with(first { it.mPathID == pathId }) { if (this is T) this else null }
+}
+
+inline fun <reified T: Object> Collection<Object>.findWithPathID(pathId: Long): T {
     return first { it.mPathID == pathId } as T
+}
+
+inline fun <reified T: Object> Map<Long, Object>.safeGetAs(pathId: Long): T? {
+    return this[pathId].safeCast()
 }
 
 inline fun <reified T: Object> Map<Long, Object>.getAs(pathId: Long): T {
     return this[pathId].cast()
 }
+
+inline fun <reified T> Any?.safeCast(): T? = this as? T
 
 inline fun <reified T> Any?.cast(): T = this as T

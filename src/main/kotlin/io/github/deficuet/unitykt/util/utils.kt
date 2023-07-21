@@ -2,6 +2,8 @@ package io.github.deficuet.unitykt.util
 
 import org.json.JSONArray
 import org.json.JSONObject
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 import java.nio.charset.Charset
 import java.nio.file.Files
 import kotlin.io.path.Path
@@ -42,6 +44,13 @@ internal fun ByteArray.toHalf(): Float {
     }
     return Float.fromBits(
         intValue.and(0x8000).shl(16).or(exp.or(mantissa).shl(13))
+    )
+}
+
+internal fun ByteArray.toChar(): Char {
+    if (size != 2) throw IllegalStateException("There should be 2 bytes only")
+    return Char(
+        ByteBuffer.wrap(this).order(ByteOrder.LITTLE_ENDIAN).short.toUShort()
     )
 }
 

@@ -28,9 +28,9 @@ class UnityAssetManager: Closeable {
     /**
      * All Objects loaded except [io.github.deficuet.unitykt.data.AssetBundle]
      */
-    val objects get() = contexts.values.flatMap { context ->
+    val objectList get() = contexts.values.flatMap { context ->
         sequence {
-            for (obj in context.objects) {
+            for (obj in context.objectMap) {
                 if (obj.key != 1L) {
                     yield(obj.value)
                 }
@@ -41,7 +41,7 @@ class UnityAssetManager: Closeable {
     /**
      * Multi-dictionary of objects associated with their mPathID
      */
-    val objectDict get() = objects.groupBy { it.mPathID }
+    val objectMap get() = objectList.groupBy { it.mPathID }
 
     data class Configuration internal constructor(
         /**

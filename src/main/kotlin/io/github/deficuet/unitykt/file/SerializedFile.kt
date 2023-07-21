@@ -360,7 +360,7 @@ class SerializedFile(
             objectMap[obj.mPathID] = obj
         }
         objects = objectMap
-        root.objects.putAll(objects)
+        root.objectMap.putAll(objects)
         objectInfoList.clear()
         //endregion
     }

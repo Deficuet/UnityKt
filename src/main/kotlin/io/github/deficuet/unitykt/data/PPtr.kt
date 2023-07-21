@@ -19,7 +19,7 @@ class PPtr<out T: Object> internal constructor(reader: ObjectReader) {
     val assetFile = reader.assetFile
 
     /**
-     * @see io.github.deficuet.unitykt.getObj
+     * @see io.github.deficuet.unitykt.safeGetObj
      */
     @PublishedApi internal var obj: @UnsafeVariance T? = null
 
