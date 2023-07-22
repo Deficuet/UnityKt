@@ -53,7 +53,9 @@ fun Collection<Object>.allObjectsOf(vararg type: String): List<Object> {
 }
 
 inline fun <reified T: Object> Collection<Object>.safeFindWithPathID(pathId: Long): T? {
-    return with(first { it.mPathID == pathId }) { if (this is T) this else null }
+    return find { it.mPathID == pathId }?.let {
+        if (it is T) it else null
+    }
 }
 
 inline fun <reified T: Object> Collection<Object>.findWithPathID(pathId: Long): T {
