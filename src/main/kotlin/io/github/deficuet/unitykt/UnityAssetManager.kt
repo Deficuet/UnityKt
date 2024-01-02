@@ -1,165 +1,170 @@
 package io.github.deficuet.unitykt
 
-import io.github.deficuet.unitykt.file.*
-import io.github.deficuet.unitykt.util.OffsetMode
-import io.github.deficuet.unitykt.util.isDirectory
-import io.github.deficuet.unitykt.util.isFile
+import io.github.deficuet.unitykt.classes.AssetBundle
+import io.github.deficuet.unitykt.classes.PPtr
+import io.github.deficuet.unitykt.classes.UnityObject
+import io.github.deficuet.unitykt.internal.UnityAssetManagerImpl
 import java.io.Closeable
-import java.nio.file.Files
-import java.util.stream.Collectors
-import kotlin.io.path.Path
-import kotlin.io.path.isRegularFile
-import kotlin.io.path.pathString
+import java.io.File
+import java.nio.file.Path
 
-class UnityAssetManager: Closeable {
-    /**
-     * Usually [BundleFile] and [WebFile] with their file names.
-     */
-    val assetBundles = mutableMapOf<String, AssetBundleFile>()
-
-    val assetFiles = mutableMapOf<String, SerializedFile>()
-    val resourceFiles = mutableMapOf<String, ResourceFile>()
+interface UnityAssetManager: Closeable {
+    val assetRootFolder: File?
+    val defaultReaderConfig: ReaderConfig
 
     /**
-     * All file context loaded from disk.
+     * All file contexts loaded.
      */
-    val contexts = mutableMapOf<String, ImportContext>()
+    val contexts: Map<String, ImportContext>
 
     /**
-     * All Objects loaded except [io.github.deficuet.unitykt.data.AssetBundle]
+     * All Objects loaded except [AssetBundle]
      */
-    val objectList get() = contexts.values.flatMap { context ->
-        sequence {
-            for (obj in context.objectMap) {
-                if (obj.key != 1L) {
-                    yield(obj.value)
-                }
-            }
-        }
-    }
+    val objectList: List<UnityObject>
 
     /**
      * Multi-dictionary of objects associated with their mPathID
      */
-    val objectMap get() = objectList.groupBy { it.mPathID }
-
-    data class Configuration internal constructor(
-        /**
-         * @see [OffsetMode]
-         */
-        var offsetMode: OffsetMode = OffsetMode.AUTO,
-
-        /**
-         * Skip specific number of bytes before reading under [OffsetMode.MANUAL] mode.
-         */
-        var manualOffset: Long = 0
-    )
-
-    private val configuration = Configuration()
-
-    internal val otherReaderList = mutableListOf<Closeable>()
-
-    init { managers.add(this) }
+    val objectMap: Map<Long, List<UnityObject>>
 
     /**
      * @param data Bytes of AsserBundle file
      * @param name A string as the "file name" of this bytes
-     * @param config To set [Configuration.offsetMode] and [Configuration.manualOffset] **before** reading
+     * @param config To set [offsetMode][ReaderConfig.offsetMode]
+     *  and [manualOffset][ReaderConfig.manualOffset] **before** reading
+     * @return A [ImportContext] for the bytes.
      */
-    fun loadFromByteArray(data: ByteArray, name: String, config: Configuration.() -> Unit = {}): ImportContext {
-        configuration.config()
-        return ImportContext(
-            data, name, this,
-            configuration.offsetMode,
-            configuration.manualOffset
-        ).also {
-            contexts[it.name] = it
-        }
-    }
+    fun loadFromByteArray(data: ByteArray, name: String, config: ReaderConfig = defaultReaderConfig): ImportContext
 
     /**
-     * @param path The path string points to a **file**
-     * @param config To set [Configuration.offsetMode] and [Configuration.manualOffset] **before** reading
+     * @param file The **file** path.
+     * @param config To set [offsetMode][ReaderConfig.offsetMode]
+     *  and [manualOffset][ReaderConfig.manualOffset] **before** reading
      * @return A [ImportContext] for this file.
-     * @throws IllegalStateException If [path] does not point to a **file**
+     * @throws IllegalArgumentException If [file] does not point to a file.
      */
-    fun loadFile(path: String, config: Configuration.() -> Unit = {}): ImportContext {
-        configuration.config()
-        if (!path.isFile()) throw IllegalStateException("\"path\" must be a file")
-        return ImportContext(
-            path, this,
-            configuration.offsetMode,
-            configuration.manualOffset
-        ).also {
-            contexts[it.name] = it
-        }
-    }
+    fun loadFile(file: String, config: ReaderConfig = defaultReaderConfig): ImportContext
+    /**
+     * @see loadFile
+     */
+    fun loadFile(file: Path, config: ReaderConfig = defaultReaderConfig): ImportContext
+    /**
+     * @see loadFile
+     */
+    fun loadFile(file: File, config: ReaderConfig = defaultReaderConfig): ImportContext
 
     /**
-     * @param path The path strings point to **files**
-     * @param config To set [Configuration.offsetMode] and [Configuration.manualOffset] **before** reading
-     * @return A list of [ImportContext] for each file.
-     * @throws IllegalStateException If [path] does not point to a **file**
+     * @param files Arbitrary number of **file** paths.
+     * @param config config To set [offsetMode][ReaderConfig.offsetMode]
+     *  and [manualOffset][ReaderConfig.manualOffset] **before** reading for all files
+     * @return An [Array] of [ImportContext] for each file.
+     * @throws IllegalArgumentException If any of [files] does not point to a file.
      */
-    fun loadFiles(vararg path: String, config: Configuration.() -> Unit = {}): List<ImportContext> {
-        configuration.config()
-        if (path.any { !it.isFile() }) throw IllegalStateException("\"path\" must be a file")
-        return mutableListOf<ImportContext>().apply {
-            for (dir in path) {
-                add(loadFile(dir))
-            }
-        }
-    }
+    fun loadFiles(vararg files: String, config: ReaderConfig = defaultReaderConfig): Array<ImportContext>
+    /**
+     * @see loadFiles
+     */
+    fun loadFiles(vararg files: Path, config: ReaderConfig = defaultReaderConfig): Array<ImportContext>
+    /**
+     * @see loadFiles
+     */
+    fun loadFiles(vararg files: File, config: ReaderConfig = defaultReaderConfig): Array<ImportContext>
 
     /**
-     * @param folder The path strings point to a **folder**
-     * @param config To set [Configuration.offsetMode] and [Configuration.manualOffset] **before** reading
-     * @return A list of [ImportContext] for each file under this folder.
-     * Others folders under this directory will be ignored.
-     * @throws IllegalStateException If [folder] does not point to a **folder**.
+     * @param folder The **folder** path
+     * @param config To set [offsetMode][ReaderConfig.offsetMode]
+     *  and [manualOffset][ReaderConfig.manualOffset] **before** reading for all files
+     * @return An [Array] of [ImportContext] for each file under this folder.
+     * Folders under this directory is excluded.
+     * @throws IllegalArgumentException If [folder] does not point to a folder.
      */
-    fun loadFolder(folder: String, config: Configuration.() -> Unit = {}): List<ImportContext> {
-        configuration.config()
-        if (!folder.isDirectory()) throw IllegalStateException("\"path\" must be a directory")
-        val files = Files.newDirectoryStream(Path(folder)).use { stream ->
-            stream.filter { it.isRegularFile() }
-                .map { it.pathString }
-                .toTypedArray()
-        }
-        return loadFiles(*files)
-    }
+    fun loadFolder(folder: String, config: ReaderConfig = defaultReaderConfig): Array<ImportContext>
+    /**
+     * @see loadFolder
+     */
+    fun loadFolder(folder: File, config: ReaderConfig = defaultReaderConfig): Array<ImportContext>
+    /**
+     * @see loadFolder
+     */
+    fun loadFolder(folder: Path, config: ReaderConfig = defaultReaderConfig): Array<ImportContext>
 
     /**
-     * @param folder The path strings point to a **folder**
-     * @param config To set [Configuration.offsetMode] and [Configuration.manualOffset] **before** reading
-     * @return A list of [ImportContext] for all reachable files under this folder.
-     * @throws IllegalStateException If [folder] does not point to a **folder**.
+     * @param folder The **folder** path
+     * @param config To set [offsetMode][ReaderConfig.offsetMode]
+     *  and [manualOffset][ReaderConfig.manualOffset] **before** reading for all files
+     * @return An [Array] of [ImportContext] for **all** reachable files under this folder.
+     * @throws IllegalArgumentException If [folder] does not point to a folder.
      */
-    fun loadFolderRecursively(folder: String, config: Configuration.() -> Unit = {}): List<ImportContext> {
-        configuration.config()
-        if (!folder.isDirectory()) throw IllegalStateException("\"path\" must be a directory")
-        val files = Files.walk(Path(folder)).filter(Files::isRegularFile)
-            .map { it.pathString }.collect(Collectors.toList()).toTypedArray()
-        return loadFiles(*files)
-    }
-
-    override fun close() {
-        assetFiles.values.forEach { it.reader.close() }
-        resourceFiles.values.forEach { it.reader.close() }
-        otherReaderList.forEach { it.close() }
-        assetBundles.clear()
-        assetFiles.clear()
-        resourceFiles.clear()
-        otherReaderList.clear()
-        contexts.clear()
-    }
+    fun loadFolderRecursively(folder: String, config: ReaderConfig = defaultReaderConfig): Array<ImportContext>
+    /**
+     * @see loadFolderRecursively
+     */
+    fun loadFolderRecursively(folder: File, config: ReaderConfig = defaultReaderConfig): Array<ImportContext>
+    /**
+     * @see loadFolderRecursively
+     */
+    fun loadFolderRecursively(folder: Path, config: ReaderConfig = defaultReaderConfig): Array<ImportContext>
 
     companion object {
-        private val managers = mutableListOf<UnityAssetManager>()
+        /**
+         * @param assetRootFolder The root folder of a Unity asset bundles system.
+         *  This will be used by [PPtr] to find dependency objects.
+         */
+        fun new(assetRootFolder: String, readerConfig: ReaderConfig = ReaderConfig.default): UnityAssetManager {
+            return new(File(assetRootFolder), readerConfig)
+        }
+        /**
+         * @see new
+         */
+        fun new(assetRootFolder: Path, readerConfig: ReaderConfig = ReaderConfig.default): UnityAssetManager {
+            return new(assetRootFolder.toFile(), readerConfig)
+        }
+        /**
+         * @see new
+         */
+        fun new(assetRootFolder: File, readerConfig: ReaderConfig = ReaderConfig.default): UnityAssetManager {
+            if (!assetRootFolder.isDirectory) {
+                throw IllegalArgumentException("${assetRootFolder.path} is not a valid folder")
+            }
+            return UnityAssetManagerImpl(assetRootFolder, readerConfig)
+        }
+
+        fun new(readerConfig: ReaderConfig = ReaderConfig.default): UnityAssetManager {
+            return UnityAssetManagerImpl(null, readerConfig)
+        }
+
+        internal val managers = mutableListOf<UnityAssetManager>()
 
         fun closeAll() {
             managers.forEach { it.close() }
             managers.clear()
         }
     }
+}
+
+data class ReaderConfig internal constructor(
+    /**
+     * @see [OffsetMode]
+     */
+    val offsetMode: OffsetMode = OffsetMode.MANUAL,
+
+    /**
+     * Skip specific number of bytes before reading.
+     *
+     * Works under [OffsetMode.MANUAL] mode.
+     */
+    val manualOffset: Long = 0
+) {
+    companion object {
+        val default = ReaderConfig()
+    }
+}
+
+enum class OffsetMode {
+    MANUAL,
+
+    /**
+     * Stream will seek automatically to the first non-zero byte.
+     */
+    AUTO
 }

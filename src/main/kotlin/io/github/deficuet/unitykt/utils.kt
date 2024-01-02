@@ -1,72 +1,52 @@
 package io.github.deficuet.unitykt
 
-import io.github.deficuet.unitykt.data.Object
+import io.github.deficuet.unitykt.classes.UnityObject
+import io.github.deficuet.unitykt.enums.ClassIDType
 
-operator fun <K, V> Collection<Pair<K, V>>.get(key: K): List<V> {
-    return filter {
-        when (val f = it.first) {
-            is CharSequence -> f.contentEquals(key as CharSequence)
-            is Array<*> -> f.contentEquals(key as Array<*>)
-            is ByteArray -> f.contentEquals(key as ByteArray)
-            is CharArray -> f.contentEquals(key as CharArray)
-            is ShortArray -> f.contentEquals(key as ShortArray)
-            is IntArray -> f.contentEquals(key as IntArray)
-            is LongArray -> f.contentEquals(key as LongArray)
-            is DoubleArray -> f.contentEquals(key as DoubleArray)
-            is FloatArray -> f.contentEquals(key as FloatArray)
-            is BooleanArray -> f.contentEquals(key as BooleanArray)
-            else -> f == key
-        }
-    }.map { it.second }
-}
+/**
+ * Use [filterIsInstance] for finding all objects of a specific type.
+ */
+inline fun <reified O: UnityObject> Iterable<UnityObject>.firstObjectOf() = filterIsInstance<O>()[0]
 
-operator fun <K, V> Array<Pair<K, V>>.get(key: K): List<V> {
-    return filter {
-        when (val f = it.first) {
-            is CharSequence -> f.contentEquals(key as CharSequence)
-            is Array<*> -> f.contentEquals(key as Array<*>)
-            is ByteArray -> f.contentEquals(key as ByteArray)
-            is CharArray -> f.contentEquals(key as CharArray)
-            is ShortArray -> f.contentEquals(key as ShortArray)
-            is IntArray -> f.contentEquals(key as IntArray)
-            is LongArray -> f.contentEquals(key as LongArray)
-            is DoubleArray -> f.contentEquals(key as DoubleArray)
-            is FloatArray -> f.contentEquals(key as FloatArray)
-            is BooleanArray -> f.contentEquals(key as BooleanArray)
-            else -> f == key
-        }
-    }.map { it.second }
-}
+inline fun <reified O: UnityObject> Array<out UnityObject>.firstObjectOf() = filterIsInstance<O>()[0]
 
-fun <K, V> Collection<Pair<K, V>>.first(key: K) = get(key)[0]
-
-fun <K, V> Collection<Pair<K, V>>.firstOrNull(key: K) = with(get(key)) { if (isEmpty()) null else this[0] }
-
-inline fun <reified O: Object> Collection<Object>.firstObjectOf() = filterIsInstance<O>()[0]
-
-inline fun <reified O: Object> Collection<Object>.firstOfOrNull(): O? {
+inline fun <reified O: UnityObject> Iterable<UnityObject>.firstOfOrNull(): O? {
     return with(filterIsInstance<O>()) { if (isEmpty()) null else this[0] }
 }
 
-fun Collection<Object>.allObjectsOf(vararg type: String): List<Object> {
-    return filter { it.type.name in type }
+inline fun <reified O: UnityObject> Array<out UnityObject>.firstOfOrNull(): O? {
+    return with(filterIsInstance<O>()) { if (isEmpty()) null else this[0] }
 }
 
-inline fun <reified T: Object> Collection<Object>.safeFindWithPathID(pathId: Long): T? {
-    return find { it.mPathID == pathId }?.let {
-        if (it is T) it else null
-    }
+fun Iterable<UnityObject>.allObjectsOf(vararg types: ClassIDType): List<UnityObject> {
+    return filter { it.type in types }
 }
 
-inline fun <reified T: Object> Collection<Object>.findWithPathID(pathId: Long): T {
-    return first { it.mPathID == pathId } as T
+fun Array<UnityObject>.allObjectsOf(vararg types: ClassIDType): List<UnityObject> {
+    return filter { it.type in types }
 }
 
-inline fun <reified T: Object> Map<Long, Object>.safeGetAs(pathId: Long): T? {
+inline fun <reified T: UnityObject> Iterable<UnityObject>.safeFindWithPathID(pathId: Long): T? {
+    return find { it.mPathID == pathId }.safeCast()
+}
+
+inline fun <reified T: UnityObject> Array<out UnityObject>.safeFindWithPathID(pathId: Long): T? {
+    return find { it.mPathID == pathId }.safeCast()
+}
+
+inline fun <reified T: UnityObject> Iterable<UnityObject>.findWithPathID(pathId: Long): T {
+    return first { it.mPathID == pathId }.cast()
+}
+
+inline fun <reified T: UnityObject> Array<out UnityObject>.findWithPathID(pathId: Long): T {
+    return first { it.mPathID == pathId }.cast()
+}
+
+inline fun <reified T: UnityObject> Map<Long, UnityObject>.safeGetAs(pathId: Long): T? {
     return this[pathId].safeCast()
 }
 
-inline fun <reified T: Object> Map<Long, Object>.getAs(pathId: Long): T {
+inline fun <reified T: UnityObject> Map<Long, UnityObject>.getAs(pathId: Long): T {
     return this[pathId].cast()
 }
 

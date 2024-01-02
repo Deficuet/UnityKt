@@ -1,14 +1,7 @@
 package io.github.deficuet.unitykt.math
 
-import io.github.deficuet.unitykt.cast
-
-data class Quaternion(val a: Double, val b: Double, val c: Double, val d: Double) {
-    constructor(a: Float, b: Float, c: Float, d: Float):
-        this(a.toDouble(), b.toDouble(), c.toDouble(), d.toDouble())
-
-    constructor(vararg data: Float): this(data[0], data[1], data[2], data[3])
-
-    operator fun get(index: Int): Double {
+class Quaternion(val a: Float, val b: Float, val c: Float, val d: Float) {
+    operator fun get(index: Int): Float {
         return when (index) {
             0 -> a
             1 -> b
@@ -30,14 +23,15 @@ data class Quaternion(val a: Double, val b: Double, val c: Double, val d: Double
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
-        return dot(other.cast()) > 1.0 - kEpsilon
+        return dot(other as Quaternion) > 1f - kEpsilon
     }
 
     override fun toString(): String {
-        return "Quaternion(a, b, c, d) = ($a, $b, $c, $d)"
+        return "Quaternion($a, $b, $c, $d)"
     }
 
     companion object {
-        internal const val kEpsilon = 0.000001
+        val Zero = Quaternion(0f, 0f, 0f, 0f)
+        private const val kEpsilon = 0.000001f
     }
 }

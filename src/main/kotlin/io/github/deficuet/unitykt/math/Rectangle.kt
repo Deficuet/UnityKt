@@ -1,9 +1,7 @@
 package io.github.deficuet.unitykt.math
 
-data class Rectangle(val x: Double, val y: Double, val w: Double, val h: Double) {
-    constructor(x: Float, y: Float, w: Float, h: Float): this(x.toDouble(), y.toDouble(), w.toDouble(), h.toDouble())
-
+class Rectangle(val x: Float, val y: Float, val w: Float, val h: Float) {
     override fun toString(): String {
-        return "Rectangle at ($x, $y) with width and height ($w, $h)"
+        return "Rectangle(pos($x, $y), size($w, $h))"
     }
 }

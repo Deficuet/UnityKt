@@ -7,12 +7,12 @@ import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.util.zip.GZIPInputStream
 
-class CompressUtils private constructor() {
+internal class CompressUtils private constructor() {
     companion object {
-        val GZIP_MAGIC = byteArrayOf(0x1F, 0x8B)
-        val BROTLI_MAGIC = byteArrayOf("brotli")
+        val GZIP_MAGIC = byteArrayOf(0x1F, -0x75)
+        val BROTLI_MAGIC = byteArrayOf(0x62, 0x72, 0x6F, 0x74, 0x6C, 0x69)
 
-        private val lz4Decompressor = LZ4Factory.fastestInstance().fastDecompressor()
+        private val lz4Decompressor = LZ4Factory.nativeInstance().safeDecompressor()
 
         fun lzmaDecompress(data: ByteArray): ByteArray {
             val preInput = ByteArrayInputStream(data)
@@ -24,16 +24,17 @@ class CompressUtils private constructor() {
             for (i in 0 until 8) {
                 val v = preInput.read()
                 if (v < 0) throw IllegalStateException("Invalid input data")
-                outSize = outSize or (v.toLong().shl(8 * i))
+                outSize = outSize.or(v.toLong().shl(8 * i))
             }
-            val output = ByteArrayOutputStream()
-            return with(Decoder()) {
-                SetDecoderProperties(props)
-                Code(
-                    with(data) { ByteArrayInputStream(sliceArray(5 until size)) },
-                    output, outSize
-                )
-                output.toByteArray()
+            return ByteArrayOutputStream().use { output ->
+                with(Decoder()) {
+                    SetDecoderProperties(props)
+                    Code(
+                        ByteArrayInputStream(data, 5, data.size),
+                        output, outSize
+                    )
+                    output.toByteArray()
+                }
             }
         }
 

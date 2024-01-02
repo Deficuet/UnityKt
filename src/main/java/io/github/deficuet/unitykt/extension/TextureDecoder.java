@@ -1,6 +1,6 @@
 package io.github.deficuet.unitykt.extension;
 
-import io.github.deficuet.unitykt.util.NativeUtils;
+import io.github.deficuet.unitykt.internal.NativeUtils;
 
 public final class TextureDecoder {
     private TextureDecoder() {  }
@@ -9,7 +9,7 @@ public final class TextureDecoder {
         try {
             System.loadLibrary("TextureDecoder");
         } catch (UnsatisfiedLinkError e) {
-            NativeUtils.Companion.loadLibraryFromJar("TextureDecoder.dll");
+            NativeUtils.Companion.loadLibraryFromJar("TextureDecoder", "dll");
         }
     }
 

@@ -3,21 +3,19 @@ package io.github.deficuet.unitykt.math
 import io.github.deficuet.unitykt.cast
 import kotlin.math.sqrt
 
-class Vector3(val x: Double, val y: Double, val z: Double): Vector() {
-    constructor(x: Float, y: Float, z: Float): this(x.toDouble(), y.toDouble(), z.toDouble())
-
-    constructor(v2: Vector2, z: Double): this(v2.x, v2.y, z)
-
+class Vector3(val x: Float, val y: Float, val z: Float): Vector<Vector3> {
+    constructor(v2: Vector2, z: Float): this(v2.x, v2.y, z)
     val vector2: Vector2 get() = Vector2(x, y)
+    val vector4: Vector4 get() = Vector4(this, 0f)
 
-    val vector4: Vector4 get() = Vector4(this, 0.0)
-
-    val length2 get() = x * x + y * y + z * z
+    private val length2 get() = x * x + y * y + z * z
+    override val length get() = sqrt(length2)
 
     override val unit: Vector3
         get() {
-            return if (length2 > kEpsilonSqrt) {
-                with(1 / sqrt(length2)) {
+            val l2 = length2
+            return if (l2 > Vector.kEpsilon2) {
+                with(1 / sqrt(l2)) {
                     Vector3(x * this, y * this, z * this)
                 }
             } else {
@@ -25,7 +23,7 @@ class Vector3(val x: Double, val y: Double, val z: Double): Vector() {
             }
         }
 
-    operator fun get(index: Int): Double {
+    override operator fun get(index: Int): Float {
         return when (index) {
             0 -> x
             1 -> y
@@ -34,19 +32,32 @@ class Vector3(val x: Double, val y: Double, val z: Double): Vector() {
         }
     }
 
-    operator fun plus(other: Vector3) = Vector3(x + other.x, y + other.y, z + other.z)
+    override operator fun plus(other: Vector3) = Vector3(x + other.x, y + other.y, z + other.z)
+    override operator fun minus(other: Vector3) = Vector3(x - other.x, y - other.y, z - other.z)
 
-    operator fun minus(other: Vector3) = Vector3(x - other.x, y - other.y, z - other.z)
+    /**
+     * Treat the "Vector" as a number tuple
+     * @see dot
+     * @see cross
+     */
+    override operator fun times(other: Vector3) = Vector3(x * other.x, y * other.y, z * other.z)
+    override operator fun div(other: Vector3) = Vector3(x / other.x, y / other.y, z / other.z)
+    override operator fun unaryMinus() = Vector3(-x, -y, -z)
+    override infix fun dot(other: Vector3) = x * other.x + y * other.y + z * other.z
 
-    operator fun times(other: Vector3) = Vector3(x * other.x, y * other.y, z * other.z)
+    infix fun cross(o: Vector3): Vector3 {
+        return Vector3(y * o.z - z * o.y, z * o.x - x * o.z, x * o.y - y * o.x)
+    }
 
-    operator fun div(other: Vector3) = Vector3(x / other.x, y / other.y, z / other.z)
+    override operator fun <N: Number> times(m: N): Vector3 {
+        val n = m.toFloat()
+        return Vector3(x * n, y * n, z * n)
+    }
 
-    operator fun unaryMinus() = Vector3(-x, -y, -z)
-
-    operator fun <N> times(m: N) where N: Number, N: Comparable<N> = Vector3(x * m, y * m, z * m)
-
-    operator fun <N> div(d: N) where N: Number, N: Comparable<N> = Vector3(x / d, y / d, z / d)
+    override operator fun <N: Number> div(d: N): Vector3 {
+        val n = d.toFloat()
+        return Vector3(x / n, y / n, z / n)
+    }
 
     operator fun component1() = x
     operator fun component2() = y
@@ -59,14 +70,14 @@ class Vector3(val x: Double, val y: Double, val z: Double): Vector() {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
-        return minus(other.cast()).length2 < kEpsilon2
+        return minus(other.cast()).length2 < Vector.kEpsilon2
     }
 
     override fun toString(): String {
-        return "Vector(x, y, z) = ($x, $y, $z)"
+        return "Vector3($x, $y, $z)"
     }
 
     companion object {
-        val Zero = Vector3(0.0, 0.0, 0.0)
+        val Zero = Vector3(0f, 0f, 0f)
     }
 }
