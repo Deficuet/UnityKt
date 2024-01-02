@@ -1,5 +1,5 @@
 # UnityKt
-**Warning: Out of date**
+**Warning: Out of date. Refactored on Jan. 2nd 2024**
 
 [![](https://jitpack.io/v/Deficuet/UnityKt.svg)](https://jitpack.io/#Deficuet/UnityKt)
 
