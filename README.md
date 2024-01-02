@@ -1,4 +1,6 @@
 # UnityKt
+**Warning: Out of date**
+
 [![](https://jitpack.io/v/Deficuet/UnityKt.svg)](https://jitpack.io/#Deficuet/UnityKt)
 
 A read-only Unity assets extractor for Kotlin based on [AssetStudio](https://github.com/Perfare/AssetStudio) and refer to [UnityPy](https://github.com/K0lb3/UnityPy).
