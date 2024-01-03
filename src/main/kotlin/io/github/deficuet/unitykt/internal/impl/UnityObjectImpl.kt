@@ -1,5 +1,6 @@
 package io.github.deficuet.unitykt.internal.impl
 
+import io.github.deficuet.unitykt.classes.PPtr
 import io.github.deficuet.unitykt.classes.UnityObject
 import io.github.deficuet.unitykt.enums.BuildTarget
 import io.github.deficuet.unitykt.internal.file.ObjectInfo
@@ -31,6 +32,10 @@ internal open class UnityObjectImpl(
 
     final override fun toTypeTreeJsonString(indent: Int): String {
         return toTypeTreeJson()?.toString(indent) ?: "null"
+    }
+
+    final override fun <T: UnityObject> createPPtr(fileId: Int, pathId: Long): PPtr<T> {
+        return PPtrImpl(fileId, pathId, assetFile)
     }
 
     protected open fun read() {

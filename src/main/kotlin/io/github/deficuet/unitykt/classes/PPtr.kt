@@ -1,12 +1,9 @@
 package io.github.deficuet.unitykt.classes
 
-import io.github.deficuet.unitykt.cast
-import io.github.deficuet.unitykt.firstObjectOf
-import io.github.deficuet.unitykt.firstOfOrNull
+import io.github.deficuet.unitykt.*
 import io.github.deficuet.unitykt.internal.impl.PPtrImpl
-import io.github.deficuet.unitykt.internal.impl.getObj
-import io.github.deficuet.unitykt.internal.impl.safeGetObj
-import io.github.deficuet.unitykt.safeCast
+import io.github.deficuet.unitykt.internal.impl.getObjInternal
+import io.github.deficuet.unitykt.internal.impl.safeGetObjInternal
 
 interface PPtr<out T: UnityObject> {
     val mFileID: Int
@@ -14,13 +11,21 @@ interface PPtr<out T: UnityObject> {
     val isNull: Boolean
 }
 
-inline fun <reified T: UnityObject> PPtr<T>.safeGetObj() = (this as PPtrImpl<T>).safeGetObj()
+inline fun <reified T: UnityObject> PPtr<T>.safeGetObj(): T? {
+    return (this as PPtrImpl<T>).safeGetObjInternal()
+}
 
-inline fun <reified T: UnityObject> PPtr<T>.getObj(): T = (this as PPtrImpl<T>).getObj()
+inline fun <reified T: UnityObject> PPtr<T>.getObj(): T {
+    return (this as PPtrImpl<T>).getObjInternal()
+}
 
-inline fun <reified T: UnityObject> PPtr<*>.safeGetAs(): T? = (this as PPtrImpl<UnityObject>).safeGetObj() as? T
+inline fun <reified T: UnityObject> PPtr<*>.safeGetAs(): T? {
+    return (this as PPtrImpl<UnityObject>).safeGetObjInternal() as? T
+}
 
-inline fun <reified T: UnityObject> PPtr<*>.getAs(): T = (this as PPtrImpl<UnityObject>).getObj() as T
+inline fun <reified T: UnityObject> PPtr<*>.getAs(): T {
+    return (this as PPtrImpl<UnityObject>).getObjInternal() as T
+}
 
 inline fun <reified O: UnityObject> Iterable<PPtr<*>>.firstObjectOf() =
     mapNotNull { it.safeGetObj() }.firstObjectOf<O>()

@@ -14,6 +14,11 @@ interface UnityObject {
     val unityVersion: IntArray
     val platform: BuildTarget
     val serializedType: SerializedType?
+
+    /**
+     * Mostly be used to create [PPtr] from the type tree of a [MonoBehaviour]
+     */
+    fun <T: UnityObject> createPPtr(fileId: Int, pathId: Long): PPtr<T>
     //endregion
 
     val bytes: ByteArray

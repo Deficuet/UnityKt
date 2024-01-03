@@ -16,7 +16,7 @@ internal class PPtrImpl<out T: UnityObject>: PPtr<T> {
         get() = mPathID == 0L || mFileID < 0
     private val assetFile: SerializedFile
 
-    constructor(reader: ObjectReader) {
+    internal constructor(reader: ObjectReader) {
         mFileID = reader.readInt32()
         mPathID = with(reader) {
             if (formatVersion < FormatVersion.Unknown_14) reader.readInt32().toLong()
@@ -25,7 +25,7 @@ internal class PPtrImpl<out T: UnityObject>: PPtr<T> {
         assetFile = reader.assetFile
     }
 
-    constructor(fileId: Int, pathId: Long, assetFile: SerializedFile) {
+    internal constructor(fileId: Int, pathId: Long, assetFile: SerializedFile) {
         mFileID = fileId
         mPathID = pathId
         this.assetFile = assetFile
@@ -53,7 +53,10 @@ internal class PPtrImpl<out T: UnityObject>: PPtr<T> {
         if (fileIndex >= bundle.mDependencies.size) return null
         val dependencyName = bundle.mDependencies[fileIndex]
         try {
-            manager.loadFile(manager.assetRootFolder.resolve(dependencyName), assetFile.root.readerConfig)
+            manager.loadFile(
+                manager.assetRootFolder.resolve(dependencyName),
+                assetFile.root.manager.defaultReaderConfig
+            )
         } catch (e: Exception) {
             println("An error occurred during loading dependency file ${dependencyName}: ${e.message}")
             return null
@@ -87,7 +90,7 @@ internal class PPtrImpl<out T: UnityObject>: PPtr<T> {
 }
 
 @PublishedApi
-internal inline fun <reified T: UnityObject> PPtrImpl<T>.safeGetObj(): T? {
+internal inline fun <reified T: UnityObject> PPtrImpl<T>.safeGetObjInternal(): T? {
     val cache = getCache()
     if (cache != null) return cache
     return getAssetFile()?.let {
@@ -102,4 +105,6 @@ internal inline fun <reified T: UnityObject> PPtrImpl<T>.safeGetObj(): T? {
 }
 
 @PublishedApi
-internal inline fun <reified T: UnityObject> PPtrImpl<T>.getObj(): T = safeGetObj()!!
+internal inline fun <reified T: UnityObject> PPtrImpl<T>.getObjInternal(): T {
+    return safeGetObjInternal()!!
+}
