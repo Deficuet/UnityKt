@@ -1,9 +1,12 @@
 package io.github.deficuet.unitykt.classes
 
-import io.github.deficuet.unitykt.*
+import io.github.deficuet.unitykt.cast
+import io.github.deficuet.unitykt.firstObjectOf
+import io.github.deficuet.unitykt.firstOfOrNull
 import io.github.deficuet.unitykt.internal.impl.PPtrImpl
 import io.github.deficuet.unitykt.internal.impl.getObjInternal
 import io.github.deficuet.unitykt.internal.impl.safeGetObjInternal
+import io.github.deficuet.unitykt.safeCast
 
 interface PPtr<out T: UnityObject> {
     val mFileID: Int
