@@ -1,5 +1,7 @@
 package io.github.deficuet.unitykt.classes
 
+import io.github.deficuet.unitykt.pptr.PPtr
+
 interface VideoClip: NamedObject {
     val mOriginalPath: String
     val mProxyWidth: UInt

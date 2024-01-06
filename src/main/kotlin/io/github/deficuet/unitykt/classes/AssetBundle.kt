@@ -1,5 +1,7 @@
 package io.github.deficuet.unitykt.classes
 
+import io.github.deficuet.unitykt.pptr.PPtr
+
 interface AssetBundle: NamedObject {
     val mPreloadTable: Array<out PPtr<UnityObject>>
     val mContainer: Map<String, List<AssetInfo>>

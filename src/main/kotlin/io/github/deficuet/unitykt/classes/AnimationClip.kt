@@ -6,6 +6,7 @@ import io.github.deficuet.unitykt.enums.NumericalEnumCompanion
 import io.github.deficuet.unitykt.math.Quaternion
 import io.github.deficuet.unitykt.math.Vector3
 import io.github.deficuet.unitykt.math.Vector4
+import io.github.deficuet.unitykt.pptr.PPtr
 
 interface AnimationClip: NamedObject {
     val mAnimationType: AnimationType

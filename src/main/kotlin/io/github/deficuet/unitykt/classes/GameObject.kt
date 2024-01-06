@@ -1,5 +1,7 @@
 package io.github.deficuet.unitykt.classes
 
+import io.github.deficuet.unitykt.pptr.PPtr
+
 interface GameObject: EditorExtension {
     val mComponents: Array<out PPtr<Component>>
     val mLayer: UInt

@@ -1,7 +1,7 @@
 package io.github.deficuet.unitykt.internal.impl;
 
 import io.github.deficuet.unitykt.classes.AnimationClipOverride;
-import io.github.deficuet.unitykt.classes.PPtr;
+import io.github.deficuet.unitykt.pptr.PPtr;
 import io.github.deficuet.unitykt.classes.RuntimeAnimatorController;
 import io.github.deficuet.unitykt.internal.file.ObjectInfo;
 import io.github.deficuet.unitykt.internal.file.SerializedFile;

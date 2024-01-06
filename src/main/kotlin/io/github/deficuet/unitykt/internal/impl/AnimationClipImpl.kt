@@ -6,6 +6,7 @@ import io.github.deficuet.unitykt.internal.file.ObjectInfo
 import io.github.deficuet.unitykt.internal.file.SerializedFile
 import io.github.deficuet.unitykt.math.Quaternion
 import io.github.deficuet.unitykt.math.Vector3
+import io.github.deficuet.unitykt.pptr.PPtr
 import io.github.deficuet.unitykt.util.*
 import kotlin.math.sqrt
 

@@ -1,6 +1,6 @@
 package io.github.deficuet.unitykt.internal.impl;
 
-import io.github.deficuet.unitykt.classes.PPtr;
+import io.github.deficuet.unitykt.pptr.PPtr;
 import io.github.deficuet.unitykt.classes.Shader;
 import io.github.deficuet.unitykt.classes.UnityPropertySheet;
 import io.github.deficuet.unitykt.internal.file.ObjectInfo;

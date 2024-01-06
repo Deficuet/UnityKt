@@ -3,6 +3,7 @@ package io.github.deficuet.unitykt.classes
 import io.github.deficuet.unitykt.math.Rectangle
 import io.github.deficuet.unitykt.math.Vector2
 import io.github.deficuet.unitykt.math.Vector4
+import io.github.deficuet.unitykt.pptr.PPtr
 import java.util.*
 
 interface SpriteAtlas: NamedObject {

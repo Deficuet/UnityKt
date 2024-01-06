@@ -1,6 +1,7 @@
-package io.github.deficuet.unitykt.classes
+package io.github.deficuet.unitykt.pptr
 
 import io.github.deficuet.unitykt.cast
+import io.github.deficuet.unitykt.classes.UnityObject
 import io.github.deficuet.unitykt.firstObjectOf
 import io.github.deficuet.unitykt.firstOfOrNull
 import io.github.deficuet.unitykt.internal.impl.PPtrImpl

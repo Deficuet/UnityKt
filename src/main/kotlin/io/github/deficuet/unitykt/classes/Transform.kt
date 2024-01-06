@@ -2,6 +2,7 @@ package io.github.deficuet.unitykt.classes
 
 import io.github.deficuet.unitykt.math.Quaternion
 import io.github.deficuet.unitykt.math.Vector3
+import io.github.deficuet.unitykt.pptr.PPtr
 
 interface Transform: Component {
     val mLocalRotation: Quaternion

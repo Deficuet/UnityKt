@@ -8,6 +8,8 @@ import io.github.deficuet.unitykt.math.Matrix4x4
 import io.github.deficuet.unitykt.math.Rectangle
 import io.github.deficuet.unitykt.math.Vector2
 import io.github.deficuet.unitykt.math.Vector4
+import io.github.deficuet.unitykt.pptr.PPtr
+import io.github.deficuet.unitykt.pptr.safeGetObj
 import io.github.deficuet.unitykt.util.ObjectReader
 import io.github.deficuet.unitykt.util.compareTo
 import io.github.deficuet.unitykt.util.readArrayOf

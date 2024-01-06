@@ -1,6 +1,6 @@
 package io.github.deficuet.unitykt.internal.impl;
 
-import io.github.deficuet.unitykt.classes.PPtr;
+import io.github.deficuet.unitykt.pptr.PPtr;
 import io.github.deficuet.unitykt.classes.SpriteAtlas;
 import io.github.deficuet.unitykt.classes.SpriteRenderData;
 import io.github.deficuet.unitykt.internal.file.ObjectInfo;

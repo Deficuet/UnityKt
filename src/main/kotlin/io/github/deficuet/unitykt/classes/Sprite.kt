@@ -3,6 +3,7 @@ package io.github.deficuet.unitykt.classes
 import io.github.deficuet.unitykt.enums.NumericalEnum
 import io.github.deficuet.unitykt.enums.NumericalEnumCompanion
 import io.github.deficuet.unitykt.math.*
+import io.github.deficuet.unitykt.pptr.PPtr
 import java.awt.image.BufferedImage
 import java.util.*
 

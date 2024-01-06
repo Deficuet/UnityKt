@@ -1,7 +1,7 @@
 package io.github.deficuet.unitykt
 
 import io.github.deficuet.unitykt.classes.AssetBundle
-import io.github.deficuet.unitykt.classes.PPtr
+import io.github.deficuet.unitykt.pptr.PPtr
 import io.github.deficuet.unitykt.classes.UnityObject
 import io.github.deficuet.unitykt.internal.UnityAssetManagerImpl
 import java.io.Closeable

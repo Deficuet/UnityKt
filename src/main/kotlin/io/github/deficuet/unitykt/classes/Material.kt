@@ -2,6 +2,7 @@ package io.github.deficuet.unitykt.classes
 
 import io.github.deficuet.unitykt.math.Color
 import io.github.deficuet.unitykt.math.Vector2
+import io.github.deficuet.unitykt.pptr.PPtr
 
 interface Material: NamedObject {
     val mShader: PPtr<Shader>

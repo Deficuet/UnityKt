@@ -4,6 +4,7 @@ import io.github.deficuet.unitykt.ImportContext
 import io.github.deficuet.unitykt.enums.BuildTarget
 import io.github.deficuet.unitykt.enums.ClassIDType
 import io.github.deficuet.unitykt.internal.file.SerializedType
+import io.github.deficuet.unitykt.pptr.PPtr
 import org.json.JSONObject
 
 interface UnityObject {

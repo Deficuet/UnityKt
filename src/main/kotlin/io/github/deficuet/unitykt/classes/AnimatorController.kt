@@ -3,6 +3,7 @@ package io.github.deficuet.unitykt.classes
 import io.github.deficuet.unitykt.math.Vector2
 import io.github.deficuet.unitykt.math.Vector3
 import io.github.deficuet.unitykt.math.Vector4
+import io.github.deficuet.unitykt.pptr.PPtr
 
 interface AnimatorController: RuntimeAnimatorController {
     val mControllerSize: UInt

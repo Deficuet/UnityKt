@@ -1,5 +1,7 @@
 package io.github.deficuet.unitykt.classes
 
+import io.github.deficuet.unitykt.pptr.PPtr
+
 /**
  * Only tested under version `2018.4.34f1`
  */

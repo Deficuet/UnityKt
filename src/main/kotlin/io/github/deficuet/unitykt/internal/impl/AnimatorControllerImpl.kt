@@ -5,6 +5,7 @@ import io.github.deficuet.unitykt.internal.file.ObjectInfo
 import io.github.deficuet.unitykt.internal.file.SerializedFile
 import io.github.deficuet.unitykt.math.Vector3
 import io.github.deficuet.unitykt.math.Vector4
+import io.github.deficuet.unitykt.pptr.PPtr
 import io.github.deficuet.unitykt.util.ObjectReader
 import io.github.deficuet.unitykt.util.compareTo
 import io.github.deficuet.unitykt.util.readArrayOf

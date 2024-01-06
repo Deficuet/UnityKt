@@ -2,7 +2,7 @@ package io.github.deficuet.unitykt.internal.impl
 
 import io.github.deficuet.unitykt.cast
 import io.github.deficuet.unitykt.classes.AssetBundle
-import io.github.deficuet.unitykt.classes.PPtr
+import io.github.deficuet.unitykt.pptr.PPtr
 import io.github.deficuet.unitykt.classes.UnityObject
 import io.github.deficuet.unitykt.internal.file.FormatVersion
 import io.github.deficuet.unitykt.internal.file.SerializedFile
