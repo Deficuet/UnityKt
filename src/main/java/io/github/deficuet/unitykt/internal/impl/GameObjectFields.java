@@ -6,6 +6,7 @@ import io.github.deficuet.unitykt.internal.file.SerializedFile;
 import kotlin.UInt;
 import kotlin.UShort;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 abstract class GameObjectFields extends EditorExtensionImpl {
     GameObjectFields(@NotNull SerializedFile assetFile, @NotNull ObjectInfo info) {
@@ -17,10 +18,11 @@ abstract class GameObjectFields extends EditorExtensionImpl {
     String fmName;
     UShort fmTag;
     Boolean fmIsActive;
-    Transform fmTransform;
-    MeshRenderer fmMeshRenderer;
-    MeshFilter fmMeshFilter;
-    SkinnedMeshRenderer fmSkinnedMeshRenderer;
-    Animator fmAnimator;
-    Animation fmAnimation;
+
+    @Nullable Transform fmTransform = null;
+    @Nullable MeshRenderer fmMeshRenderer = null;
+    @Nullable MeshFilter fmMeshFilter = null;
+    @Nullable SkinnedMeshRenderer fmSkinnedMeshRenderer = null;
+    @Nullable Animator fmAnimator = null;
+    @Nullable Animation fmAnimation = null;
 }

@@ -29,27 +29,27 @@ internal class GameObjectImpl(
         checkInitialize()
         return fmIsActive
     }
-    override val mTransform: Transform get() {
+    override val mTransform: Transform? get() {
         checkInitialize()
         return fmTransform
     }
-    override val mMeshRenderer: MeshRenderer get() {
+    override val mMeshRenderer: MeshRenderer? get() {
         checkInitialize()
         return fmMeshRenderer
     }
-    override val mMeshFilter: MeshFilter get() {
+    override val mMeshFilter: MeshFilter? get() {
         checkInitialize()
         return fmMeshFilter
     }
-    override val mSkinnedMeshRenderer: SkinnedMeshRenderer get() {
+    override val mSkinnedMeshRenderer: SkinnedMeshRenderer? get() {
         checkInitialize()
         return fmSkinnedMeshRenderer
     }
-    override val mAnimator: Animator get() {
+    override val mAnimator: Animator? get() {
         checkInitialize()
         return fmAnimator
     }
-    override val mAnimation: Animation get() {
+    override val mAnimation: Animation? get() {
         checkInitialize()
         return fmAnimation
     }
