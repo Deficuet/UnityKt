@@ -91,6 +91,7 @@ internal class PPtrImpl<out T: UnityObject>: PPtr<T> {
 
 @PublishedApi
 internal inline fun <reified T: UnityObject> PPtrImpl<T>.safeGetObjInternal(): T? {
+    if (isNull) return null
     val cache = getCache()
     if (cache != null) return cache
     return getAssetFile()?.let {
