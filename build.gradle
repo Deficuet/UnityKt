@@ -5,7 +5,7 @@ plugins {
 }
 
 group 'io.github.deficuet'
-version '0.1.0_alpha.5'
+version '0.1.0_alpha.7'
 
 repositories {
     mavenCentral()
