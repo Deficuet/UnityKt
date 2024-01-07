@@ -108,12 +108,22 @@ internal class SpriteImpl(
         } else emptyArray()
     }
 
+    override fun getTexture2D(): Texture2D? {
+        val spriteAtlas = mSpriteAtlas?.safeGetObj()
+        return if (spriteAtlas != null) {
+            spriteAtlas.mRenderDataMap[mRenderDataKey]?.texture?.safeGetObj()
+        } else {
+            mRD.texture.safeGetObj()
+        }
+    }
+
     override fun getImage(): BufferedImage? {
         val spriteAtlas = mSpriteAtlas?.safeGetObj()
         if (spriteAtlas != null) {
             val spriteAtlasData = spriteAtlas.mRenderDataMap[mRenderDataKey]
             val tex = spriteAtlasData?.texture?.safeGetObj()
             if (tex != null) {
+                println(tex.mPathID)
                 return cutImage(
                     tex, spriteAtlasData.textureRect, //spriteAtlasData.textureRectOffset,
                     spriteAtlasData.downScaleMultiplier, spriteAtlasData.settingsRaw
