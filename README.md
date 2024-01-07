@@ -104,7 +104,8 @@ So far the objects that can export data includes:
   - `getImage` - A BufferedImage created from the decompressed data. **It is usually up-side-down**.
   - If the format of the texture is unsupported, both functions will return `null`.
 - Sprite
-  - `getImage` - An **upright** BufferedImage cropped from a `Texture2D` image. The function will return `null` if the `Texture2D` object is not found or the format is unsupported. 
+  - `getImage` - An BufferedImage cropped from a `Texture2D` image. Will return `null` if the `Texture2D` object is not found or the format is unsupported.
+    - The packing mode `SpritePackingMode.Tight` is not supported yet.
 - TextAsset
   - `text(charset)` - This function is used to export content in this object as `String`. A `Charset` can be passed as a parameter, by default it is `Charsets.UTF_8`.
 - Shader

@@ -155,16 +155,16 @@ internal class SpriteImpl(
             if (settingsRow.packed == 1u) {
                 when (settingsRow.packingRotation) {
                     SpritePackingRotation.FlipHorizontal -> {
-                        spriteImage = spriteImage.use { flipX() }
+                        spriteImage = spriteImage.flipX().apply(true)
                     }
                     SpritePackingRotation.FlipVertical -> {
-                        spriteImage = spriteImage.use { flipY() }
+                        spriteImage = spriteImage.flipY().apply(true)
                     }
                     SpritePackingRotation.Rotate90 -> {
-                        spriteImage = spriteImage.use { quadrantRotate(3) }
+                        spriteImage = spriteImage.quadrantRotate(3).apply(true)
                     }
                     SpritePackingRotation.Rotate180 -> {
-                        spriteImage = spriteImage.use { quadrantRotate(2) }
+                        spriteImage = spriteImage.quadrantRotate(2).apply(true)
                     }
                     else -> {  }
                 }
@@ -172,7 +172,7 @@ internal class SpriteImpl(
 //            if (settingsRow.packingMode == SpritePackingMode.Tight) {
 //                TODO("Sprite image tight")
 //            }
-            return spriteImage.use { flipY() }
+            return spriteImage
         }
         return null
     }

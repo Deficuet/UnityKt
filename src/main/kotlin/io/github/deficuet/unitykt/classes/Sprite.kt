@@ -21,6 +21,11 @@ interface Sprite: NamedObject {
     val mRD: SpriteRenderData
     val mPhysicsShape: Array<out Array<out Vector2>>
 
+    /**
+     * Has the same orientation as the parent [Texture2D]
+     *
+     * i.e. usually up-side-down
+     */
     fun getImage(): BufferedImage?
 }
 
