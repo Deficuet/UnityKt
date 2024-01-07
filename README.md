@@ -41,11 +41,34 @@ All the C++ code used to decode texture compression come from [AssetStudio/Textu
   - The data of a UnityObject will not be read until you access any of its properties.
     - However, an access to the fields related to the UnityObject's metadata will not cause the initialization of the UnityObject.
       - e.g. Its `assetFile` which is a `SerializedFile`, `mPathID`, `unityVersion`, etc. Those are the fields enclosed in the metadata region. See [UnityObject class](https://github.com/Deficuet/UnityKt/blob/main/src/main/kotlin/io/github/deficuet/unitykt/classes/UnityObject.kt).
-
-
 - Shortcuts
   - See [utils.kt](https://github.com/Deficuet/UnityKt/blob/main/src/main/kotlin/io/github/deficuet/unitykt/utils.kt) and [PPtr.kt](https://github.com/Deficuet/UnityKt/blob/main/src/main/kotlin/io/github/deficuet/unitykt/classes/PPtr.kt)
   - Should always use `PPtr<O>.safeGetObj()` or `PPtr<O>.getObj()` to get the object, or use `PPtr<*>.safeGetObjAs<T: UnityObject>()` to get and cast.
+
+## Export
+So far the objects that can export data includes:
+- Mesh
+  - `exportString` - A string with the same content as exporting mesh to .obj file using [AssetStudio](https://github.com/Perfare/AssetStudio).
+  - `exportVertices` - The data of lines starts with "v" in the .obj file, grouped by Vector3.
+  - `exportUV` - The data of lines starts with "vt" in the .obj file, grouped by Vector2. Only the data `mUV0` is exported.
+  - `exportNormals` - The data of lines starts with "vn" in the .obj file, grouped by Vector3.
+  - `exportFaces` - The data of lines starts with "f" in the .obj file, grouped by Vector3.
+- Texture2D
+  - `getDecompressedData` - Image data as `ByteArray` after decoding. Can be used to create image directly. The color channels are `BGRA`. The size of the array is `mWidth * mHeight * 4`.
+  - `getImage` - A BufferedImage created from the decompressed data. **It is usually up-side-down**.
+  - If the format of the texture is unsupported, both functions will return `null`.
+- Sprite
+  - `getImage` - An BufferedImage cropped from a `Texture2D` image. Will return `null` if the `Texture2D` object is not found or the format is unsupported.
+    - The packing mode `SpritePackingMode.Tight` is not supported yet.
+- TextAsset
+  - `text(charset)` - This function is used to export content in this object as `String`. A `Charset` can be passed as a parameter, by default it is `Charsets.UTF_8`.
+- Shader
+  - `exportString` - Export as String. **Include** the Spir-V Shader data (experimental).
+- `AudioClip` and `VideoClip`
+  - `getRawData` - To get the raw data `ByteArray`. The export functions are not implemented yet. 
+- All objects
+  - `typeTreeJson` - A [JSONObject](https://stleary.github.io/JSON-java/org/json/JSONObject.html) contains all the properties they have, including those properties that is not implemented yet. The json could be `null`.
+    - May throw exception for some types of object like `Font` because of some unsolved problems.
 
 ## Build/Installation
 Used openJDK 11.0.10 and Kotlin Language 1.8.21.
@@ -91,30 +114,7 @@ libraryDependencies += "com.github.Deficuet" % "UnityKt" % "{version}"
 
 :dependencies [[com.github.Deficuet/UnityKt "{version}"]]
 ```
-## Export
-So far the objects that can export data includes:
-- Mesh
-  - `exportString` - A string with the same content as exporting mesh to .obj file using [AssetStudio](https://github.com/Perfare/AssetStudio).
-  - `exportVertices` - The data of lines starts with "v" in the .obj file, grouped by Vector3.
-  - `exportUV` - The data of lines starts with "vt" in the .obj file, grouped by Vector2. Only the data `mUV0` is exported.
-  - `exportNormals` - The data of lines starts with "vn" in the .obj file, grouped by Vector3.
-  - `exportFaces` - The data of lines starts with "f" in the .obj file, grouped by Vector3.
-- Texture2D
-  - `getDecompressedData` - Image data as `ByteArray` after decoding. Can be used to create image directly. The color channels are `BGRA`. The size of the array is `mWidth * mHeight * 4`.
-  - `getImage` - A BufferedImage created from the decompressed data. **It is usually up-side-down**.
-  - If the format of the texture is unsupported, both functions will return `null`.
-- Sprite
-  - `getImage` - An BufferedImage cropped from a `Texture2D` image. Will return `null` if the `Texture2D` object is not found or the format is unsupported.
-    - The packing mode `SpritePackingMode.Tight` is not supported yet.
-- TextAsset
-  - `text(charset)` - This function is used to export content in this object as `String`. A `Charset` can be passed as a parameter, by default it is `Charsets.UTF_8`.
-- Shader
-  - `exportString` - Export as String. **Include** the Spir-V Shader data (experimental).
-- `AudioClip` and `VideoClip`
-  - `getRawData` - To get the raw data `ByteArray`. The export functions are not implemented yet. 
-- All objects
-  - `typeTreeJson` - A [JSONObject](https://stleary.github.io/JSON-java/org/json/JSONObject.html) contains all the properties they have, including those properties that is not implemented yet. The json could be `null`.
-    - May throw exception for some types of object like `Font` because of some unsolved problems.
+
 ## Example
 Example for reading and saving an image from a Texture2D object.
 ```kotlin
