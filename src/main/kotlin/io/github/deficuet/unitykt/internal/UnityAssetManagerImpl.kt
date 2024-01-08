@@ -15,7 +15,7 @@ import kotlin.io.path.isDirectory
 import kotlin.io.path.isRegularFile
 
 internal class UnityAssetManagerImpl(
-    override val assetRootFolder: File?,
+    override val assetRootFolder: Path?,
     override val defaultReaderConfig: ReaderConfig
 ): UnityAssetManager {
     init { UnityAssetManager.managers.add(this) }
@@ -64,8 +64,7 @@ internal class UnityAssetManagerImpl(
     override fun loadFolder(folder: Path, config: ReaderConfig): Array<ImportContext> {
         if (!folder.isDirectory()) throw IllegalArgumentException("parameter \"folder\" must be a directory")
         val files = Files.newDirectoryStream(folder).use { stream ->
-            stream.filter { it.isRegularFile() }
-                .toTypedArray()
+            stream.filter { it.isRegularFile() }.toTypedArray()
         }
         return loadFiles(*files, config = config)
     }

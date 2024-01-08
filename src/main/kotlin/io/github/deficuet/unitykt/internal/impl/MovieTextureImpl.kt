@@ -2,9 +2,9 @@ package io.github.deficuet.unitykt.internal.impl
 
 import io.github.deficuet.unitykt.classes.AudioClip
 import io.github.deficuet.unitykt.classes.MovieTexture
-import io.github.deficuet.unitykt.pptr.PPtr
 import io.github.deficuet.unitykt.internal.file.ObjectInfo
 import io.github.deficuet.unitykt.internal.file.SerializedFile
+import io.github.deficuet.unitykt.pptr.PPtr
 
 internal class MovieTextureImpl(
     assetFile: SerializedFile, info: ObjectInfo

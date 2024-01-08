@@ -1,7 +1,10 @@
 package io.github.deficuet.unitykt.internal.impl
 
 import io.github.deficuet.unitykt.cast
-import io.github.deficuet.unitykt.classes.*
+import io.github.deficuet.unitykt.classes.Sprite
+import io.github.deficuet.unitykt.classes.SpriteAtlas
+import io.github.deficuet.unitykt.classes.SpriteAtlasData
+import io.github.deficuet.unitykt.classes.Texture2D
 import io.github.deficuet.unitykt.internal.file.ObjectInfo
 import io.github.deficuet.unitykt.internal.file.SerializedFile
 import io.github.deficuet.unitykt.math.Vector2

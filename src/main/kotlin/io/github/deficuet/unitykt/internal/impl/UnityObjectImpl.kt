@@ -1,10 +1,10 @@
 package io.github.deficuet.unitykt.internal.impl
 
-import io.github.deficuet.unitykt.pptr.PPtr
 import io.github.deficuet.unitykt.classes.UnityObject
 import io.github.deficuet.unitykt.enums.BuildTarget
 import io.github.deficuet.unitykt.internal.file.ObjectInfo
 import io.github.deficuet.unitykt.internal.file.SerializedFile
+import io.github.deficuet.unitykt.pptr.PPtr
 import io.github.deficuet.unitykt.util.ObjectReader
 import org.json.JSONObject
 

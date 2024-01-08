@@ -1,15 +1,16 @@
 package io.github.deficuet.unitykt
 
 import io.github.deficuet.unitykt.classes.AssetBundle
-import io.github.deficuet.unitykt.pptr.PPtr
 import io.github.deficuet.unitykt.classes.UnityObject
 import io.github.deficuet.unitykt.internal.UnityAssetManagerImpl
+import io.github.deficuet.unitykt.pptr.PPtr
 import java.io.Closeable
 import java.io.File
 import java.nio.file.Path
+import kotlin.io.path.isDirectory
 
 interface UnityAssetManager: Closeable {
-    val assetRootFolder: File?
+    val assetRootFolder: Path?
     val defaultReaderConfig: ReaderConfig
 
     /**
@@ -116,15 +117,15 @@ interface UnityAssetManager: Closeable {
         /**
          * @see new
          */
-        fun new(assetRootFolder: Path, readerConfig: ReaderConfig = ReaderConfig.default): UnityAssetManager {
-            return new(assetRootFolder.toFile(), readerConfig)
+        fun new(assetRootFolder: File, readerConfig: ReaderConfig = ReaderConfig.default): UnityAssetManager {
+            return new(assetRootFolder.toPath(), readerConfig)
         }
         /**
          * @see new
          */
-        fun new(assetRootFolder: File, readerConfig: ReaderConfig = ReaderConfig.default): UnityAssetManager {
-            if (!assetRootFolder.isDirectory) {
-                throw IllegalArgumentException("${assetRootFolder.path} is not a valid folder")
+        fun new(assetRootFolder: Path, readerConfig: ReaderConfig = ReaderConfig.default): UnityAssetManager {
+            if (!assetRootFolder.isDirectory()) {
+                throw IllegalArgumentException("$assetRootFolder is not a valid folder")
             }
             return UnityAssetManagerImpl(assetRootFolder, readerConfig)
         }

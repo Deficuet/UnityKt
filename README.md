@@ -21,7 +21,7 @@ All the C++ code used to decode texture compression come from [AssetStudio/Textu
 - UnityAssetManager
   - The entry point of loading object. It contains all objects read from all files that are loaded through it, except `AssetBundle` objects. 
   - Use `UnityAssetManager.new(...)` with two parameters `assetRootFolder` and `readerConfig` to get an instance. 
-    - `assetRootFolder` is optional and it can be a `java.io.File`, `java.nio.file.Path` or just a `String`. When present, it will be used by `PPtr` to look for object according to the `mDependencies` property in the `AssetBundle` object of the file.
+    - `assetRootFolder` is optional and it can be a `java.io.File`, `java.nio.file.Path` or just a `String`. When present, it will be used by `PPtr` to look for object according to the `mDependencies` in the `AssetBundle` object of the file.
     - `readerConfig` is the loading configuration and is also optional.
 - Loading Configurations
   - When loading file(s)/folder/ByteArray, an optional `ReaderConfig` can also be passed to override the configuration given to the manager, or the configuration given to the manager will be used by default. 
@@ -43,7 +43,7 @@ All the C++ code used to decode texture compression come from [AssetStudio/Textu
       - e.g. Its `assetFile` which is a `SerializedFile`, `mPathID`, `unityVersion`, etc. Those are the fields enclosed in the metadata region. See [UnityObject class](https://github.com/Deficuet/UnityKt/blob/main/src/main/kotlin/io/github/deficuet/unitykt/classes/UnityObject.kt).
 - Shortcuts
   - See [utils.kt](https://github.com/Deficuet/UnityKt/blob/main/src/main/kotlin/io/github/deficuet/unitykt/utils.kt) and [PPtr.kt](https://github.com/Deficuet/UnityKt/blob/main/src/main/kotlin/io/github/deficuet/unitykt/classes/PPtr.kt)
-  - Should always use `PPtr<O>.safeGetObj()` or `PPtr<O>.getObj()` to get the object, or use `PPtr<*>.safeGetObjAs<T: UnityObject>()` to get and cast.
+  - Should always use `PPtr<T>.safeGetObj()` or `PPtr<T>.getObj()` to get the object, or use `PPtr<*>.safeGetObjAs<T: UnityObject>()` to get and cast.
 
 ## Export
 So far the objects that can export data includes:
@@ -159,7 +159,7 @@ fun main() {
                                 // Then it will look for the file under the directory "C:/path/to/asset/system/root/folder" which was
                                 // given to the manager. The file name comes from the mDependecies property of the AssetBundle object
                                 // in the same file as this Material object being in. The target file will be loaded using the same
-                                // reader config passed to the manager. Finally, PPtr will try to find the object in the new loaded file.
+                                // reader config passed to the manager. Finally, PPtr will try to find the object in the new loaded files.
             ?.safeCast<Texture2D>()?.getImage()?.let { image ->
                 ImageIO.write(image, "png", File("C:/whatever/you/want/name.png"))
             }

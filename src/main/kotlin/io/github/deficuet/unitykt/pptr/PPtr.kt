@@ -24,24 +24,26 @@ inline fun <reified T: UnityObject> PPtr<T>.getObj(): T {
 }
 
 inline fun <reified T: UnityObject> PPtr<*>.safeGetAs(): T? {
-    return (this as PPtrImpl<UnityObject>).safeGetObjInternal() as? T
+    return (this as PPtrImpl<UnityObject>).safeGetObjInternal().safeCast()
 }
 
 inline fun <reified T: UnityObject> PPtr<*>.getAs(): T {
-    return (this as PPtrImpl<UnityObject>).getObjInternal() as T
+    return (this as PPtrImpl<UnityObject>).getObjInternal().cast()
 }
 
-inline fun <reified O: UnityObject> Iterable<PPtr<*>>.firstObjectOf() =
-    mapNotNull { it.safeGetObj() }.firstObjectOf<O>()
+inline fun <reified T: UnityObject> Iterable<PPtr<*>>.firstObjectOf(): T {
+    return mapNotNull { it.safeGetObj() }.firstObjectOf<T>()
+}
 
-inline fun <reified O: UnityObject> Array<out PPtr<*>>.firstObjectOf() =
-    mapNotNull { it.safeGetObj() }.firstObjectOf<O>()
+inline fun <reified T: UnityObject> Array<out PPtr<*>>.firstObjectOf(): T {
+    return mapNotNull { it.safeGetObj() }.firstObjectOf<T>()
+}
 
-inline fun <reified O: UnityObject> Iterable<PPtr<*>>.firstOfOrNull(): O? {
+inline fun <reified T: UnityObject> Iterable<PPtr<*>>.firstOfOrNull(): T? {
     return mapNotNull { it.safeGetObj() }.firstOfOrNull()
 }
 
-inline fun <reified O: UnityObject> Array<out PPtr<*>>.firstOfOrNull(): O? {
+inline fun <reified T: UnityObject> Array<out PPtr<*>>.firstOfOrNull(): T? {
     return mapNotNull { it.safeGetObj() }.firstOfOrNull()
 }
 

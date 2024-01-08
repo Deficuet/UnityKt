@@ -1,6 +1,9 @@
 package io.github.deficuet.unitykt.internal.impl
 
-import io.github.deficuet.jimage.*
+import io.github.deficuet.jimage.flipX
+import io.github.deficuet.jimage.flipY
+import io.github.deficuet.jimage.quadrantRotate
+import io.github.deficuet.jimage.resize
 import io.github.deficuet.unitykt.classes.*
 import io.github.deficuet.unitykt.internal.file.ObjectInfo
 import io.github.deficuet.unitykt.internal.file.SerializedFile

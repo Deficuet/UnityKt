@@ -1,6 +1,9 @@
 package io.github.deficuet.unitykt.internal.impl
 
-import io.github.deficuet.unitykt.classes.*
+import io.github.deficuet.unitykt.classes.Animation
+import io.github.deficuet.unitykt.classes.Mesh
+import io.github.deficuet.unitykt.classes.SkinnedMeshRenderer
+import io.github.deficuet.unitykt.classes.Transform
 import io.github.deficuet.unitykt.internal.file.ObjectInfo
 import io.github.deficuet.unitykt.internal.file.SerializedFile
 import io.github.deficuet.unitykt.pptr.PPtr

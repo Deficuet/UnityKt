@@ -2,10 +2,10 @@ package io.github.deficuet.unitykt.internal.impl
 
 import io.github.deficuet.unitykt.cast
 import io.github.deficuet.unitykt.classes.AssetBundle
-import io.github.deficuet.unitykt.pptr.PPtr
 import io.github.deficuet.unitykt.classes.UnityObject
 import io.github.deficuet.unitykt.internal.file.FormatVersion
 import io.github.deficuet.unitykt.internal.file.SerializedFile
+import io.github.deficuet.unitykt.pptr.PPtr
 import io.github.deficuet.unitykt.util.ObjectReader
 
 @PublishedApi
@@ -50,16 +50,16 @@ internal class PPtrImpl<out T: UnityObject>: PPtr<T> {
         if (manager.assetRootFolder == null) return null
         val bundle = assetFile.objectMap[1L] ?: return null
         if (bundle !is AssetBundle) return null
-        if (fileIndex >= bundle.mDependencies.size) return null
-        val dependencyName = bundle.mDependencies[fileIndex]
-        try {
-            manager.loadFile(
-                manager.assetRootFolder.resolve(dependencyName),
-                assetFile.root.manager.defaultReaderConfig
-            )
-        } catch (e: Exception) {
-            println("An error occurred during loading dependency file ${dependencyName}: ${e.message}")
-            return null
+        for (dependencyName in bundle.mDependencies) {
+            try {
+                manager.loadFile(
+                    manager.assetRootFolder.resolve(dependencyName),
+                    manager.defaultReaderConfig
+                )
+            } catch (e: Exception) {
+                println("An error occurred during loading dependency file ${dependencyName}: ${e.message}")
+                continue
+            }
         }
         return manager.assetFiles[assetFile.externals[fileIndex].name.lowercase()]
     }

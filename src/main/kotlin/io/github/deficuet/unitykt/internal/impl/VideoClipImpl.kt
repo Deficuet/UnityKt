@@ -1,11 +1,11 @@
 package io.github.deficuet.unitykt.internal.impl
 
-import io.github.deficuet.unitykt.pptr.PPtr
 import io.github.deficuet.unitykt.classes.Shader
 import io.github.deficuet.unitykt.classes.StreamedResource
 import io.github.deficuet.unitykt.classes.VideoClip
 import io.github.deficuet.unitykt.internal.file.ObjectInfo
 import io.github.deficuet.unitykt.internal.file.SerializedFile
+import io.github.deficuet.unitykt.pptr.PPtr
 import io.github.deficuet.unitykt.util.ObjectReader
 import io.github.deficuet.unitykt.util.ResourceReader
 import io.github.deficuet.unitykt.util.compareTo

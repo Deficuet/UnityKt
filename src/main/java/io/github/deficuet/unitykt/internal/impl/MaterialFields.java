@@ -1,10 +1,10 @@
 package io.github.deficuet.unitykt.internal.impl;
 
-import io.github.deficuet.unitykt.pptr.PPtr;
 import io.github.deficuet.unitykt.classes.Shader;
 import io.github.deficuet.unitykt.classes.UnityPropertySheet;
 import io.github.deficuet.unitykt.internal.file.ObjectInfo;
 import io.github.deficuet.unitykt.internal.file.SerializedFile;
+import io.github.deficuet.unitykt.pptr.PPtr;
 import org.jetbrains.annotations.NotNull;
 
 abstract class MaterialFields extends NamedObjectImpl {
