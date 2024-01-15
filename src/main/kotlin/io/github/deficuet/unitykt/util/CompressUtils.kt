@@ -1,8 +1,8 @@
 package io.github.deficuet.unitykt.util
 
-import SevenZip.Compression.LZMA.Decoder
-import com.nixxcode.jvmbrotli.dec.BrotliInputStream
 import net.jpountz.lz4.LZ4Factory
+import org.apache.commons.compress.compressors.brotli.BrotliCompressorInputStream
+import org.apache.commons.compress.compressors.lzma.LZMACompressorInputStream
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.util.zip.GZIPInputStream
@@ -15,26 +15,14 @@ internal class CompressUtils private constructor() {
         private val lz4Decompressor = LZ4Factory.nativeInstance().safeDecompressor()
 
         fun lzmaDecompress(data: ByteArray): ByteArray {
-            val preInput = ByteArrayInputStream(data)
-            val props = ByteArray(5)
-            if (preInput.read(props) != 5) {
-                throw IllegalStateException("Input .lzma is too short")
-            }
-            var outSize = 0L
-            for (i in 0 until 8) {
-                val v = preInput.read()
-                if (v < 0) throw IllegalStateException("Invalid input data")
-                outSize = outSize.or(v.toLong().shl(8 * i))
-            }
-            return ByteArrayOutputStream().use { output ->
-                with(Decoder()) {
-                    SetDecoderProperties(props)
-                    Code(
-                        ByteArrayInputStream(data, 5, data.size),
-                        output, outSize
-                    )
-                    output.toByteArray()
+            val output = ByteArrayOutputStream()
+            return LZMACompressorInputStream(ByteArrayInputStream(data)).use { lzma ->
+                val buf = ByteArray(32768)
+                var bytesRead = 0
+                while (lzma.read(buf).also { bytesRead += it } > 0) {
+                    output.write(buf, 0, bytesRead)
                 }
+                output.toByteArray()
             }
         }
 
@@ -45,7 +33,7 @@ internal class CompressUtils private constructor() {
         fun gzipDecompress(data: ByteArray): ByteArray {
             val output = ByteArrayOutputStream()
             return GZIPInputStream(ByteArrayInputStream(data)).use { gzip ->
-                val buf = ByteArray(1024)
+                val buf = ByteArray(32768)
                 var bytesRead: Int
                 while (gzip.read(buf).also { bytesRead = it } > 0) {
                     output.write(buf, 0, bytesRead)
@@ -56,8 +44,8 @@ internal class CompressUtils private constructor() {
 
         fun brotliDecompress(data: ByteArray): ByteArray {
             val output = ByteArrayOutputStream()
-            return BrotliInputStream(ByteArrayInputStream(data)).use { brotli ->
-                val buf = ByteArray(2048)
+            return BrotliCompressorInputStream(ByteArrayInputStream(data)).use { brotli ->
+                val buf = ByteArray(32768)
                 var bytesRead: Int
                 while (brotli.read(buf).also { bytesRead = it } > 0) {
                     output.write(buf, 0, bytesRead)

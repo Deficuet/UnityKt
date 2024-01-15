@@ -1,7 +1,5 @@
 package io.github.deficuet.unitykt.util
 
-import java.nio.ByteBuffer
-import java.nio.ByteOrder
 import java.nio.charset.Charset
 
 internal operator fun ByteArray.get(i: UInt) = get(i.toInt()).toUByte().toInt()
@@ -54,13 +52,6 @@ internal fun parseUInt16(data: ByteArray, pos: UInt): Int {
 
 internal fun parseDownScaledInt8(data: ByteArray, pos: UInt): Byte {
     return ((parseUInt16(data, pos) * 255) + 32895).shr(16).toByte()
-}
-
-internal fun ByteArray.toChar(): Char {
-    if (size != 2) throw IllegalStateException("There should be 2 bytes only")
-    return Char(
-        ByteBuffer.wrap(this).order(ByteOrder.LITTLE_ENDIAN).short.toUShort()
-    )
 }
 
 internal operator fun IntArray.compareTo(other: IntArray): Int {

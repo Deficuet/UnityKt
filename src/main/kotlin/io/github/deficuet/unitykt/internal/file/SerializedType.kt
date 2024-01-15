@@ -1,7 +1,6 @@
 package io.github.deficuet.unitykt.internal.file
 
 import io.github.deficuet.unitykt.util.ObjectReader
-import io.github.deficuet.unitykt.util.toChar
 import java.math.BigInteger
 import kotlin.collections.set
 
@@ -63,7 +62,7 @@ data class SerializedType(
             when (node.type) {
                 "SInt8" -> value = reader.readInt8()
                 "UInt8" -> value = reader.readUInt8()
-                "char" -> value = reader.read(2).toChar()
+                "char" -> value = reader.read().toChar()
                 "SInt16", "short" -> value = reader.readInt16()
                 "UInt16", "unsigned short" -> value = reader.readUInt16()
                 "SInt32", "int" -> value = reader.readInt32()
@@ -157,7 +156,7 @@ data class SerializedType(
             when (node.type) {
                 "SInt8" -> value = reader.readInt8()
                 "UInt8" -> value = reader.readUInt8().toInt()
-                "char" -> value = reader.read(2).toChar()
+                "char" -> value = reader.read().toChar()
                 "SInt16", "short" -> value = reader.readInt16()
                 "UInt16", "unsigned short" -> value = reader.readUInt16().toInt()
                 "SInt32", "int" -> value = reader.readInt32()

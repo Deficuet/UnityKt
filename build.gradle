@@ -5,7 +5,7 @@ plugins {
 }
 
 group 'io.github.deficuet'
-version '0.1.0_alpha.8'
+version '0.1.0_alpha.9'
 
 repositories {
     mavenCentral()
@@ -14,9 +14,11 @@ repositories {
 
 dependencies {
     implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk7'
-    implementation 'org.json:json:20230618'
+    implementation 'org.json:json:20231013'
     implementation 'org.lz4:lz4-java:1.8.0'
-    implementation 'com.nixxcode.jvmbrotli:jvmbrotli:0.2.0'
+    implementation 'org.tukaani:xz:1.9'
+    implementation 'org.brotli:dec:0.1.2'
+    implementation 'org.apache.commons:commons-compress:1.25.0'
     implementation 'com.github.Deficuet:JImageUtils:0.0.4'
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.2'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.9.2'
