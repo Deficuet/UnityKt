@@ -28,7 +28,23 @@ interface Sprite: NamedObject {
      *
      * i.e. usually up-side-down.
      */
-    fun getImage(): BufferedImage?
+    fun getImage(strategy: SpriteCropStrategy = SpriteCropStrategy.USE_TEXTURE_RECT): BufferedImage?
+}
+
+/**
+ * Has effect only when cropping the image using [mRD][Sprite.mRD].
+ *
+ * i.e. when the `PPtr` [mSpriteAtlas][Sprite.mSpriteAtlas] gets `null`.
+ */
+enum class SpriteCropStrategy {
+    /**
+     * Use [textureRect][SpriteRenderData.textureRect]
+     */
+    USE_TEXTURE_RECT,
+    /**
+     * Use [mRect][Sprite.mRect]
+     */
+    USE_RECT
 }
 
 interface SecondarySpriteTexture {

@@ -13,6 +13,8 @@ interface Texture2D: Texture {
     val mTextureSettings: GLTextureSettings
     val mStreamData: StreamingInfo?
 
+    fun getRawData(): ByteArray
+
     fun getDecompressedData(): ByteArray?
 
     /**

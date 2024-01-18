@@ -120,13 +120,12 @@ internal class SpriteImpl(
         }
     }
 
-    override fun getImage(): BufferedImage? {
+    override fun getImage(strategy: SpriteCropStrategy): BufferedImage? {
         val spriteAtlas = mSpriteAtlas?.safeGetObj()
         if (spriteAtlas != null) {
             val spriteAtlasData = spriteAtlas.mRenderDataMap[mRenderDataKey]
             val tex = spriteAtlasData?.texture?.safeGetObj()
             if (tex != null) {
-                println(tex.mPathID)
                 return cutImage(
                     tex, spriteAtlasData.textureRect, //spriteAtlasData.textureRectOffset,
                     spriteAtlasData.downScaleMultiplier, spriteAtlasData.settingsRaw
@@ -134,10 +133,14 @@ internal class SpriteImpl(
             }
         } else {
             val tex = mRD.texture.safeGetObj()
+            val rect = when (strategy) {
+                SpriteCropStrategy.USE_TEXTURE_RECT -> mRD.textureRect
+                SpriteCropStrategy.USE_RECT -> mRect
+            }
             if (tex != null) {
                 return with(mRD) {
                     cutImage(
-                        tex, textureRect, //textureRectOffset,
+                        tex, rect, //textureRectOffset,
                         downScaleMultiplier, settingsRaw
                     )
                 }

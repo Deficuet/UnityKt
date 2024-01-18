@@ -54,11 +54,13 @@ So far the objects that can export data includes:
   - `exportNormals` - The data of lines starts with "vn" in the .obj file, grouped by Vector3.
   - `exportFaces` - The data of lines starts with "f" in the .obj file, grouped by Vector3.
 - Texture2D
+  - `getRawData` - Returns compressed texture data in `ByteArray`.
   - `getDecompressedData` - Image data as `ByteArray` after decoding. Can be used to create image directly. The color channels are `BGRA`. The size of the array is `mWidth * mHeight * 4`.
   - `getImage` - A BufferedImage created from the decompressed data. **It is usually up-side-down**.
   - If the format of the texture is unsupported, both functions will return `null`.
 - Sprite
   - `getImage` - An BufferedImage cropped from a `Texture2D` image. Will return `null` if the `Texture2D` object is not found or the format is unsupported.
+    - Two cropping strategies `SpriteCropStrategy.USE_TEXTURE_RECT` and `USE_RECT` are provided to determine which one of the `SpriteRenderData.textureRect` and `Sprite.mRect` will be used to crop image.
     - The packing mode `SpritePackingMode.Tight` is not supported yet.
 - TextAsset
   - `text(charset)` - This function is used to export content in this object as `String`. A `Charset` can be passed as a parameter, by default it is `Charsets.UTF_8`.

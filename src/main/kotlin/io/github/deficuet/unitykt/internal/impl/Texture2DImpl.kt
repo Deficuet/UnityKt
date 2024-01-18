@@ -90,6 +90,10 @@ internal class Texture2DImpl(
         }.registerToManager(assetFile.root.manager)
     }
 
+    override fun getRawData(): ByteArray {
+        return imageData.read()
+    }
+
     override fun getDecompressedData(): ByteArray? {
         return decompressTexture(imageData.read())
     }
@@ -113,8 +117,8 @@ internal class Texture2DImpl(
     }
 
     private fun decompressTexture(data: ByteArray): ByteArray? {
-        val areaIndices = 0 until mWidth * mHeight
         val dataSize = mWidth * mHeight * 4
+        val areaIndices = 0 until mWidth * mHeight
         val dataSizeIndices = 0 until dataSize step 4
         val out: ByteArray?
         when (mTextureFormat) {
