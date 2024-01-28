@@ -39,7 +39,7 @@ internal open class UnityObjectImpl(
     }
 
     protected open fun read() {
-        println("Object($type) path id $mPathID initialized")
+        assetFile.root.manager.debugOutput("Object($type) path id $mPathID initialized")
         reader.position = 0
         if (platform == BuildTarget.NoTarget) reader.skip(4)   //m_ObjectHideFlags: UInt
     }

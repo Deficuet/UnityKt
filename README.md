@@ -7,7 +7,7 @@ All the C++ code used to decode texture compression come from [AssetStudio/Textu
 
 [7zip-LZMA SDK](https://www.7-zip.org/sdk.html) is included to decompress bundle files.
 
-**If you encounter an error and want to start an new issue, remember to submit the assets files as well.**
+**If you encounter an error and want to start a new issue, remember to submit the assets files as well.**
 
 **Many things are not tested yet.**
 ## Features
@@ -16,13 +16,14 @@ All the C++ code used to decode texture compression come from [AssetStudio/Textu
   - Folder
     - Files under the folder only, or
     - All reachable files under the folder, recursively.
-  - ByteArray, bytes of a asset bundle file. 
+  - ByteArray, bytes of an asset bundle file. 
     - A `String` is required as the identifier "file name" of this `ByteArray`.
 - UnityAssetManager
   - The entry point of loading object. It contains all objects read from all files that are loaded through it, except `AssetBundle` objects. 
-  - Use `UnityAssetManager.new(...)` with two parameters `assetRootFolder` and `readerConfig` to get an instance. 
-    - `assetRootFolder` is optional and it can be a `java.io.File`, `java.nio.file.Path` or just a `String`. When present, it will be used by `PPtr` to look for object according to the `mDependencies` in the `AssetBundle` object of the file.
+  - Use `UnityAssetManager.new(...)` with three parameters `assetRootFolder`, `readerConfig` and `debugOutput` to get an instance. 
+    - `assetRootFolder` is optional (nullable), and it can be a `java.io.File`, `java.nio.file.Path` or just a `String`. When present, it will be used by `PPtr` to look for object according to the `mDependencies` in the `AssetBundle` object of the file.
     - `readerConfig` is the loading configuration and is also optional.
+    - `debugOutput` is a lambda function takes a `String`. It is used to redirect the debug information. By default, it does nothing.
 - Loading Configurations
   - When loading file(s)/folder/ByteArray, an optional `ReaderConfig` can also be passed to override the configuration given to the manager, or the configuration given to the manager will be used by default. 
   - The configuration will be applied **before** loading.
@@ -31,7 +32,7 @@ All the C++ code used to decode texture compression come from [AssetStudio/Textu
     - If the `offsetMode` is `MANUAL`, the number of bytes that is ignored depends on `manualOffset`.
   - `manualOffset`: `Int`; Default: `0`
     - Determine the number of bytes that needs to be ignored at the beginning of the file, no matter the byte is `\x00` or not.
-    - This propery works under `OffsetMode.MANUAL` mode only, will be ignored under `AUTO` mode.
+    - This property works under `OffsetMode.MANUAL` mode only, will be ignored under `AUTO` mode.
     - e.g. If an asset bundle file has 1024 bytes of useless non-zero data at the beginning, these bytes can be skipped by setting `offsetMode` to `MANUAL` and setting `manualOffset` to 1024.
 - ImportContext
   - For each file loaded, an `ImportContext` with file name and directory will be returned. An `ImportContext` contains all objects read from the file.
@@ -39,7 +40,7 @@ All the C++ code used to decode texture compression come from [AssetStudio/Textu
   - Don't forget to call the method `close()` to close and release the resources used by the manager, or call the static method `closeAll()` in `UnityAssetManager` to release resources used by **all** manager instances. It implements `Closeable` interface, so the function `use` for `Closeable` can be used.
 - Object Reading
   - The data of a UnityObject will not be read until you access any of its properties.
-    - However, an access to the fields related to the UnityObject's metadata will not cause the initialization of the UnityObject.
+    - However, access to the fields related to the UnityObject's metadata will not cause the initialization of the UnityObject.
       - e.g. Its `assetFile` which is a `SerializedFile`, `mPathID`, `unityVersion`, etc. Those are the fields enclosed in the metadata region. See [UnityObject class](https://github.com/Deficuet/UnityKt/blob/main/src/main/kotlin/io/github/deficuet/unitykt/classes/UnityObject.kt).
 - Shortcuts
   - See [utils.kt](https://github.com/Deficuet/UnityKt/blob/main/src/main/kotlin/io/github/deficuet/unitykt/utils.kt) and [PPtr.kt](https://github.com/Deficuet/UnityKt/blob/main/src/main/kotlin/io/github/deficuet/unitykt/classes/PPtr.kt)
@@ -159,7 +160,7 @@ fun main() {
             .mSavedProperties.mTexEnvs.values.first()[0].mTexture   //PPtr<Texture>
             .safeGetObj()       // if PPtr can not find the object under the same assetFile (SerializedFile) nor others loaded assetFiles
                                 // Then it will look for the file under the directory "C:/path/to/asset/system/root/folder" which was
-                                // given to the manager. The file name comes from the mDependecies property of the AssetBundle object
+                                // given to the manager. The file name comes from the mDependencies property of the AssetBundle object
                                 // in the same file as this Material object being in. The target file will be loaded using the same
                                 // reader config passed to the manager. Finally, PPtr will try to find the object in the new loaded files.
             ?.safeCast<Texture2D>()?.getImage()?.let { image ->

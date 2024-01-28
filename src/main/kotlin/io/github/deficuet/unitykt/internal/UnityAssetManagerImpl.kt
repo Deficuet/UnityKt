@@ -16,7 +16,8 @@ import kotlin.io.path.isRegularFile
 
 internal class UnityAssetManagerImpl(
     override val assetRootFolder: Path?,
-    override val defaultReaderConfig: ReaderConfig
+    override val defaultReaderConfig: ReaderConfig,
+    internal val debugOutput: (String) -> Unit
 ): UnityAssetManager {
     init { UnityAssetManager.managers.add(this) }
 

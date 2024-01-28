@@ -7,6 +7,7 @@ import io.github.deficuet.unitykt.pptr.PPtr
 import java.io.Closeable
 import java.io.File
 import java.nio.file.Path
+import kotlin.io.path.Path
 import kotlin.io.path.isDirectory
 
 interface UnityAssetManager: Closeable {
@@ -111,27 +112,35 @@ interface UnityAssetManager: Closeable {
          * @param assetRootFolder The root folder of a Unity asset bundles system.
          *  This will be used by [PPtr] to find dependency objects.
          */
-        fun new(assetRootFolder: String, readerConfig: ReaderConfig = ReaderConfig.default): UnityAssetManager {
-            return new(File(assetRootFolder), readerConfig)
+        fun new(
+            assetRootFolder: String,
+            readerConfig: ReaderConfig = ReaderConfig.default,
+            debugOutput: (String) -> Unit = {  }
+        ): UnityAssetManager {
+            return new(Path(assetRootFolder), readerConfig, debugOutput)
         }
         /**
          * @see new
          */
-        fun new(assetRootFolder: File, readerConfig: ReaderConfig = ReaderConfig.default): UnityAssetManager {
-            return new(assetRootFolder.toPath(), readerConfig)
+        fun new(
+            assetRootFolder: File,
+            readerConfig: ReaderConfig = ReaderConfig.default,
+            debugOutput: (String) -> Unit = {  }
+        ): UnityAssetManager {
+            return new(assetRootFolder.toPath(), readerConfig, debugOutput)
         }
         /**
          * @see new
          */
-        fun new(assetRootFolder: Path, readerConfig: ReaderConfig = ReaderConfig.default): UnityAssetManager {
-            if (!assetRootFolder.isDirectory()) {
+        fun new(
+            assetRootFolder: Path? = null,
+            readerConfig: ReaderConfig = ReaderConfig.default,
+            debugOutput: (String) -> Unit = {  }
+        ): UnityAssetManager {
+            if (assetRootFolder?.isDirectory() == false) {
                 throw IllegalArgumentException("$assetRootFolder is not a valid folder")
             }
-            return UnityAssetManagerImpl(assetRootFolder, readerConfig)
-        }
-
-        fun new(readerConfig: ReaderConfig = ReaderConfig.default): UnityAssetManager {
-            return UnityAssetManagerImpl(null, readerConfig)
+            return UnityAssetManagerImpl(assetRootFolder, readerConfig, debugOutput)
         }
 
         internal val managers = mutableListOf<UnityAssetManager>()
