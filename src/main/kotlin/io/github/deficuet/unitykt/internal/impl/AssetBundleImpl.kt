@@ -50,8 +50,6 @@ internal class AssetBundleImpl(
         return fmPathFlags
     }
 
-    internal var dependenciesLoaded = false
-
     override fun read() {
         super.read()
         fmPreloadTable = reader.readArrayOf { PPtrImpl(this) }

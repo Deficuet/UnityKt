@@ -8,27 +8,13 @@ import io.github.deficuet.unitykt.pptr.PPtr
 import io.github.deficuet.unitykt.util.ObjectReader
 
 @PublishedApi
-internal class PPtrImpl<out T: UnityObject>: PPtr<T> {
-    override var mFileID: Int
-    override var mPathID: Long
+internal class PPtrImpl<out T: UnityObject> internal constructor(
+    override var mFileID: Int,
+    override var mPathID: Long,
+    private val assetFile: SerializedFile
+): PPtr<T> {
     override val isNull: Boolean
         get() = mPathID == 0L || mFileID < 0
-    private val assetFile: SerializedFile
-
-    internal constructor(reader: ObjectReader) {
-        mFileID = reader.readInt32()
-        mPathID = with(reader) {
-            if (formatVersion < FormatVersion.Unknown_14) reader.readInt32().toLong()
-            else reader.readInt64()
-        }
-        assetFile = reader.assetFile
-    }
-
-    internal constructor(fileId: Int, pathId: Long, assetFile: SerializedFile) {
-        mFileID = fileId
-        mPathID = pathId
-        this.assetFile = assetFile
-    }
 
     private var obj: T? = null
 
@@ -43,27 +29,7 @@ internal class PPtrImpl<out T: UnityObject>: PPtr<T> {
         if (mFileID < 0 || fileIndex >= assetFile.externals.size) {
             return null
         }
-        val manager = assetFile.root.manager
-        val result = manager.assetFiles[assetFile.externals[fileIndex].name.lowercase()]
-        if (result != null) return result
-        if (manager.assetRootFolder == null) return null
-        val bundle = assetFile.objectMap[1L] ?: return null
-        if (bundle !is AssetBundleImpl) return null
-        if (!bundle.dependenciesLoaded) {
-            for (dependencyName in bundle.mDependencies) {
-                try {
-                    manager.loadFile(
-                        manager.assetRootFolder.resolve(dependencyName),
-                        manager.defaultReaderConfig
-                    )
-                } catch (e: Exception) {
-                    println("An error occurred during loading dependency file ${dependencyName}: ${e.message}")
-                    continue
-                }
-            }
-            bundle.dependenciesLoaded = true
-        }
-        return manager.assetFiles[assetFile.externals[fileIndex].name.lowercase()]
+        return assetFile.root.manager.assetFiles[assetFile.externals[fileIndex].name.lowercase()]
     }
 
     internal fun setObj(other: @UnsafeVariance T) {
@@ -89,6 +55,17 @@ internal class PPtrImpl<out T: UnityObject>: PPtr<T> {
     }
 
     fun getObjFrom(assetFile: SerializedFile) = assetFile.objectMap[mPathID]
+
+    internal companion object {
+        internal operator fun <T: UnityObject> invoke(reader: ObjectReader): PPtrImpl<T> {
+            val fileId = reader.readInt32()
+            val pathId = with(reader) {
+                if (formatVersion < FormatVersion.Unknown_14) reader.readInt32().toLong()
+                else reader.readInt64()
+            }
+            return PPtrImpl(fileId, pathId, reader.assetFile)
+        }
+    }
 }
 
 @PublishedApi
