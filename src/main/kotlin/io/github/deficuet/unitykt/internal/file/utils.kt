@@ -7,9 +7,17 @@ import io.github.deficuet.unitykt.util.runThenReset
 internal fun readerFileType(reader: EndianBinaryReader): FileType {
     if (reader.length < 20) return FileType.RESOURCE
     when (reader.runThenReset { readNullString(20) }) {
-        "UnityWeb", "UnityRaw", "UnityArchive", "UnityFS" -> return FileType.BUNDLE
-        "UnityWebData1.0" -> return FileType.WEB
+        "UnityWeb", "UnityRaw", "UnityArchive", "UnityFS",
+        "\u00FA\u00FA\u00FA\u00FA\u00FA\u00FA\u00FA\u00FA" -> {
+            return FileType.BUNDLE
+        }
+        "UnityWebData1.0" -> {
+            return FileType.WEB
+        }
         else -> {
+            if (reader.length < 128) {
+                return FileType.RESOURCE
+            }
             var magic = reader.runThenReset { read(2) }
             if (CompressUtils.GZIP_MAGIC.contentEquals(magic)) {
                 return FileType.GZIP
@@ -33,7 +41,7 @@ internal fun isSerializedFile(reader: EndianBinaryReader) = reader.runThenReset 
     val mVersion = readUInt32()
     var mDataOffset = readUInt32().toLong()
     skip(4)    //m_Endian(1), m_Reserved(3)
-    if (mVersion > 22u) {
+    if (mVersion >= 22u) {
         if (length < 48) {
             return@runThenReset false
         }
