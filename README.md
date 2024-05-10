@@ -61,7 +61,6 @@ So far the objects that can export data includes:
   - If the format of the texture is unsupported, both functions will return `null`.
 - Sprite
   - `getImage` - An BufferedImage cropped from a `Texture2D` image. Will return `null` if the `Texture2D` object is not found or the format is unsupported.
-    - Two cropping strategies `SpriteCropStrategy.USE_TEXTURE_RECT` and `USE_RECT` are provided to determine which one of the `SpriteRenderData.textureRect` and `Sprite.mRect` will be used to crop image.
     - The packing mode `SpritePackingMode.Tight` is not supported yet.
 - TextAsset
   - `text(charset)` - This function is used to export content in this object as `String`. A `Charset` can be passed as a parameter, by default it is `Charsets.UTF_8`.
