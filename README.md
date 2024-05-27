@@ -148,20 +148,20 @@ fun main() {
         ReaderConfig(OffsetMode.AUTO)
     ).use {
         //Loading configurations
-        //The new config with mode `MANUAL` and offset `217` will be used instead of the config with mode `AUTO` given to the manager.
+        //The new config with mode `MANUAL` and offset `217` will be used, instead of the default config.
         //The files and objects loaded by this manager will not show in previous manager.
         val context = it.loadFolder("C:/foo/bar", ReaderConfig(OffsetMode.MANUAL, 217))
-        //The manager holds all the objects loaded through it, except those AssetBundle objects, their PathID is usually (always?) 1.
+
+        //The manager holds all the objects loaded through it,
+        // except those AssetBundle objects, their PathID is usually (always?) 1.
         println(it.objects.firstObjectOf<Shader>().exportString)
 
         context.objectMap.getAs<Material>(4054671897103428721)      //Map<Long, UnityObject>.getAs<T: UnityObject>(pathId: Long): T
                                                                     //                  or  .safeGetAs<T: UnityObject>(pathId: Long): T?
             .mSavedProperties.mTexEnvs.values.first()[0].mTexture   //PPtr<Texture>
-            .safeGetObj()       // if PPtr can not find the object under the same assetFile (SerializedFile) nor others loaded assetFiles
-                                // Then it will look for the file under the directory "C:/path/to/asset/system/root/folder" which was
-                                // given to the manager. The file name comes from the mDependencies property of the AssetBundle object
-                                // in the same file as this Material object being in. The target file will be loaded using the same
-                                // reader config passed to the manager. Finally, PPtr will try to find the object in the new loaded files.
+            .safeGetObj()       // if PPtr can not find the object under the same assetFile (SerializedFile)
+                                // nor others loaded assetFiles, it will return null.
+                                // don't forget to load all dependencies first
             ?.safeCast<Texture2D>()?.getImage()?.let { image ->
                 ImageIO.write(image, "png", File("C:/whatever/you/want/name.png"))
             }
