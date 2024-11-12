@@ -134,6 +134,14 @@ class Matrix4x4(private val data: Array<FloatArray>) {
     override fun toString() = toString(2)
 
     companion object {
+        val I = Matrix4x4 {
+            Array(4) { col ->
+                FloatArray(4) { row ->
+                    if (col == row) 1f else 0f
+                }
+            }
+        }
+
         fun scaleMatrix(v3: Vector3) = Matrix4x4 {
             Array(4) { col ->
                 FloatArray(4) { row ->

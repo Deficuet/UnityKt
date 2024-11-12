@@ -16,6 +16,8 @@ dependencies {
     implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk7'
     implementation 'org.json:json:20240303'
     implementation 'org.lz4:lz4-java:1.8.0'
+    implementation 'org.tukaani:xz:1.10'
+    implementation 'org.brotli:dec:0.1.2'
     implementation 'org.apache.commons:commons-compress:1.27.1'
     implementation 'com.github.Deficuet:JImageUtils:0.0.6'
     testImplementation 'org.jetbrains.kotlin:kotlin-test'
