@@ -3,7 +3,7 @@ package io.github.deficuet.unitykt.utils
 import java.io.Closeable
 import java.nio.ByteOrder
 
-abstract class EndianReaderTemplate: Closeable, DataInput {
+abstract class EndianBinaryReader: Closeable, DataInput {
     abstract val bytes: ByteArray
     abstract var position: Long
     abstract val length: Long
@@ -23,12 +23,12 @@ abstract class EndianReaderTemplate: Closeable, DataInput {
     abstract fun read(buf: ByteArray): Int
     abstract fun read(size: Int): ByteArray
 
-    fun skip(n: Int): EndianReaderTemplate {
+    fun skip(n: Int): EndianBinaryReader {
         position += n
         return this
     }
 
-    fun skip(n: Long): EndianReaderTemplate {
+    fun skip(n: Long): EndianBinaryReader {
         position += n
         return this
     }
@@ -38,7 +38,7 @@ abstract class EndianReaderTemplate: Closeable, DataInput {
     }
 }
 
-inline fun <R: EndianReaderTemplate, reified T> R.readArrayOf(
+inline fun <R: EndianBinaryReader, reified T> R.readArrayOf(
     size: Int = -1,
     crossinline constructor: R.() -> T
 ): Array<T> {
@@ -46,7 +46,7 @@ inline fun <R: EndianReaderTemplate, reified T> R.readArrayOf(
     return Array(num) { constructor() }
 }
 
-inline fun <R: EndianReaderTemplate, reified T> R.readArrayIndexedOf(
+inline fun <R: EndianBinaryReader, reified T> R.readArrayIndexedOf(
     size: Int = -1,
     crossinline constructor: R.(Int) -> T
 ): Array<T> {
@@ -54,20 +54,20 @@ inline fun <R: EndianReaderTemplate, reified T> R.readArrayIndexedOf(
     return Array(num) { constructor(it) }
 }
 
-inline fun <R: EndianReaderTemplate, T> R.withMark(crossinline block: R.() -> T): T {
+inline fun <R: EndianBinaryReader, T> R.withMark(crossinline block: R.() -> T): T {
     val mark = position
     val result = this.block()
     position = mark
     return result
 }
 
-inline fun <R: EndianReaderTemplate, T> R.runThenReset(crossinline block: R.() -> T): T {
+inline fun <R: EndianBinaryReader, T> R.runThenReset(crossinline block: R.() -> T): T {
     val result = this.block()
     position = 0
     return result
 }
 
-inline fun <R: EndianReaderTemplate, T> R.useEndian(e: ByteOrder, crossinline block: R.() -> T): T {
+inline fun <R: EndianBinaryReader, T> R.useEndian(e: ByteOrder, crossinline block: R.() -> T): T {
     val cache = endian
     endian = e
     val result = this.block()

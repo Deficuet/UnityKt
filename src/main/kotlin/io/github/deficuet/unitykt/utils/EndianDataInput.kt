@@ -5,7 +5,7 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.charset.Charset
 
-abstract class EndianDataInput(endian: ByteOrder): EndianReaderTemplate() {
+abstract class EndianDataInput(endian: ByteOrder): EndianBinaryReader() {
     private val arr2 = ByteArray(2)
     private val arr4 = ByteArray(4)
     private val arr8 = ByteArray(8)
