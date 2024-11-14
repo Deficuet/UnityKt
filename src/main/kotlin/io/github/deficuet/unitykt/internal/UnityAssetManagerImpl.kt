@@ -4,6 +4,7 @@ import io.github.deficuet.unitykt.ImportContext
 import io.github.deficuet.unitykt.ManagerConfig
 import io.github.deficuet.unitykt.ReaderConfig
 import io.github.deficuet.unitykt.UnityAssetManager
+import io.github.deficuet.unitykt.internal.file.ResourceFile
 import java.io.Closeable
 import java.io.File
 import java.nio.file.Files
@@ -19,7 +20,7 @@ internal class UnityAssetManagerImpl(val config: ManagerConfig): UnityAssetManag
     }
 
     internal val serializedFiles = mutableMapOf<String, Any>()  // TODO
-    internal val resourceFiles = mutableMapOf<String, Any>()    // TODO
+    internal val resourceFiles = mutableMapOf<String, ResourceFile>()
     internal val otherResources = mutableListOf<Closeable>()
 
     override val contexts = mutableMapOf<String, ImportContextImpl>()
@@ -111,7 +112,7 @@ internal class UnityAssetManagerImpl(val config: ManagerConfig): UnityAssetManag
     override fun close() {
         //TODO
 //        serializedFiles.values.forEach { it.reader.close() }
-//        resourceFiles.values.forEach { it.reader.close() }
+        resourceFiles.values.forEach { it.reader.close() }
         otherResources.forEach { it.close() }
         serializedFiles.clear()
         resourceFiles.clear()

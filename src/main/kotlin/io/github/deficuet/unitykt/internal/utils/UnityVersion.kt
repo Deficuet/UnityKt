@@ -1,16 +1,13 @@
 package io.github.deficuet.unitykt.internal.utils
 
 internal class UnityVersion {
-    val major: Int
-    val minor: Int
-    val patch: Int
-    val build: Int
-
-    val buildType: String
-//    val versionString: String
+    private val major: Int
+    private val minor: Int
+    private val patch: Int
+    private val build: Int
+    private val buildType: String
 
     constructor(vs: String) {
-//        versionString = vs
         val ret = VERSION_REGEX.matchEntire(vs) ?: throw IllegalArgumentException("Unknown unity version pattern")
         major = ret.groups["ma"]!!.value.toInt()
         minor = ret.groups["mi"]!!.value.toInt()
@@ -19,13 +16,12 @@ internal class UnityVersion {
         buildType = ret.groups["bt"]?.value ?: ""
     }
 
-    constructor(ma: Int, mi: Int, p: Int) {
+    constructor(ma: Int, mi: Int, p: Int, bt: BuildType = BuildType.FINAL, b: Int = 1) {
         major = ma
         minor = mi
         patch = p
-        build = 1
-        buildType = BuildType.FINAL.symbol
-//        versionString = "${major}.${major}.${major}${buildType}${build}"
+        build = b
+        buildType = bt.symbol
     }
 
     operator fun get(i: Int): Int {

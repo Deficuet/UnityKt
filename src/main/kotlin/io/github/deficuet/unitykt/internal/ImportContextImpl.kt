@@ -57,7 +57,7 @@ internal class ImportContextImpl: ImportContext, FileNode {
     private fun init(reader: EndianBinaryReader) {
         when (readerFileType(reader)) {
             FileType.BUNDLE -> BundleFile(reader, this, identifier)
-//            FileType.WEB -> WebFile(reader, this, name)
+            FileType.WEB -> WebFile(reader, this, identifier)
             FileType.GZIP -> init(
                 EndianByteArrayReader(
                     CompressUtils.gzipDecompress(reader.bytes),
@@ -73,9 +73,9 @@ internal class ImportContextImpl: ImportContext, FileNode {
 //            FileType.ASSETS -> SerializedFile(reader, this, name).also {
 //                manager.assetFiles[name.lowercase()] = it
 //            }
-//            FileType.RESOURCE -> ResourceFile(reader, this, name).also {
-//                manager.resourceFiles[name] = it
-//            }
+            FileType.RESOURCE -> ResourceFile(reader, this, identifier).also {
+                manager.resourceFiles[identifier] = it
+            }
             else -> {}
         }
     }

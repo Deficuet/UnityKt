@@ -25,7 +25,12 @@ internal interface AbstractFile: FileNode {
                 baseOffset = reader.baseOffset + node.offset
             ).use { nodeReader ->
                 when (readerFileType(nodeReader)) {
+                    FileType.BUNDLE -> BundleFile(nodeReader, this, node.path)
+                    FileType.WEB -> WebFile(nodeReader, this, node.path)
 
+                    FileType.RESOURCE -> ResourceFile(nodeReader, this, node.path).also {
+                        root.manager.resourceFiles[node.path] = it
+                    }
                     else -> {  }
                 }
             }
