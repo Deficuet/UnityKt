@@ -1,5 +1,7 @@
 package io.github.deficuet.unitykt
 
+import io.github.deficuet.unitykt.metadata.UnityObjectMetadata
+
 interface ImportContext {
     /**
      * The [UnityAssetManager] which loads this file
@@ -21,9 +23,8 @@ interface ImportContext {
     val readerConfig: ReaderConfig
 
     /**
-     * All objects loaded from this file. The objects are associated by their `m_PathId`
-     * TODO
+     * All objects' metadata loaded from this file. The objects are associated by their `m_PathId`
      */
-    val objectMap: Map<Long, Any>
-    val objectList: Collection<Any>
+    val objectMap: Map<Long, UnityObjectMetadata>
+    val objectList: Collection<UnityObjectMetadata>
 }

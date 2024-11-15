@@ -5,7 +5,7 @@ import io.github.deficuet.unitykt.enums.ClassIDType
 interface UnityObjectMetadata {
     val typeID: Int
     val classID: Int
-    val mPathID: Long
+    val m_PathID: Long
     val serializedType: SerializedType?
     val classType: ClassIDType
 }

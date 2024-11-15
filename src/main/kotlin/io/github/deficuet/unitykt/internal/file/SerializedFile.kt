@@ -82,9 +82,9 @@ internal class SerializedFile(
     private val userInformation: String
 
     private val types: Array<SerializedTypeImpl>
-    private val objectMetadataArray: Array<UnityObjectMetadataImpl>
+    val objectMetadataMap: Map<Long, UnityObjectMetadataImpl>
     private val scriptTypes: Array<ObjectIdentifier>
-    internal val externals = mutableListOf<FileIdentifier>()
+    val externals = mutableListOf<FileIdentifier>()
     private val refTypes: Array<SerializedTypeImpl>
 
     init {
@@ -123,7 +123,7 @@ internal class SerializedFile(
         bigIDEnabled = if (header.version in FormatVersion.UNKNOWN_7 ..< FormatVersion.UNKNOWN_14) {
             reader.readInt32()
         } else 0
-        objectMetadataArray = reader.readArrayOf {
+        objectMetadataMap = reader.readArrayOf {
             val mPathID = if (bigIDEnabled != 0) {
                 readInt64()
             } else if (header.version < FormatVersion.UNKNOWN_14) {
@@ -160,10 +160,10 @@ internal class SerializedFile(
                 header.version == FormatVersion.REFACTORED_CLASS_ID
             ) readUInt8() else 0u
             UnityObjectMetadataImpl(
-                byteStart, byteSize, typeID, classID,
-                isDestroyed, stripped, mPathID, serialisedType
+                this@SerializedFile, byteStart, byteSize, typeID,
+                classID, isDestroyed, stripped, mPathID, serialisedType
             )
-        }
+        }.associateBy { it.m_PathID }
         scriptTypes = if (header.version >= FormatVersion.HAS_SCRIPT_TYPE_INDEX) {
             reader.readArrayOf {
                 ObjectIdentifier(
@@ -195,7 +195,7 @@ internal class SerializedFile(
         userInformation = if (header.version >= FormatVersion.UNKNOWN_5) {
             reader.readNullString()
         } else ""
-        // TODO read object
+        root.objectMap.putAll(objectMetadataMap)
     }
 
     private fun readSerializedType(isRefType: Boolean): SerializedTypeImpl {

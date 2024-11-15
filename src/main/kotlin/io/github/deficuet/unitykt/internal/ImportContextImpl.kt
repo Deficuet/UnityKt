@@ -8,6 +8,7 @@ import io.github.deficuet.unitykt.internal.file.BundleFile
 import io.github.deficuet.unitykt.internal.file.FileNode
 import io.github.deficuet.unitykt.internal.file.FileType
 import io.github.deficuet.unitykt.internal.file.readerFileType
+import io.github.deficuet.unitykt.internal.metadata.UnityObjectMetadataImpl
 import io.github.deficuet.unitykt.internal.utils.CompressUtils
 import io.github.deficuet.unitykt.utils.EndianBinaryFileReader
 import io.github.deficuet.unitykt.utils.EndianByteArrayReader
@@ -22,8 +23,8 @@ internal class ImportContextImpl: ImportContext, FileNode {
     override val identifier: String
     override val readerConfig: ReaderConfig
 
-    override val objectMap = mutableMapOf<Long, Any>()
-    override val objectList: Collection<Any>
+    override val objectMap = mutableMapOf<Long, UnityObjectMetadataImpl>()
+    override val objectList: Collection<UnityObjectMetadataImpl>
         get() = objectMap.values
 
     override val parent = this
