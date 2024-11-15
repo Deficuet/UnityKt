@@ -50,6 +50,11 @@ internal class FileIdentifier private constructor(
     }
 }
 
+class ScriptIdentifier(
+    val serializedFileIndex: Int,
+    val identifierInFile: Long
+)
+
 internal class SerializedFile(
     internal val reader: EndianBinaryReader,
     override val parent: FileNode,
@@ -61,11 +66,6 @@ internal class SerializedFile(
         val version: UInt,
         var dataOffset: Long,
         var endianess: UByte = 0u,
-    )
-
-    class ObjectIdentifier(
-        val serializedFileIndex: Int,
-        val identifierInFile: Long
     )
 
     private val header = Header(
@@ -83,7 +83,7 @@ internal class SerializedFile(
 
     private val types: Array<SerializedTypeImpl>
     val objectMetadataMap: Map<Long, UnityObjectMetadataImpl>
-    private val scriptTypes: Array<ObjectIdentifier>
+    private val scriptTypes: Array<ScriptIdentifier>
     val externals = mutableListOf<FileIdentifier>()
     private val refTypes: Array<SerializedTypeImpl>
 
@@ -166,7 +166,7 @@ internal class SerializedFile(
         }.associateBy { it.m_PathID }
         scriptTypes = if (header.version >= FormatVersion.HAS_SCRIPT_TYPE_INDEX) {
             reader.readArrayOf {
-                ObjectIdentifier(
+                ScriptIdentifier(
                     serializedFileIndex = readInt32(),
                     identifierInFile = if (header.version < FormatVersion.UNKNOWN_14) {
                         readInt32().toLong()
