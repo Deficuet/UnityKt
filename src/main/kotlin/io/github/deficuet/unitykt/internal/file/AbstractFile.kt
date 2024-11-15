@@ -27,7 +27,17 @@ internal interface AbstractFile: FileNode {
                 when (readerFileType(nodeReader)) {
                     FileType.BUNDLE -> BundleFile(nodeReader, this, node.path)
                     FileType.WEB -> WebFile(nodeReader, this, node.path)
-
+                    FileType.ASSETS -> {
+                        if (RESOURCE_EXT.none { node.path.endsWith(it) }) {
+                            SerializedFile(nodeReader, this, node.path).also {
+                                root.manager.serializedFiles[node.path.lowercase()] = it
+                            }
+                        } else {
+                            ResourceFile(nodeReader, this, node.path).also {
+                                root.manager.resourceFiles[node.path] = it
+                            }
+                        }
+                    }
                     FileType.RESOURCE -> ResourceFile(nodeReader, this, node.path).also {
                         root.manager.resourceFiles[node.path] = it
                     }

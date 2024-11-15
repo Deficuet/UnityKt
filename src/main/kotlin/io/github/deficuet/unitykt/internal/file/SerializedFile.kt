@@ -1,14 +1,16 @@
 package io.github.deficuet.unitykt.internal.file
 
 import io.github.deficuet.unitykt.enums.BuildTarget
-import io.github.deficuet.unitykt.internal.utils.BuildType
-import io.github.deficuet.unitykt.internal.utils.UnityVersion
-import io.github.deficuet.unitykt.metadata.SerializedType
-import io.github.deficuet.unitykt.metadata.TypeTree
-import io.github.deficuet.unitykt.metadata.TypeTreeNode
+import io.github.deficuet.unitykt.utils.BuildType
+import io.github.deficuet.unitykt.utils.UnityVersion
+import io.github.deficuet.unitykt.internal.metadata.SerializedTypeImpl
+import io.github.deficuet.unitykt.internal.metadata.TypeTreeImpl
+import io.github.deficuet.unitykt.internal.metadata.TypeTreeNodeImpl
+import io.github.deficuet.unitykt.internal.metadata.UnityObjectMetadataImpl
 import io.github.deficuet.unitykt.utils.EndianBinaryReader
 import io.github.deficuet.unitykt.utils.EndianByteArrayReader
 import io.github.deficuet.unitykt.utils.readArrayOf
+import java.io.File
 import java.nio.ByteOrder
 
 internal class FormatVersion private constructor() {
@@ -37,17 +39,33 @@ internal class FormatVersion private constructor() {
     }
 }
 
+internal class FileIdentifier private constructor(
+    val type: Int,
+    val path: String,
+    val name: String
+) {
+    companion object {
+        fun fromPath(type: Int, path: String) = FileIdentifier(type, path, File(path).name)
+        fun fromName(type: Int, name: String) = FileIdentifier(type, "", name)
+    }
+}
+
 internal class SerializedFile(
     internal val reader: EndianBinaryReader,
     override val parent: FileNode,
     override val name: String
 ): AbstractFile {
-    data class Header(
+    class Header(
         var metadataSize: UInt,
         var fileSize: Long,
         val version: UInt,
         var dataOffset: Long,
         var endianess: UByte = 0u,
+    )
+
+    class ObjectIdentifier(
+        val serializedFileIndex: Int,
+        val identifierInFile: Long
     )
 
     private val header = Header(
@@ -56,12 +74,18 @@ internal class SerializedFile(
         version = reader.readUInt32(),
         dataOffset = reader.readUInt32().toLong()
     )
+
     private val unityVersion: UnityVersion
     private val buildTarget: BuildTarget
     private val enableTypeTree: Boolean
     private val bigIDEnabled: Int
+    private val userInformation: String
 
-    private val types: Array<SerializedType>
+    private val types: Array<SerializedTypeImpl>
+    private val objectMetadataArray: Array<UnityObjectMetadataImpl>
+    private val scriptTypes: Array<ObjectIdentifier>
+    internal val externals = mutableListOf<FileIdentifier>()
+    private val refTypes: Array<SerializedTypeImpl>
 
     init {
         with(header) {
@@ -99,15 +123,88 @@ internal class SerializedFile(
         bigIDEnabled = if (header.version in FormatVersion.UNKNOWN_7 ..< FormatVersion.UNKNOWN_14) {
             reader.readInt32()
         } else 0
+        objectMetadataArray = reader.readArrayOf {
+            val mPathID = if (bigIDEnabled != 0) {
+                readInt64()
+            } else if (header.version < FormatVersion.UNKNOWN_14) {
+                readInt32().toLong()
+            } else {
+                alignStream()
+                readInt64()
+            }
+            val byteStart = if (header.version >= FormatVersion.LARGE_FILE_SUPPORT) {
+                readInt64()
+            } else {
+                readUInt32().toLong()
+            } + header.dataOffset
+            val byteSize = readUInt32()
+            val typeID = readInt32()
+            val classID: Int; val serialisedType: SerializedTypeImpl?
+            if (header.version < FormatVersion.REFACTORED_CLASS_ID) {
+                classID = readUInt16().toInt()
+                serialisedType = types.find { it.classID == typeID }
+            } else {
+                with(types[typeID]) {
+                    serialisedType = this
+                    classID = this.classID
+                }
+            }
+            val isDestroyed: UShort = if (header.version < FormatVersion.HAS_SCRIPT_TYPE_INDEX) readUInt16() else 0u
+            if (header.version in FormatVersion.HAS_SCRIPT_TYPE_INDEX ..< FormatVersion.REFACTOR_TYPE_DATA) {
+                if (serialisedType != null) {
+                    serialisedType.scriptTypeIndex = readInt16()
+                }
+            }
+            val stripped: UByte = if (
+                header.version == FormatVersion.SUPPORTS_STRIPPED_OBJECT ||
+                header.version == FormatVersion.REFACTORED_CLASS_ID
+            ) readUInt8() else 0u
+            UnityObjectMetadataImpl(
+                byteStart, byteSize, typeID, classID,
+                isDestroyed, stripped, mPathID, serialisedType
+            )
+        }
+        scriptTypes = if (header.version >= FormatVersion.HAS_SCRIPT_TYPE_INDEX) {
+            reader.readArrayOf {
+                ObjectIdentifier(
+                    serializedFileIndex = readInt32(),
+                    identifierInFile = if (header.version < FormatVersion.UNKNOWN_14) {
+                        readInt32().toLong()
+                    } else {
+                        alignStream()
+                        readInt64()
+                    }
+                )
+            }
+        } else emptyArray()
+        externals.addAll(
+            reader.readArrayOf {
+                if (header.version >= FormatVersion.UNKNOWN_6) readNullString()
+                val type = if (header.version >= FormatVersion.UNKNOWN_5) {
+                    //guid: UUID (byte[16])
+                    skip(16)
+                    readInt32()
+                } else 0
+                val path = readNullString()
+                FileIdentifier.fromPath(type, path)
+            }
+        )
+        refTypes = if (header.version >= FormatVersion.SUPPORTS_REF_OBJECT) {
+            reader.readArrayOf { readSerializedType(true) }
+        } else emptyArray()
+        userInformation = if (header.version >= FormatVersion.UNKNOWN_5) {
+            reader.readNullString()
+        } else ""
+        // TODO read object
     }
 
-    private fun readSerializedType(isRefType: Boolean): SerializedType {
+    private fun readSerializedType(isRefType: Boolean): SerializedTypeImpl {
         val classID = reader.readInt32()
         val isStrippedType = if (header.version >= FormatVersion.REFACTORED_CLASS_ID) reader.readBool() else false
         val scriptTypeIndex = if (header.version >= FormatVersion.REFACTOR_TYPE_DATA) reader.readInt16() else 0
         val scriptID = ByteArray(16)
         val oldTypeHash = ByteArray(16)
-        val typeTree = TypeTree()
+        val typeTree = TypeTreeImpl()
         var className = ""
         var nameSpace = ""
         var asmName = ""
@@ -143,7 +240,7 @@ internal class SerializedFile(
                 }
             }
         }
-        return SerializedType(
+        return SerializedTypeImpl(
             classID, isStrippedType, scriptTypeIndex, typeTree, scriptID,
             oldTypeHash, typeDependencies, className, nameSpace, asmName
         )
@@ -158,34 +255,41 @@ internal class SerializedFile(
         return commonString[offset] ?: offset.toString()
     }
 
-    private fun typeTreeBlobRead(tree: TypeTree) {
+    private fun typeTreeBlobRead(tree: TypeTreeImpl) {
         val nodeCount = reader.readInt32()
         val stringBufferSize = reader.readInt32()
         val hasRefTypeHash = header.version >= FormatVersion.TYPE_TREE_NODE_WITH_TYPE_FLAGS
+        val typeOffsetList = mutableListOf<UInt>()
+        val nameOffsetList = mutableListOf<UInt>()
         for (i in 0 ..< nodeCount) {
-            tree.treeNodes.add(
-                TypeTreeNode(
-                    version = reader.readUInt16().toInt(),
-                    level = reader.readUInt8().toInt(),
-                    typeFlags = reader.readUInt8().toInt(),
-                    typeStrOffset = reader.readUInt32(),
-                    nameStrOffset = reader.readUInt32(),
-                    byteSize = reader.readInt32(),
-                    index = reader.readInt32(),
-                    metaFlag = reader.readInt32(),
-                    refTypeHash = if (hasRefTypeHash) reader.readUInt64() else 0u
+            val version = reader.readUInt16().toInt()
+            val level = reader.readUInt8().toInt()
+            val typeFlags = reader.readUInt8().toInt()
+            val typeStrOffset = reader.readUInt32()
+            val nameStrOffset = reader.readUInt32()
+            val byteSize = reader.readInt32()
+            val index = reader.readInt32()
+            val metaFlag = reader.readInt32()
+            val refTypeHash = if (hasRefTypeHash) reader.readUInt64() else 0u
+            tree.nodes.add(
+                TypeTreeNodeImpl(
+                    byteSize, index, typeFlags, version,
+                    metaFlag, level, refTypeHash
                 )
             )
+            typeOffsetList.add(typeStrOffset)
+            nameOffsetList.add(nameStrOffset)
         }
         EndianByteArrayReader(reader.read(stringBufferSize)).use {
-            for (node in tree.treeNodes) {
-                node.type = readNodeString(it, node.typeStrOffset)
-                node.name = readNodeString(it, node.nameStrOffset)
+            for (i in 0 ..< nodeCount) {
+                val node = tree.nodes[i]
+                node.type = readNodeString(it, typeOffsetList[i])
+                node.name = readNodeString(it, nameOffsetList[i])
             }
         }
     }
 
-    private fun readTypeTree(tree: TypeTree, level: Int = 0) {
+    private fun readTypeTree(tree: TypeTreeImpl, level: Int = 0) {
         val type = reader.readNullString()
         val name = reader.readNullString()
         val byteSize = reader.readInt32()
@@ -194,10 +298,10 @@ internal class SerializedFile(
         val typeFlags = reader.readInt32()
         val version = reader.readInt32()
         val metaFlag = if (header.version != FormatVersion.UNKNOWN_3) reader.readInt32() else 0
-        tree.treeNodes.add(
-            TypeTreeNode(
+        tree.nodes.add(
+            TypeTreeNodeImpl(
                 byteSize, index, typeFlags, version, metaFlag, level,
-                0u, 0u, 0u, type, name
+                0u, type, name
             )
         )
         val childrenCount = reader.readInt32()

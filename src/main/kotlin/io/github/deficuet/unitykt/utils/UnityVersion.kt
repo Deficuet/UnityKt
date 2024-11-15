@@ -1,4 +1,4 @@
-package io.github.deficuet.unitykt.internal.utils
+package io.github.deficuet.unitykt.utils
 
 internal class UnityVersion {
     private val major: Int

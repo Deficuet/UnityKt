@@ -70,13 +70,12 @@ internal class ImportContextImpl: ImportContext, FileNode {
                     endian = ByteOrder.LITTLE_ENDIAN
                 )
             )
-//            FileType.ASSETS -> SerializedFile(reader, this, name).also {
-//                manager.assetFiles[name.lowercase()] = it
-//            }
+            FileType.ASSETS -> SerializedFile(reader, this, identifier).also {
+                manager.serializedFiles[it.name.lowercase()] = it
+            }
             FileType.RESOURCE -> ResourceFile(reader, this, identifier).also {
                 manager.resourceFiles[identifier] = it
             }
-            else -> {}
         }
     }
 }

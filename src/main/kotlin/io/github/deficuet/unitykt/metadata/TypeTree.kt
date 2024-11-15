@@ -1,6 +1,5 @@
 package io.github.deficuet.unitykt.metadata
 
-internal class TypeTree(
-    val treeNodes: MutableList<TypeTreeNode> = mutableListOf()
-) {
+interface TypeTree {
+    val nodes: List<TypeTreeNode>
 }
