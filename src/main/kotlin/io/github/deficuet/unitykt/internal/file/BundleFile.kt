@@ -1,11 +1,7 @@
 package io.github.deficuet.unitykt.internal.file
 
 import io.github.deficuet.unitykt.internal.utils.CompressUtils
-import io.github.deficuet.unitykt.utils.UnityVersion
-import io.github.deficuet.unitykt.utils.EndianBinaryReader
-import io.github.deficuet.unitykt.utils.EndianByteArrayReader
-import io.github.deficuet.unitykt.utils.readArrayOf
-import io.github.deficuet.unitykt.utils.withMark
+import io.github.deficuet.unitykt.utils.*
 
 internal class ArchiveFlags private constructor() {
     companion object {

@@ -2,6 +2,7 @@ package io.github.deficuet.unitykt.internal.metadata
 
 import io.github.deficuet.unitykt.enums.ClassIDType
 import io.github.deficuet.unitykt.internal.file.SerializedFile
+import io.github.deficuet.unitykt.internal.utils.ObjectReader
 import io.github.deficuet.unitykt.metadata.UnityObjectMetadata
 
 internal class UnityObjectMetadataImpl(
@@ -16,5 +17,12 @@ internal class UnityObjectMetadataImpl(
     override val serializedType: SerializedTypeImpl?
 ): UnityObjectMetadata {
     override val classType = ClassIDType.of(classID)
-    val valueMap = mutableMapOf<String, Any?>()
+
+    private var isInitialized = false
+    private val valueMap = mutableMapOf<String, Any?>()
+    private val dumpBuilder = StringBuilder()
+
+    private fun readTree() {
+        val reader = ObjectReader(serializedFile, this)
+    }
 }

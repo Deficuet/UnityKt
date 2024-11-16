@@ -3,16 +3,11 @@ package io.github.deficuet.unitykt.internal
 import io.github.deficuet.unitykt.ImportContext
 import io.github.deficuet.unitykt.ReaderConfig
 import io.github.deficuet.unitykt.internal.file.*
-import io.github.deficuet.unitykt.internal.file.AbstractFile
-import io.github.deficuet.unitykt.internal.file.BundleFile
-import io.github.deficuet.unitykt.internal.file.FileNode
-import io.github.deficuet.unitykt.internal.file.FileType
-import io.github.deficuet.unitykt.internal.file.readerFileType
 import io.github.deficuet.unitykt.internal.metadata.UnityObjectMetadataImpl
 import io.github.deficuet.unitykt.internal.utils.CompressUtils
 import io.github.deficuet.unitykt.utils.EndianBinaryFileReader
-import io.github.deficuet.unitykt.utils.EndianByteArrayReader
 import io.github.deficuet.unitykt.utils.EndianBinaryReader
+import io.github.deficuet.unitykt.utils.EndianByteArrayReader
 import java.io.File
 import java.nio.ByteOrder
 import kotlin.io.path.pathString
