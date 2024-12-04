@@ -12,4 +12,6 @@ internal class TypeTreeNodeImpl(
     override val refTypeHash: ULong,
     override var type: String = "",
     override var name: String = ""
-): TypeTreeNode
+): TypeTreeNode {
+    val children = mutableListOf<TypeTreeNodeImpl>()
+}

@@ -37,4 +37,32 @@ internal class TypeTreeImpl(
         }
         return ret
     }
+
+    fun createNodeTree(): List<TypeTreeNodeImpl> {
+        if (nodes.isEmpty()) return emptyList()
+        val baseLevel = nodes[0].level
+        val rootList = mutableListOf<TypeTreeNodeImpl>()
+        val nodeStack = ArrayDeque<TypeTreeNodeImpl>()
+        for (node in nodes) {
+            if (node.level == baseLevel) {
+                rootList.add(node)
+                nodeStack.addLast(node)
+                continue
+            }
+            val lastNode = nodeStack.last()
+            if (node.level > lastNode.level) {
+                lastNode.children.add(node)
+            } else {
+                var top: TypeTreeNodeImpl
+                do {
+                    nodeStack.removeLast()
+                    top = nodeStack.last()
+                } while (node.level <= top.level)
+                top.children.add(node)
+            }
+            nodeStack.addLast(node)
+        }
+        nodeStack.clear()
+        return rootList
+    }
 }
