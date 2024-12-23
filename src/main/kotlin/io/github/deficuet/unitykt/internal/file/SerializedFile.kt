@@ -2,9 +2,10 @@ package io.github.deficuet.unitykt.internal.file
 
 import io.github.deficuet.unitykt.enums.BuildTarget
 import io.github.deficuet.unitykt.internal.metadata.SerializedTypeImpl
+import io.github.deficuet.unitykt.internal.metadata.UnityObjectMetadataImpl
 import io.github.deficuet.unitykt.internal.metadata.tree.TypeTreeImpl
 import io.github.deficuet.unitykt.internal.metadata.tree.TypeTreeNodeImpl
-import io.github.deficuet.unitykt.internal.metadata.UnityObjectMetadataImpl
+import io.github.deficuet.unitykt.internal.utils.BuildType
 import io.github.deficuet.unitykt.utils.*
 import java.io.File
 import java.nio.ByteOrder
@@ -71,7 +72,7 @@ internal class SerializedFile(
         dataOffset = reader.readUInt32().toLong()
     )
 
-    private val unityVersion: UnityVersion
+    val unityVersion: UnityVersion
     private val buildTarget: BuildTarget
     private val enableTypeTree: Boolean
     private val bigIDEnabled: Int
@@ -202,7 +203,7 @@ internal class SerializedFile(
         val scriptTypeIndex = if (header.version >= FormatVersion.REFACTOR_TYPE_DATA) reader.readInt16() else 0
         val scriptID = ByteArray(16)
         val oldTypeHash = ByteArray(16)
-        val typeTree = TypeTreeImpl()
+        val typeTreeNodeList = mutableListOf<TypeTreeNodeImpl>()
         var className = ""
         var nameSpace = ""
         var asmName = ""
@@ -224,9 +225,9 @@ internal class SerializedFile(
                 header.version >= FormatVersion.UNKNOWN_12 ||
                 header.version == FormatVersion.UNKNOWN_10
             ) {
-                typeTreeBlobRead(typeTree)
+                typeTreeBlobRead(typeTreeNodeList)
             } else {
-                readTypeTree(typeTree)
+                readTypeTree(typeTreeNodeList)
             }
             if (header.version >= FormatVersion.STORES_TYPE_DEPENDENCIES) {
                 if (isRefType) {
@@ -239,7 +240,7 @@ internal class SerializedFile(
             }
         }
         return SerializedTypeImpl(
-            classID, isStrippedType, scriptTypeIndex, typeTree, scriptID,
+            classID, isStrippedType, scriptTypeIndex, TypeTreeImpl(typeTreeNodeList), scriptID,
             oldTypeHash, typeDependencies, className, nameSpace, asmName
         )
     }
@@ -253,7 +254,7 @@ internal class SerializedFile(
         return commonString[offset] ?: offset.toString()
     }
 
-    private fun typeTreeBlobRead(tree: TypeTreeImpl) {
+    private fun typeTreeBlobRead(nodeList: MutableList<TypeTreeNodeImpl>) {
         val nodeCount = reader.readInt32()
         val stringBufferSize = reader.readInt32()
         val hasRefTypeHash = header.version >= FormatVersion.TYPE_TREE_NODE_WITH_TYPE_FLAGS
@@ -269,7 +270,7 @@ internal class SerializedFile(
             val index = reader.readInt32()
             val metaFlag = reader.readInt32()
             val refTypeHash = if (hasRefTypeHash) reader.readUInt64() else 0u
-            tree.nodes.add(
+            nodeList.add(
                 TypeTreeNodeImpl(
                     byteSize, index, typeFlags, version,
                     metaFlag, level, refTypeHash
@@ -280,14 +281,14 @@ internal class SerializedFile(
         }
         EndianByteArrayReader(reader.read(stringBufferSize)).use {
             for (i in 0 ..< nodeCount) {
-                val node = tree.nodes[i]
+                val node = nodeList[i]
                 node.type = readNodeString(it, typeOffsetList[i])
                 node.name = readNodeString(it, nameOffsetList[i])
             }
         }
     }
 
-    private fun readTypeTree(tree: TypeTreeImpl, level: Int = 0) {
+    private fun readTypeTree(nodeList: MutableList<TypeTreeNodeImpl>, level: Int = 0) {
         val type = reader.readNullString()
         val name = reader.readNullString()
         val byteSize = reader.readInt32()
@@ -296,7 +297,7 @@ internal class SerializedFile(
         val typeFlags = reader.readInt32()
         val version = reader.readInt32()
         val metaFlag = if (header.version != FormatVersion.UNKNOWN_3) reader.readInt32() else 0
-        tree.nodes.add(
+        nodeList.add(
             TypeTreeNodeImpl(
                 byteSize, index, typeFlags, version, metaFlag, level,
                 0u, type, name
@@ -304,7 +305,7 @@ internal class SerializedFile(
         )
         val childrenCount = reader.readInt32()
         for (i in 0 ..< childrenCount) {
-            readTypeTree(tree, level + 1)
+            readTypeTree(nodeList, level + 1)
         }
     }
 

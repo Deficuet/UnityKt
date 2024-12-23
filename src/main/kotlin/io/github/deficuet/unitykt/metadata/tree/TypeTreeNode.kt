@@ -1,4 +1,4 @@
-package io.github.deficuet.unitykt.metadata
+package io.github.deficuet.unitykt.metadata.tree
 
 interface TypeTreeNode {
     val byteSize: Int

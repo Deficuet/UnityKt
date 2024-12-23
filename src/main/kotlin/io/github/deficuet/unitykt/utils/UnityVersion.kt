@@ -1,6 +1,8 @@
 package io.github.deficuet.unitykt.utils
 
-internal class UnityVersion {
+import io.github.deficuet.unitykt.internal.utils.BuildType
+
+class UnityVersion {
     private val major: Int
     private val minor: Int
     private val patch: Int
@@ -16,7 +18,7 @@ internal class UnityVersion {
         buildType = ret.groups["bt"]?.value ?: ""
     }
 
-    constructor(ma: Int, mi: Int, p: Int, bt: BuildType = BuildType.FINAL, b: Int = 1) {
+    internal constructor(ma: Int, mi: Int, p: Int, bt: BuildType = BuildType.FINAL, b: Int = 1) {
         major = ma
         minor = mi
         patch = p
@@ -46,12 +48,4 @@ internal class UnityVersion {
     companion object {
         val VERSION_REGEX = Regex("""(?<ma>\d+).(?<mi>\d+).(?<p>\d+)(?<bt>[a-z])?(?<b>\d+)?""")
     }
-}
-
-internal enum class BuildType(val symbol: String) {
-    ALPHA("a"),
-    BETA("b"),
-    FINAL("f"),
-    PATCH("p"),
-    TUAN_JIE("t");
 }

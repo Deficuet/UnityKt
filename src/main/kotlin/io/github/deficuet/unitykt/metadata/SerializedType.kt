@@ -1,5 +1,7 @@
 package io.github.deficuet.unitykt.metadata
 
+import io.github.deficuet.unitykt.metadata.tree.TypeTree
+
 interface SerializedType {
     val classID: Int
     val isStrippedType: Boolean

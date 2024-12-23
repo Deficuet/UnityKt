@@ -1,6 +1,6 @@
 package io.github.deficuet.unitykt.internal.metadata.tree
 
-import io.github.deficuet.unitykt.metadata.TypeTreeNode
+import io.github.deficuet.unitykt.metadata.tree.TypeTreeNode
 
 internal class TypeTreeNodeImpl(
     override val byteSize: Int,

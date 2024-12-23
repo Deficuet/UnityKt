@@ -2,14 +2,15 @@ package io.github.deficuet.unitykt.internal.metadata.tree
 
 import io.github.deficuet.unitykt.cast
 import io.github.deficuet.unitykt.internal.utils.ObjectReader
-import io.github.deficuet.unitykt.metadata.TypeTree
+import io.github.deficuet.unitykt.metadata.tree.TypeTree
 
 internal class TypeTreeImpl(
-    override val nodes: MutableList<TypeTreeNodeImpl> = mutableListOf()
+    nodeList: List<TypeTreeNodeImpl>
 ): TypeTree {
+    override val nodeTree = createNodeTree(nodeList)
+
     fun read(reader: ObjectReader, parserList: List<TypeTreeParser>): Map<String, Any> {
         reader.position = 0
-        val nodeTree = createNodeTree()
         val root = nodeTree[0]
         parserList.forEach { it.writeNode(root) }
         val dict = mutableMapOf<String, Any>()
@@ -180,31 +181,33 @@ internal class TypeTreeImpl(
         return value
     }
 
-    fun createNodeTree(): List<TypeTreeNodeImpl> {
-        if (nodes.isEmpty()) return emptyList()
-        val baseLevel = nodes[0].level
-        val rootList = mutableListOf<TypeTreeNodeImpl>()
-        val nodeStack = ArrayDeque<TypeTreeNodeImpl>(nodes.size)
-        for (node in nodes) {
-            if (node.level == baseLevel) {
-                rootList.add(node)
+    companion object {
+        fun createNodeTree(nodeList: List<TypeTreeNodeImpl>): List<TypeTreeNodeImpl> {
+            if (nodeList.isEmpty()) return emptyList()
+            val baseLevel = nodeList[0].level
+            val rootList = mutableListOf<TypeTreeNodeImpl>()
+            val nodeStack = ArrayDeque<TypeTreeNodeImpl>(nodeList.size)
+            for (node in nodeList) {
+                if (node.level == baseLevel) {
+                    rootList.add(node)
+                    nodeStack.addLast(node)
+                    continue
+                }
+                val lastNode = nodeStack.last()
+                if (node.level > lastNode.level) {
+                    lastNode.children.add(node)
+                } else {
+                    var top: TypeTreeNodeImpl
+                    do {
+                        nodeStack.removeLast()
+                        top = nodeStack.last()
+                    } while (node.level <= top.level)
+                    top.children.add(node)
+                }
                 nodeStack.addLast(node)
-                continue
             }
-            val lastNode = nodeStack.last()
-            if (node.level > lastNode.level) {
-                lastNode.children.add(node)
-            } else {
-                var top: TypeTreeNodeImpl
-                do {
-                    nodeStack.removeLast()
-                    top = nodeStack.last()
-                } while (node.level <= top.level)
-                top.children.add(node)
-            }
-            nodeStack.addLast(node)
+            nodeStack.clear()
+            return rootList
         }
-        nodeStack.clear()
-        return rootList
     }
 }
