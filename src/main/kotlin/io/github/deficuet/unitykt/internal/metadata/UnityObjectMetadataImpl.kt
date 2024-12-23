@@ -2,6 +2,7 @@ package io.github.deficuet.unitykt.internal.metadata
 
 import io.github.deficuet.unitykt.enums.ClassIDType
 import io.github.deficuet.unitykt.internal.file.SerializedFile
+import io.github.deficuet.unitykt.internal.metadata.tree.TypeTreeStringParser
 import io.github.deficuet.unitykt.internal.utils.ObjectReader
 import io.github.deficuet.unitykt.metadata.UnityObjectMetadata
 
@@ -14,15 +15,36 @@ internal class UnityObjectMetadataImpl(
     val isDestroyed: UShort,
     val stripped: UByte,
     override val m_PathID: Long,
-    override val serializedType: SerializedTypeImpl?
+    override val serializedType: SerializedTypeImpl
 ): UnityObjectMetadata {
     override val classType = ClassIDType.of(classID)
 
     private var isInitialized = false
-    private val valueMap = mutableMapOf<String, Any?>()
-    private val dumpBuilder = StringBuilder()
+    private lateinit var dumpString: String
+    private lateinit var valueMap: Map<String, Any>
 
     private fun readTree() {
-        val reader = ObjectReader(serializedFile, this)
+        val parser = TypeTreeStringParser()
+        valueMap = serializedType.typeTree.read(
+            ObjectReader(serializedFile, this),
+            listOf(parser)
+        )
+        dumpString = parser.flush()
+    }
+
+    override fun dump(): String {
+        if (!isInitialized) {
+            readTree()
+//            isInitialized = true
+        }
+        return dumpString
+    }
+
+    fun getValueMap(): Map<String, Any> {
+        if (!isInitialized) {
+            readTree()
+//            isInitialized = true
+        }
+        return valueMap
     }
 }

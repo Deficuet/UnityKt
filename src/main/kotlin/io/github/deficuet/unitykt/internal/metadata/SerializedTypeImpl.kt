@@ -1,5 +1,6 @@
 package io.github.deficuet.unitykt.internal.metadata
 
+import io.github.deficuet.unitykt.internal.metadata.tree.TypeTreeImpl
 import io.github.deficuet.unitykt.metadata.SerializedType
 
 internal class SerializedTypeImpl(

@@ -18,12 +18,17 @@ interface DataInput {
     fun readString(size: Int = -1, charset: Charset = Charsets.UTF_8): String
     fun readNullString(maxLength: Int = 32767, charset: Charset = Charsets.UTF_8): String
     fun readAlignedString(charset: Charset = Charsets.UTF_8): String
-    fun readInt8Array(): ByteArray
+    fun readInt8Array(size: Int = -1): ByteArray
+    fun readUInt8Array(size: Int = -1): Array<UByte>
+    fun readInt16Array(size: Int = -1): ShortArray
     fun readUInt16Array(size: Int = -1): Array<UShort>
     fun readInt32Array(size: Int = -1): IntArray
     fun readUInt32Array(size: Int = -1): Array<UInt>
     fun readNestedUInt32Array(size: Int = -1): Array<Array<UInt>>
+    fun readInt64Array(size: Int = -1): LongArray
+    fun readUInt64Array(size: Int = -1): Array<ULong>
     fun readFloatArray(size: Int = -1): FloatArray
+    fun readDoubleArray(size: Int = -1): DoubleArray
     fun readBoolArray(size: Int = -1): BooleanArray
     fun readAlignedStringArray(size: Int = -1): Array<String>
     fun readRect(): Rect

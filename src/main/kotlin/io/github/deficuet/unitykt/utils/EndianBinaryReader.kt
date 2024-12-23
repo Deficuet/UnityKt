@@ -36,13 +36,15 @@ abstract class EndianBinaryReader: Closeable, DataInput {
     open fun alignStream(alignment: Int = 4) {
         skip((alignment - position % alignment) % alignment)
     }
+
+    fun autoSize(size: Int) = if (size == -1) readInt32() else size
 }
 
 inline fun <R: EndianBinaryReader, reified T> R.readArrayOf(
     size: Int = -1,
     crossinline constructor: R.() -> T
 ): Array<T> {
-    val num = if (size == -1) readInt32() else size
+    val num = autoSize(size)
     return Array(num) { constructor() }
 }
 
@@ -50,7 +52,7 @@ inline fun <R: EndianBinaryReader, reified T> R.readArrayIndexedOf(
     size: Int = -1,
     crossinline constructor: R.(Int) -> T
 ): Array<T> {
-    val num = if (size == -1) readInt32() else size
+    val num = autoSize(size)
     return Array(num) { constructor(it) }
 }
 

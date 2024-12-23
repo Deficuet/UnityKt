@@ -2,8 +2,8 @@ package io.github.deficuet.unitykt.internal.file
 
 import io.github.deficuet.unitykt.enums.BuildTarget
 import io.github.deficuet.unitykt.internal.metadata.SerializedTypeImpl
-import io.github.deficuet.unitykt.internal.metadata.TypeTreeImpl
-import io.github.deficuet.unitykt.internal.metadata.TypeTreeNodeImpl
+import io.github.deficuet.unitykt.internal.metadata.tree.TypeTreeImpl
+import io.github.deficuet.unitykt.internal.metadata.tree.TypeTreeNodeImpl
 import io.github.deficuet.unitykt.internal.metadata.UnityObjectMetadataImpl
 import io.github.deficuet.unitykt.utils.*
 import java.io.File
@@ -46,7 +46,7 @@ internal class FileIdentifier private constructor(
     }
 }
 
-class ScriptIdentifier(
+internal class ScriptIdentifier(
     val serializedFileIndex: Int,
     val identifierInFile: Long
 )
@@ -113,6 +113,9 @@ internal class SerializedFile(
             BuildTarget.UnknownPlatform
         }
         enableTypeTree = if (header.version >= FormatVersion.HAS_TYPE_TREE_HASHES) reader.readBool() else true
+        if (!enableTypeTree) {
+            throw UnsupportedOperationException("Type tree disabled. Context: ${root.identifier}")
+        }
         types = reader.readArrayOf {
             readSerializedType(false)
         }
@@ -135,10 +138,11 @@ internal class SerializedFile(
             } + header.dataOffset
             val byteSize = readUInt32()
             val typeID = readInt32()
-            val classID: Int; val serialisedType: SerializedTypeImpl?
+            val classID: Int; val serialisedType: SerializedTypeImpl
             if (header.version < FormatVersion.REFACTORED_CLASS_ID) {
                 classID = readUInt16().toInt()
                 serialisedType = types.find { it.classID == typeID }
+                    ?: throw UnsupportedOperationException("The object has no serialized tree. m_PathID: $mPathID")
             } else {
                 with(types[typeID]) {
                     serialisedType = this
@@ -147,9 +151,7 @@ internal class SerializedFile(
             }
             val isDestroyed: UShort = if (header.version < FormatVersion.HAS_SCRIPT_TYPE_INDEX) readUInt16() else 0u
             if (header.version in FormatVersion.HAS_SCRIPT_TYPE_INDEX ..< FormatVersion.REFACTOR_TYPE_DATA) {
-                if (serialisedType != null) {
-                    serialisedType.scriptTypeIndex = readInt16()
-                }
+                serialisedType.scriptTypeIndex = readInt16()
             }
             val stripped: UByte = if (
                 header.version == FormatVersion.SUPPORTS_STRIPPED_OBJECT ||

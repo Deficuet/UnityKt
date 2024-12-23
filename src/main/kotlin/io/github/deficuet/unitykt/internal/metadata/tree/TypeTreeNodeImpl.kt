@@ -1,4 +1,4 @@
-package io.github.deficuet.unitykt.internal.metadata
+package io.github.deficuet.unitykt.internal.metadata.tree
 
 import io.github.deficuet.unitykt.metadata.TypeTreeNode
 
@@ -14,4 +14,5 @@ internal class TypeTreeNodeImpl(
     override var name: String = ""
 ): TypeTreeNode {
     val children = mutableListOf<TypeTreeNodeImpl>()
+    val dataType get() = NodeDataType.of(type)
 }

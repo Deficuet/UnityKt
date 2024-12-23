@@ -69,13 +69,18 @@ abstract class EndianDataInput(endian: ByteOrder): EndianBinaryReader() {
         }
         return ""
     }
-    override fun readInt8Array() = read(readInt32())
+    override fun readInt8Array(size: Int) = read(autoSize(size))
+    override fun readUInt8Array(size: Int) = readArrayOf(size) { readUInt8() }
+    override fun readInt16Array(size: Int) = ShortArray(autoSize(size)) { readInt16() }
     override fun readUInt16Array(size: Int) = readArrayOf(size) { readUInt16() }
-    override fun readInt32Array(size: Int) = readArrayOf(size) { readInt32() }.toIntArray()
+    override fun readInt32Array(size: Int) = IntArray(autoSize(size)) { readInt32() }
     override fun readUInt32Array(size: Int) = readArrayOf(size) { readUInt32() }
     override fun readNestedUInt32Array(size: Int) = readArrayOf(size) { readUInt32Array() }
-    override fun readFloatArray(size: Int) = readArrayOf(size) { readFloat() }.toFloatArray()
-    override fun readBoolArray(size: Int) = readArrayOf(size) { readBool() }.toBooleanArray()
+    override fun readInt64Array(size: Int) = LongArray(autoSize(size)) { readInt64() }
+    override fun readUInt64Array(size: Int) = readArrayOf(size) { readUInt64() }
+    override fun readFloatArray(size: Int) = FloatArray(autoSize(size)) { readFloat() }
+    override fun readBoolArray(size: Int) = BooleanArray(autoSize(size)) { readBool() }
+    override fun readDoubleArray(size: Int) = DoubleArray(autoSize(size)) { readDouble() }
     override fun readAlignedStringArray(size: Int) = readArrayOf(size) { readAlignedString() }
     override fun readRect() = Rect(readFloat(), readFloat(), readFloat(), readFloat())
     override fun readQuaternion() = Quaternion(readFloat(), readFloat(), readFloat(), readFloat())
