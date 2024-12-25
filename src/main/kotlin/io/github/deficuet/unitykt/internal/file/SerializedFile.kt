@@ -73,7 +73,7 @@ internal class SerializedFile(
     )
 
     val unityVersion: UnityVersion
-    private val buildTarget: BuildTarget
+    val buildTarget: BuildTarget
     private val enableTypeTree: Boolean
     private val bigIDEnabled: Int
     private val userInformation: String
@@ -150,19 +150,28 @@ internal class SerializedFile(
                     classID = this.classID
                 }
             }
-            val isDestroyed: UShort = if (header.version < FormatVersion.HAS_SCRIPT_TYPE_INDEX) readUInt16() else 0u
+//            val isDestroyed: UShort = if (header.version < FormatVersion.HAS_SCRIPT_TYPE_INDEX) readUInt16() else 0u
+            if (header.version < FormatVersion.HAS_SCRIPT_TYPE_INDEX) {
+                readUInt16()
+            }
             if (header.version in FormatVersion.HAS_SCRIPT_TYPE_INDEX ..< FormatVersion.REFACTOR_TYPE_DATA) {
                 serialisedType.scriptTypeIndex = readInt16()
             }
-            val stripped: UByte = if (
+//            val stripped: UByte = if (
+//                header.version == FormatVersion.SUPPORTS_STRIPPED_OBJECT ||
+//                header.version == FormatVersion.REFACTORED_CLASS_ID
+//            ) readUInt8() else 0u
+            if (
                 header.version == FormatVersion.SUPPORTS_STRIPPED_OBJECT ||
                 header.version == FormatVersion.REFACTORED_CLASS_ID
-            ) readUInt8() else 0u
+            ) {
+                readUInt8()
+            }
             UnityObjectMetadataImpl(
                 this@SerializedFile, byteStart, byteSize, typeID,
-                classID, isDestroyed, stripped, mPathID, serialisedType
+                classID, mPathID, serialisedType
             )
-        }.associateBy { it.m_PathID }
+        }.associateBy { it.mPathID }
         scriptTypes = if (header.version >= FormatVersion.HAS_SCRIPT_TYPE_INDEX) {
             reader.readArrayOf {
                 ScriptIdentifier(

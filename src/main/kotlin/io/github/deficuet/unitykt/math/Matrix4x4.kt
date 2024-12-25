@@ -121,17 +121,11 @@ class Matrix4x4(private val data: Array<FloatArray>) {
         return true
     }
 
-    fun toString(precision: Int): String {
-        val strArray = data.map { fa ->
-            val l = fa.maxOf { f -> "%.${precision}f".format(f).length }
-            Array(4) { index -> "%-${l}.${precision}f".format(fa[index]) }
-        }
-        return "[" + intArrayOf(0, 1, 2, 3).map { row ->
-            strArray.joinToString("  ") { it[row] }
-        }.joinToString("\n") { " [ $it ] " }.trim() + "]"
+    override fun toString(): String {
+        return "[\n" + data.mapIndexed { i, column ->
+            "\tcolumn[$i] = ${column.contentToString()}\n"
+        }.joinToString("") + "]"
     }
-
-    override fun toString() = toString(2)
 
     companion object {
         val I = Matrix4x4 {

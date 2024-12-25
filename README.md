@@ -121,7 +121,7 @@ libraryDependencies += "com.github.Deficuet" % "UnityKt" % "{version}"
 Example for reading and saving an image from a Texture2D object.
 ```kotlin
 import io.github.deficuet.unitykt.*
-import io.github.deficuet.unitykt.classes.*
+import io.github.deficuet.unitykt.data.*
 import java.io.File
 import javax.imageio.ImageIO
 

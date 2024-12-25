@@ -1,6 +1,7 @@
 package io.github.deficuet.unitykt.internal.metadata
 
 import io.github.deficuet.unitykt.ImportContext
+import io.github.deficuet.unitykt.enums.BuildTarget
 import io.github.deficuet.unitykt.enums.ClassIDType
 import io.github.deficuet.unitykt.internal.file.SerializedFile
 import io.github.deficuet.unitykt.internal.metadata.tree.TypeTreeStringParser
@@ -14,13 +15,12 @@ internal class UnityObjectMetadataImpl(
     val byteSize: UInt,
     override val typeID: Int,
     override val classID: Int,
-    val isDestroyed: UShort,
-    val stripped: UByte,
-    override val m_PathID: Long,
+    override val mPathID: Long,
     override val serializedType: SerializedTypeImpl
 ): UnityObjectMetadata {
     override val context = serializedFile.root
     override val unityVersion = serializedFile.unityVersion
+    override val buildTarget = serializedFile.buildTarget
     override val classType = ClassIDType.of(classID)
 
     private var isInitialized = false
@@ -28,6 +28,7 @@ internal class UnityObjectMetadataImpl(
     private lateinit var valueMap: Map<String, Any>
 
     private fun readTree() {
+        serializedFile.root.manager.config.debugOutput("Object($classType) path id $mPathID initialized")
         val parser = TypeTreeStringParser()
         valueMap = serializedType.typeTree.read(
             ObjectReader(serializedFile, this),
@@ -44,7 +45,7 @@ internal class UnityObjectMetadataImpl(
         return dumpString
     }
 
-    fun getValueMap(): Map<String, Any> {
+    override fun getValueMap(): Map<String, Any> {
         if (!isInitialized) {
             readTree()
             isInitialized = true

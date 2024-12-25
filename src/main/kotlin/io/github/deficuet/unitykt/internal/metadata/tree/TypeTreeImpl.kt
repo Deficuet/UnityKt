@@ -70,10 +70,20 @@ internal class TypeTreeImpl(
                     it.writeNodePrimitive(
                         TypeTreeNodeImpl(
                             0, 0, 0, 0, 0,
-                            node.level, 0uL, "int", "size"
+                            node.level + 1, 0uL, "int", "size"
                         ),
                         value.size
                     )
+                }
+            }
+            NodeDataType.MATRIX -> {
+                writeLater = false
+                value = reader.readMatrix4x4()
+                parserList.forEach {
+                    it.writeNode(node)
+                    for ((i, elementNode) in node.children.withIndex()) {
+                        it.writeNodePrimitive(elementNode, value[i])
+                    }
                 }
             }
             NodeDataType.COMPOSITE -> {
@@ -182,7 +192,7 @@ internal class TypeTreeImpl(
     }
 
     companion object {
-        fun createNodeTree(nodeList: List<TypeTreeNodeImpl>): List<TypeTreeNodeImpl> {
+        internal fun createNodeTree(nodeList: List<TypeTreeNodeImpl>): List<TypeTreeNodeImpl> {
             if (nodeList.isEmpty()) return emptyList()
             val baseLevel = nodeList[0].level
             val rootList = mutableListOf<TypeTreeNodeImpl>()

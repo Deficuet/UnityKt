@@ -16,6 +16,7 @@ internal enum class NodeDataType(val isPrimitive: Boolean) {
     STRING(true),
     MAP(false),
     TYPELESS(false),
+    MATRIX(false),
     COMPOSITE(false);
 
     companion object {
@@ -36,6 +37,7 @@ internal enum class NodeDataType(val isPrimitive: Boolean) {
                 "string" -> STRING
                 "map" -> MAP
                 "TypelessData" -> TYPELESS
+                "Matrix4x4f" -> MATRIX
                 else -> COMPOSITE
             }
         }

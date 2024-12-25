@@ -1,6 +1,7 @@
 package io.github.deficuet.unitykt.metadata
 
 import io.github.deficuet.unitykt.ImportContext
+import io.github.deficuet.unitykt.enums.BuildTarget
 import io.github.deficuet.unitykt.enums.ClassIDType
 import io.github.deficuet.unitykt.utils.UnityVersion
 
@@ -9,9 +10,11 @@ interface UnityObjectMetadata {
     val typeID: Int
     val classID: Int
     val classType: ClassIDType
-    val m_PathID: Long
+    val mPathID: Long
     val unityVersion: UnityVersion
+    val buildTarget: BuildTarget
     val serializedType: SerializedType
 
     fun dump(): String
+    fun getValueMap(): Map<String, Any>
 }
