@@ -6,8 +6,12 @@ import io.github.deficuet.unitykt.internal.metadata.UnityObjectMetadataImpl
 import io.github.deficuet.unitykt.internal.metadata.tree.TypeTreeImpl
 import io.github.deficuet.unitykt.internal.metadata.tree.TypeTreeNodeImpl
 import io.github.deficuet.unitykt.internal.utils.BuildType
-import io.github.deficuet.unitykt.utils.*
-import java.io.File
+import io.github.deficuet.unitykt.pptr.ExternalLinker
+import io.github.deficuet.unitykt.pptr.FileIdentifier
+import io.github.deficuet.unitykt.utils.EndianBinaryReader
+import io.github.deficuet.unitykt.utils.EndianByteArrayReader
+import io.github.deficuet.unitykt.utils.UnityVersion
+import io.github.deficuet.unitykt.utils.readArrayOf
 import java.nio.ByteOrder
 
 internal class FormatVersion private constructor() {
@@ -36,17 +40,6 @@ internal class FormatVersion private constructor() {
     }
 }
 
-internal class FileIdentifier private constructor(
-    val type: Int,
-    val path: String,
-    val name: String
-) {
-    companion object {
-        fun fromPath(type: Int, path: String) = FileIdentifier(type, path, File(path).name)
-        fun fromName(type: Int, name: String) = FileIdentifier(type, "", name)
-    }
-}
-
 internal class ScriptIdentifier(
     val serializedFileIndex: Int,
     val identifierInFile: Long
@@ -56,7 +49,7 @@ internal class SerializedFile(
     internal val reader: EndianBinaryReader,
     override val parent: FileNode,
     override val name: String
-): AbstractFile {
+): AbstractFile, ExternalLinker {
     class Header(
         var metadataSize: UInt,
         var fileSize: Long,
@@ -81,8 +74,9 @@ internal class SerializedFile(
     private val types: Array<SerializedTypeImpl>
     val objectMetadataMap: Map<Long, UnityObjectMetadataImpl>
     private val scriptTypes: Array<ScriptIdentifier>
-    val externals = mutableListOf<FileIdentifier>()
     private val refTypes: Array<SerializedTypeImpl>
+
+    override val externals = mutableListOf<FileIdentifier>()
 
     init {
         with(header) {

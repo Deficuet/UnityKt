@@ -15,18 +15,6 @@ interface UnityAssetManager: Closeable {
     val contexts: Map<String, ImportContext>
 
     /**
-     * All loaded objects except `AssetBundle`
-     * TODO
-     */
-    val objectList: List<Any>
-
-    /**
-     * Multi-dictionary of objects associated with their `mPathID`
-     * TODO
-     */
-    val objectMap: Map<Long, Any>
-
-    /**
      * @param data Byte array data of an asset bundle file
      * @param name A unique string as the name of this bytes
      * @param readerConfig To set [offsetMode][ReaderConfig.offsetMode]

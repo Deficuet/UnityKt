@@ -1,6 +1,5 @@
 package io.github.deficuet.unitykt.data
 
-import io.github.deficuet.unitykt.metadata.DataBinding
+import io.github.deficuet.unitykt.internal.metadata.DataBinding
 
-abstract class UnityDataClass(protected val valueMap: Map<String, Any>): DataBinding() {
-}
+abstract class UnityDataClass(val obj: UnityObject): DataBinding()

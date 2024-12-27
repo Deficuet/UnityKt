@@ -1,26 +1,49 @@
 package io.github.deficuet.unitykt.internal.metadata.tree
 
 import io.github.deficuet.unitykt.cast
+import io.github.deficuet.unitykt.data.UnityObject
 import io.github.deficuet.unitykt.internal.utils.ObjectReader
+import io.github.deficuet.unitykt.metadata.UnityDataClassCompanion
 import io.github.deficuet.unitykt.metadata.tree.TypeTree
+import kotlin.Any
+import kotlin.Array
+import kotlin.IllegalStateException
+import kotlin.Int
+import kotlin.Pair
+import kotlin.String
+import kotlin.arrayOf
+import kotlin.emptyArray
+import kotlin.let
+import java.lang.reflect.Array as JArray
 
 internal class TypeTreeImpl(
     nodeList: List<TypeTreeNodeImpl>
 ): TypeTree {
     override val nodeTree = createNodeTree(nodeList)
 
-    fun read(reader: ObjectReader, parserList: List<TypeTreeParser>): Map<String, Any> {
+    fun read(
+        obj: UnityObject,
+        reader: ObjectReader,
+        parserList: List<TypeTreeParser>
+    ) {
         reader.position = 0
         val root = nodeTree[0]
         parserList.forEach { it.writeNode(root) }
-        val dict = mutableMapOf<String, Any>()
         for (child in root.children) {
-            dict[child.name] = readNode(reader, child, parserList)
+            obj.propertyMap[child.name] = readNode(
+                obj, reader, child, parserList,
+                obj.loaderMap[child.name] ?: emptyArray()
+            )
         }
-        return dict
     }
 
-    private fun readNode(reader: ObjectReader, node: TypeTreeNodeImpl, parserList: List<TypeTreeParser>): Any {
+    private fun readNode(
+        obj: UnityObject,
+        reader: ObjectReader,
+        node: TypeTreeNodeImpl,
+        parserList: List<TypeTreeParser>,
+        loaders: Array<out UnityDataClassCompanion<*>?>
+    ): Any {
         var align = node.metaFlag.and(0x4000) != 0
         var writeLater = true
         val value: Any
@@ -42,40 +65,6 @@ internal class TypeTreeImpl(
                 value = reader.readAlignedString()
                 parserList.forEach { it.writeString(node, value) }
             }
-            NodeDataType.MAP -> {
-                writeLater = false
-                if (node.children[0].metaFlag.and(0x4000) != 0) {
-                    align = true
-                }
-                val size = reader.readInt32()
-                parserList.forEach { it.writeArrayHeader(node, size) }
-                val pairNode = node.children[0].children[1]
-                val pairs = Array(size) { index ->
-                    parserList.forEach {
-                        it.writeElementIndex(pairNode, index)
-                        it.writeNode(pairNode)
-                    }
-                    Pair(
-                        readNode(reader, pairNode.children[0], parserList),
-                        readNode(reader, pairNode.children[1], parserList)
-                    )
-                }
-                value = pairs.groupBy({ it.first }, { it.second })
-            }
-            NodeDataType.TYPELESS -> {
-                writeLater = false
-                value = reader.readInt8Array()
-                parserList.forEach {
-                    it.writeNode(node)
-                    it.writeNodePrimitive(
-                        TypeTreeNodeImpl(
-                            0, 0, 0, 0, 0,
-                            node.level + 1, 0uL, "int", "size"
-                        ),
-                        value.size
-                    )
-                }
-            }
             NodeDataType.MATRIX -> {
                 writeLater = false
                 value = reader.readMatrix4x4()
@@ -86,6 +75,54 @@ internal class TypeTreeImpl(
                     }
                 }
             }
+            NodeDataType.MAP -> {
+                writeLater = false
+                if (node.children[0].metaFlag.and(0x4000) != 0) {
+                    align = true
+                }
+                val size = reader.readInt32()
+                parserList.forEach { it.writeArrayHeader(node, size) }
+                val loader1: UnityDataClassCompanion<*>?
+                val loader2: UnityDataClassCompanion<*>?
+                when (loaders.size) {
+                    0 -> { loader1 = null; loader2 = null }
+                    1 -> { loader1 = loaders[0]; loader2 = null }
+                    else -> { loader1 = loaders[0]; loader2 = loaders[1] }
+                }
+                val pairNode = node.children[0].children[1]
+                val pairs = Array(size) { index ->
+                    parserList.forEach {
+                        it.writeElementIndex(pairNode, index)
+                        it.writeNode(pairNode)
+                    }
+                    Pair(
+                        readNode(
+                            obj, reader, pairNode.children[0], parserList,
+                            loader1?.let { arrayOf(it) } ?: emptyArray()
+                        ),
+                        readNode(
+                            obj, reader, pairNode.children[1], parserList,
+                            loader2?.let { arrayOf(it) } ?: emptyArray()
+                        )
+                    )
+                }
+                value = pairs.groupBy({ it.first }, { it.second })
+            }
+            NodeDataType.TYPELESS -> {
+                writeLater = false
+                value = reader.readInt8Array()
+                parserList.forEach {
+                    it.writeNode(node)
+                    it.writeNodePrimitive(
+                        // made up fake node
+                        TypeTreeNodeImpl(
+                            0, 0, 0, 0, 0,
+                            node.level + 1, 0uL, "int", "size"
+                        ),
+                        value.size
+                    )
+                }
+            }
             NodeDataType.COMPOSITE -> {
                 writeLater = false
                 if (node.children.isNotEmpty() && node.children[0].type == "Array") {
@@ -94,12 +131,26 @@ internal class TypeTreeImpl(
                     }
                     val size = reader.readInt32()
                     parserList.forEach { it.writeArrayHeader(node, size) }
-                    value = readArray(reader, node, size, parserList)
+                    value = readArray(obj, reader, node, size, parserList, loaders)
                 } else {
                     parserList.forEach { it.writeNode(node) }
-                    value = mutableMapOf<String, Any>()
+                    val loader = if (loaders.isEmpty()) null else loaders[0]
+                    val dict: Map<String, Any>
+                    val loaderMap: Map<String, Array<out UnityDataClassCompanion<*>?>>
+                    if (loader != null) {
+                        value = loader.load(obj)
+                        dict = value.propertyMap
+                        loaderMap = value.loaderMap
+                    } else {
+                        dict = mutableMapOf()
+                        loaderMap = emptyMap()
+                        value = dict
+                    }
                     for (child in node.children) {
-                        value[child.name] = readNode(reader, child, parserList)
+                        dict[child.name] = readNode(
+                            obj, reader, child, parserList,
+                            loaderMap[child.name] ?: emptyArray()
+                        )
                     }
                 }
             }
@@ -114,10 +165,12 @@ internal class TypeTreeImpl(
     }
 
     private fun readArray(
+        obj: UnityObject,
         reader: ObjectReader,
         arrayNode: TypeTreeNodeImpl,
         size: Int,
-        parserList: List<TypeTreeParser>
+        parserList: List<TypeTreeParser>,
+        loaders: Array<out UnityDataClassCompanion<*>?>
     ): Any {
         val dataNode = arrayNode.children[0].children[1]
         val value: Any
@@ -181,11 +234,18 @@ internal class TypeTreeImpl(
                 }
             }
         } else {
-            value = Array(size) { index ->
-                parserList.forEach {
-                    it.writeElementIndex(dataNode, index)
+            if (loaders.isEmpty() || loaders[0] == null) {
+                value = Array(size) { index ->
+                    parserList.forEach {
+                        it.writeElementIndex(dataNode, index)
+                    }
+                    readNode(obj, reader, dataNode, parserList, loaders)
                 }
-                readNode(reader, dataNode, parserList)
+            } else {
+                value = loaders[0]!!.createArray(size)
+                for (i in 0 ..< size) {
+                    JArray.set(value, i, readNode(obj, reader, dataNode, parserList, loaders))
+                }
             }
         }
         return value

@@ -26,16 +26,6 @@ internal class UnityAssetManagerImpl(val config: ManagerConfig): UnityAssetManag
 
     override val contexts = mutableMapOf<String, ImportContextImpl>()
 
-    override val objectList: List<Any>
-        get() = contexts.values.flatMap { context ->
-            sequence {
-                // TODO
-            }
-        }
-
-    override val objectMap: Map<Long, Any>
-        get() = TODO("Not yet implemented")
-
     override fun loadFromByteArray(
         data: ByteArray,
         name: String,
