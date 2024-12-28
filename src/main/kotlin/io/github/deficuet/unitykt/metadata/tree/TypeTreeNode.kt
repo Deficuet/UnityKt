@@ -10,4 +10,6 @@ interface TypeTreeNode {
     val refTypeHash: ULong
     val type: String
     val name: String
+
+    val children: List<TypeTreeNode>
 }

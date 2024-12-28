@@ -13,7 +13,7 @@ internal class TypeTreeNodeImpl(
     override var type: String = "",
     override var name: String = ""
 ): TypeTreeNode {
-    val children = mutableListOf<TypeTreeNodeImpl>()
+    override val children = mutableListOf<TypeTreeNodeImpl>()
     val dataType get() = NodeDataType.of(type)
 }
 

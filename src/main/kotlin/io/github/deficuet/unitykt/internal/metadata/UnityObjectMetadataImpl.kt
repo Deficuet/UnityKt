@@ -5,6 +5,7 @@ import io.github.deficuet.unitykt.enums.ClassIDType
 import io.github.deficuet.unitykt.internal.file.SerializedFile
 import io.github.deficuet.unitykt.internal.utils.ObjectReader
 import io.github.deficuet.unitykt.metadata.UnityObjectMetadata
+import io.github.deficuet.unitykt.metadata.tree.TypeTreeParser
 
 internal class UnityObjectMetadataImpl(
     override val externalLinker: SerializedFile,
@@ -22,13 +23,12 @@ internal class UnityObjectMetadataImpl(
 
     private val reader = ObjectReader(externalLinker, this)
 
-    fun readTree(obj: UnityObject) {
+    internal fun readTree(obj: UnityObject) {
         externalLinker.root.manager.config.debugOutput("Object($classType) path id $mPathID initialized")
-        serializedType.typeTree.read(obj, reader)
+        serializedType.typeTree.readTree(obj, reader)
     }
 
-    override fun dump(obj: UnityObject): String {
-        // TODO
-        return "dumpString"
+    override fun dump(parser: TypeTreeParser): String {
+        return serializedType.typeTree.parseTree(reader, parser)
     }
 }
