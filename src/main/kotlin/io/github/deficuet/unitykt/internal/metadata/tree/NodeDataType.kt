@@ -16,7 +16,7 @@ internal enum class NodeDataType(val isPrimitive: Boolean) {
     STRING(true),
     MAP(false),
     TYPELESS(false),
-    MATRIX(false),
+    MATRIX(true),
     COMPOSITE(false);
 
     companion object {

@@ -1,24 +1,35 @@
 package io.github.deficuet.unitykt.internal.metadata
 
+import io.github.deficuet.unitykt.cast
 import io.github.deficuet.unitykt.data.UnityDataClass
 import io.github.deficuet.unitykt.data.UnityObject
+import io.github.deficuet.unitykt.internal.metadata.tree.Loader
 import io.github.deficuet.unitykt.metadata.UnityDataClassCompanion
 import kotlin.reflect.KProperty
 
 abstract class DataBinding internal constructor() {
-    internal val loaderMap = mutableMapOf<String, Array<out UnityDataClassCompanion<*>?>>()
+    internal val loaderMap = mutableMapOf<String, ArrayDeque<Loader>>()
 
     @PublishedApi
     internal val propertyMap = mutableMapOf<String, Any>()
 
-    @PublishedApi
     internal var isInitialized = false
 
     protected fun bind(dataKey: String, vararg loaders: UnityDataClassCompanion<*>?): String {
         if (loaders.isNotEmpty()) {
-            loaderMap[dataKey] = loaders
+            val deque = ArrayDeque<Loader>(loaders.size)
+            deque.addAll(loaders)
+            loaderMap[dataKey] = deque
         }
         return dataKey
+    }
+
+    @PublishedApi
+    internal fun checkInit(obj: UnityObject) {
+        if (!obj.isInitialized) {
+            obj.metadata.cast<UnityObjectMetadataImpl>().readTree(obj)
+            obj.isInitialized = true
+        }
     }
 
     inline fun <reified T> validateType(propertyName: String, dataKey: String): T {
@@ -34,10 +45,7 @@ abstract class DataBinding internal constructor() {
     }
 
     inline operator fun <reified T> String.getValue(thisRef: UnityObject, property: KProperty<*>): T {
-        if (!isInitialized) {
-            thisRef.metadata.dump(thisRef)
-            isInitialized = true
-        }
+        checkInit(thisRef)
         return validateType(property.name, this)
     }
 
