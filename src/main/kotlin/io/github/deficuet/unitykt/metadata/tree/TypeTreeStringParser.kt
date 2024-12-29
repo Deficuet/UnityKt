@@ -1,6 +1,6 @@
 package io.github.deficuet.unitykt.metadata.tree
 
-internal class TypeTreeStringParser(
+class TypeTreeStringParser(
     private val lineSeparator: String = "\r\n"
 ): TypeTreeParser {
     private val builder = StringBuilder()
@@ -29,7 +29,17 @@ internal class TypeTreeStringParser(
         builder.append("${indent(elementNode)}[$index]").append(lineSeparator)
     }
 
-    override fun flush() = builder.toString()
+    override fun writeNodeMetadata(node: TypeTreeNode) {
+        builder.append("${indent(node)}${node.type} ${node.name} ")
+            .append("${node.byteSize} ${node.metaFlag.and(0x4000) != 0}")
+            .append(lineSeparator)
+    }
+
+    override fun flush(): String {
+        val ret = builder.toString()
+        builder.clear()
+        return ret
+    }
 
     private fun indent(node: TypeTreeNode): String {
         return "\t".repeat(node.level)

@@ -93,9 +93,7 @@ internal class TypeTreeImpl(
                 }
             }
         }
-        if (align) {
-            reader.alignStream()
-        }
+        if (align) reader.alignStream()
         return value
     }
 
@@ -251,6 +249,20 @@ internal class TypeTreeImpl(
         }
         if (writeLater) parser.writeNodePrimitive(node, value!!)
         if (align) reader.alignStream()
+    }
+
+    fun parseTreeStructure(parser: TypeTreeParser): String {
+        for (node in nodeTree) {
+            parseNodeMetadata(parser, node)
+        }
+        return parser.flush()
+    }
+
+    private fun parseNodeMetadata(parser: TypeTreeParser, node: TypeTreeNodeImpl) {
+        parser.writeNodeMetadata(node)
+        for (child in node.children) {
+            parseNodeMetadata(parser, child)
+        }
     }
 
     companion object {

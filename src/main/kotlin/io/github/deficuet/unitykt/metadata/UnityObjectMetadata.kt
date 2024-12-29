@@ -19,4 +19,5 @@ interface UnityObjectMetadata {
     val serializedType: SerializedType
 
     fun dump(parser: TypeTreeParser): String
+    fun dumpStructure(parser: TypeTreeParser): String
 }

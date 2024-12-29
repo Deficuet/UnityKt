@@ -16,6 +16,7 @@ open class UnityObject(val metadata: UnityObjectMetadata): DataBinding() {
     val serializedType    get() = metadata.serializedType
 
     fun dump(parser: TypeTreeParser = TypeTreeStringParser()) = metadata.dump(parser)
+    fun dumpStructure(parser: TypeTreeParser = TypeTreeStringParser()) = metadata.dumpStructure(parser)
 
     companion object: UnityObjectCompanion<UnityObject>(ClassIDType.Object, ::UnityObject)
 }

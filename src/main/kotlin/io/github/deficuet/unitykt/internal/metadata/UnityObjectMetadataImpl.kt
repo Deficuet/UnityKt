@@ -31,4 +31,8 @@ internal class UnityObjectMetadataImpl(
     override fun dump(parser: TypeTreeParser): String {
         return serializedType.typeTree.parseTree(reader, parser)
     }
+
+    override fun dumpStructure(parser: TypeTreeParser): String {
+        return serializedType.typeTree.parseTreeStructure(parser)
+    }
 }

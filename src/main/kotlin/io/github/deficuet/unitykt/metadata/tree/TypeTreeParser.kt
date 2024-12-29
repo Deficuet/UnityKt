@@ -6,5 +6,6 @@ interface TypeTreeParser {
     fun writeString(node: TypeTreeNode, str: String)
     fun writeArrayHeader(node: TypeTreeNode, size: Int)
     fun writeElementIndex(elementNode: TypeTreeNode, index: Int)
+    fun writeNodeMetadata(node: TypeTreeNode)
     fun flush(): String
 }
