@@ -1,18 +1,8 @@
 # Set the minimum version of CMake that can be used
-cmake_minimum_required (VERSION 3.8)
+cmake_minimum_required (VERSION 3.15)
 
 # Set the project name
-project("TextureDecoder")
-
-# Set the C++ standard to C++ 14
-set(CMAKE_CXX_STANDARD 14)
-
-# Add definitions from the project file
-# 'Release|x64'
-# <PreprocessorDefinitions>_T2D_DLL;NDEBUG;TEXTURE2DDECODERNATIVE_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-add_compile_definitions(_T2D_DLL)
-add_compile_definitions(NDEBUG)
-add_compile_definitions(TEXTURE2DDECODERNATIVE_EXPORTS)
+project("TextureDecoder" LANGUAGES CXX)
 
 # Add the given directories to those the compiler uses to search for include files
 include_directories("C:/Program Files/Java/jdk-17.0.12+7/include")
@@ -53,3 +43,15 @@ add_library(TextureDecoder SHARED
         lib/unitycrunch.h
         io_github_deficuet_unitykt_extension_TextureDecoder.h
         io_github_deficuet_unitykt_extension_TextureDecoder.cc)
+
+set_target_properties(TextureDecoder PROPERTIES
+    CXX_STANDARD 14
+    CXX_STANDARD_REQUIRED YES
+    MSVC_RUNTIME_LIBRARY "MultiThreadedDLL"
+)
+
+target_compile_definitions(TextureDecoder PRIVATE
+    _T2D_DLL
+    TEXTURE2DDECODERNATIVE_EXPORTS
+    $<$<CONFIG:Release>:NDEBUG>
+)
